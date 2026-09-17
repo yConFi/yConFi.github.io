@@ -2,10 +2,9 @@
 // lo que falta queda marcado con TODO.
 
 export const SITE = {
-  // TODO: confirmar el nombre/título que quieres para la web.
-  titulo: 'Ricardo Hidalgo',
-  // TODO: descripción por defecto para buscadores (1-2 frases).
-  descripcion: 'Portfolio y walkthroughs de ciberseguridad.',
+  titulo: 'yConFi',
+  descripcion:
+    'Portfolio de ciberseguridad y walkthroughs paso a paso de máquinas y retos retirados, con cada parte de cada comando explicada.',
   idioma: 'es',
   autor: 'Ricardo Hidalgo Bejarano',
 } as const;
