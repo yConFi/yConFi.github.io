@@ -120,7 +120,7 @@ describe('analizarComando: casos válidos', () => {
     const nc = analizarComando('nc -lvnp 4444');
     expect(nc.map((s) => `${s.clase}:${s.texto}`)).toEqual(['herramienta:nc', 'opcion:-lvnp', 'valor:4444']);
     expect(nc[1]!.partes?.map((p) => p.texto)).toEqual(['-l', '-v', '-n', '-p']);
-    expect(nc[0]!.aviso).toMatch(/variante/);
+    expect(nc[0]!.aviso).toMatch(/netcat-traditional.*OpenBSD.*ncat/);
   });
 
   it('opciones combinadas con valor pegado: grep -iA3', () => {

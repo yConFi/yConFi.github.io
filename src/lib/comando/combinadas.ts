@@ -39,8 +39,21 @@ export function expandirCombinadas(
   grupo: string,
   buscar: (flag: string) => Opcion | undefined,
 ): ResultadoCombinadas {
-  // TODO(Ricardo): implementar (5-10 líneas).
-  void grupo;
-  void buscar;
-  throw new Error('TODO: implementar expandirCombinadas en src/lib/comando/combinadas.ts');
+  const partes: ParteCombinada[] = [];
+
+  for (let i = 0; i < grupo.length; i++) {
+    const flag = `-${grupo[i]}`;
+    const opcion = buscar(flag);
+    if (!opcion) return { ok: false, flagDesconocida: flag };
+    partes.push({ flag, opcion });
+
+    // Como getopt: si esta opción lleva valor, lo que queda del grupo es su valor
+    // y ya no se leen más opciones (`-pla` = `-p la`, no `-p -l -a`).
+    if (opcion.valor && !opcion.valor.soloConIgual) {
+      const resto = grupo.slice(i + 1);
+      return resto ? { ok: true, partes, valorPegado: resto } : { ok: true, partes };
+    }
+  }
+
+  return { ok: true, partes };
 }
