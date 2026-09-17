@@ -1,0 +1,11 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout titulo="Página no encontrada" noindex>
+  <section class="lectura">
+    <h1 class="prompt">cd {Astro.url.pathname}</h1>
+    <pre><code>bash: cd: No such file or directory</code></pre>
+    <p>Esta página no existe. <a href="/">Volver al inicio</a>.</p>
+  </section>
+</BaseLayout>

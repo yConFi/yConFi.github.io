@@ -1,0 +1,228 @@
+/* =========================================================
+   Tokens de diseño. Oscuro por defecto; claro con data-theme.
+   Contrastes comprobados para WCAG AA (texto normal >= 4.5:1).
+   ========================================================= */
+:root {
+  color-scheme: dark;
+
+  --bg: #0d1117;
+  --bg-elev: #161b22;
+  --bg-code: #010409;
+  --borde: #30363d;
+  --texto: #e6edf3;
+  --texto-suave: #9da7b3;
+  --acento: #3fb950;
+  --acento-texto: #56d364;
+  --enlace: #79c0ff;
+  --foco: #f0b72f;
+  --aviso-bg: #3b2300;
+  --aviso-borde: #d29922;
+  --peligro: #ff7b72;
+
+  /* Colores de tokens de comandos (se usan en la fase 3) */
+  --tok-herramienta: #56d364;
+  --tok-subcomando: #7ee787;
+  --tok-opcion: #79c0ff;
+  --tok-valor: #ffa657;
+  --tok-argumento: #e6edf3;
+  --tok-operador: #ff7b72;
+
+  --fuente-mono: ui-monospace, 'Cascadia Code', 'JetBrains Mono', 'SFMono-Regular', Consolas,
+    'Liberation Mono', monospace;
+  --fuente-texto: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --ancho-max: 72rem;
+  --ancho-lectura: 46rem;
+  --radio: 6px;
+  --gutter: clamp(1rem, 4vw, 2rem);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #ffffff;
+  --bg-elev: #f6f8fa;
+  --bg-code: #f6f8fa;
+  --borde: #d0d7de;
+  --texto: #1f2328;
+  --texto-suave: #59636e;
+  --acento: #1a7f37;
+  --acento-texto: #116329;
+  --enlace: #0550ae;
+  --foco: #9a6700;
+  --aviso-bg: #fff8c5;
+  --aviso-borde: #9a6700;
+  --peligro: #cf222e;
+
+  --tok-herramienta: #116329;
+  --tok-subcomando: #1a7f37;
+  --tok-opcion: #0550ae;
+  --tok-valor: #953800;
+  --tok-argumento: #1f2328;
+  --tok-operador: #cf222e;
+}
+
+/* ---------- Base ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--texto);
+  font-family: var(--fuente-texto);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  overflow-wrap: break-word;
+}
+
+main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--ancho-max);
+  margin-inline: auto;
+  padding: 2rem var(--gutter) 4rem;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--fuente-mono);
+  line-height: 1.25;
+  margin: 2rem 0 0.75rem;
+}
+
+h1 {
+  font-size: clamp(1.6rem, 5vw, 2.25rem);
+  margin-top: 0;
+}
+
+h2 {
+  font-size: clamp(1.3rem, 3.5vw, 1.6rem);
+}
+
+a {
+  color: var(--enlace);
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+code,
+kbd,
+pre {
+  font-family: var(--fuente-mono);
+  font-size: 0.92em;
+}
+
+:not(pre) > code {
+  background: var(--bg-elev);
+  border: 1px solid var(--borde);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+
+pre {
+  background: var(--bg-code);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 1rem;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Foco visible y consistente para teclado */
+:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ---------- Utilidades ---------- */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -3rem;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  background: var(--foco);
+  color: #000;
+  font-weight: 600;
+  border-radius: var(--radio);
+}
+
+.skip-link:focus {
+  top: 0.5rem;
+}
+
+.prompt::before {
+  content: '$ ';
+  color: var(--acento-texto);
+}
+
+.lectura {
+  max-width: var(--ancho-lectura);
+}
+
+.texto-suave {
+  color: var(--texto-suave);
+}
+
+/* TODO visibles: imposibles de pasar por alto en la web */
+.todo {
+  background: var(--aviso-bg);
+  border: 2px dashed var(--aviso-borde);
+  border-radius: var(--radio);
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  font-family: var(--fuente-mono);
+  font-size: 0.95rem;
+}
+
+.todo::before {
+  content: 'TODO: ';
+  font-weight: 700;
+  color: var(--aviso-borde);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,18 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Todo from '../components/Todo.astro';
+import { ENLACES } from '../data/site';
+---
+
+<BaseLayout>
+  <section class="lectura" aria-labelledby="titulo-inicio">
+    <h1 id="titulo-inicio" class="prompt">whoami</h1>
+    <Todo>Texto de presentación (quién eres y qué vas a publicar aquí). Se completa en la fase 5.</Todo>
+
+    <h2>Enlaces</h2>
+    <ul>
+      <li><a href={ENLACES.github}>GitHub · yConFi</a></li>
+      <li><a href={ENLACES.linkedin}>LinkedIn</a></li>
+    </ul>
+  </section>
+</BaseLayout>

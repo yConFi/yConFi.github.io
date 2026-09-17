@@ -1,0 +1,60 @@
+---
+// Botón de tema. El tema inicial se aplica con un script inline en
+// BaseLayout (antes de pintar) para evitar el parpadeo.
+---
+
+<button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false">
+  <span aria-hidden="true" class="icono"></span>
+  <span class="visually-hidden">Modo claro</span>
+</button>
+
+<script>
+  const boton = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+
+  function sincronizar() {
+    const claro = document.documentElement.dataset.theme === 'light';
+    boton?.setAttribute('aria-pressed', String(claro));
+  }
+
+  boton?.addEventListener('click', () => {
+    const claro = document.documentElement.dataset.theme !== 'light';
+    if (claro) document.documentElement.dataset.theme = 'light';
+    else delete document.documentElement.dataset.theme;
+    try {
+      localStorage.setItem('tema', claro ? 'light' : 'dark');
+    } catch {
+      /* almacenamiento no disponible: el cambio dura solo esta visita */
+    }
+    sincronizar();
+  });
+
+  sincronizar();
+</script>
+
+<style>
+  .theme-toggle {
+    display: inline-grid;
+    place-items: center;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    background: transparent;
+    color: var(--texto);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    cursor: pointer;
+    font-family: var(--fuente-mono);
+  }
+
+  .theme-toggle:hover {
+    border-color: var(--acento);
+  }
+
+  .icono::before {
+    content: '☾';
+    font-size: 1.1rem;
+  }
+
+  :global(:root[data-theme='light']) .icono::before {
+    content: '☀';
+  }
+</style>
