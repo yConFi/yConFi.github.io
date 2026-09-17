@@ -1,9 +1,40 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import Todo from '../../components/Todo.astro';
+import TarjetaProyecto from '../../components/TarjetaProyecto.astro';
+import { obtenerProyectos } from '../../lib/coleccion';
+
+const proyectos = await obtenerProyectos();
 ---
 
-<BaseLayout titulo="Proyectos" descripcion="Proyectos y cómo los construí.">
+<BaseLayout titulo="Proyectos" descripcion="Proyectos que he construido y cómo los hice.">
   <h1 class="prompt">ls proyectos/</h1>
-  <Todo>Listado de proyectos (fase 5).</Todo>
+  <p class="lectura texto-suave">Cosas que he construido para resolver problemas reales, y cómo las hice.</p>
+
+  {
+    proyectos.length === 0 ? (
+      <p class="vacio">Todavía no hay proyectos publicados.</p>
+    ) : (
+      <div class="lista">
+        {proyectos.map((p) => (
+          <TarjetaProyecto proyecto={p} />
+        ))}
+      </div>
+    )
+  }
 </BaseLayout>
+
+<style>
+  .lista {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .vacio {
+    padding: 1.5rem;
+    border: 1px dashed var(--borde);
+    border-radius: var(--radio);
+    font-family: var(--fuente-mono);
+    color: var(--texto-suave);
+  }
+</style>

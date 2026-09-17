@@ -1,0 +1,87 @@
+---
+import type { Proyecto } from '../lib/coleccion';
+
+interface Props {
+  proyecto: Proyecto;
+  nivel?: 'h2' | 'h3';
+}
+
+const { proyecto: p, nivel: Titulo = 'h2' } = Astro.props;
+---
+
+<article class="tarjeta">
+  <Titulo class="titulo">
+    <a href={`/proyectos/${p.id}/`}>{p.data.titulo}</a>
+    {p.data.borrador && <span class="borrador">borrador</span>}
+  </Titulo>
+  <p class="estado">{p.data.estado}</p>
+  <p class="resumen">{p.data.resumen}</p>
+  <ul class="tecnologias" aria-label="Tecnologías">
+    {p.data.tecnologias.map((t) => <li>{t}</li>)}
+  </ul>
+</article>
+
+<style>
+  .tarjeta {
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    background: var(--bg-elev);
+    padding: 1rem 1.25rem;
+  }
+
+  .titulo {
+    margin: 0 0 0.35rem;
+    font-size: 1.2rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .titulo a {
+    color: var(--texto);
+    text-decoration: none;
+  }
+
+  .titulo a:hover {
+    color: var(--acento-texto);
+    text-decoration: underline;
+  }
+
+  .borrador {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    border: 1px solid var(--peligro);
+    color: var(--peligro);
+  }
+
+  .estado {
+    margin: 0;
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    color: var(--acento-texto);
+  }
+
+  .resumen {
+    margin: 0.5rem 0;
+  }
+
+  .tecnologias {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .tecnologias li {
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    padding: 0.1rem 0.5rem;
+    border: 1px solid var(--borde);
+    border-radius: 999px;
+  }
+</style>

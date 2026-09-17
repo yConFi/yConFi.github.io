@@ -25,4 +25,22 @@ const walkthroughs = defineCollection({
   }),
 });
 
-export const collections = { walkthroughs };
+export const ESTADOS_PROYECTO = ['En producción', 'En desarrollo', 'Terminado', 'Archivado'] as const;
+
+const proyectos = defineCollection({
+  loader: glob({ pattern: '**/*.mdx', base: './src/content/proyectos' }),
+  schema: z.object({
+    titulo: z.string().min(1),
+    resumen: z.string().min(1),
+    tecnologias: z.array(z.string().min(1)).min(1),
+    estado: z.enum(ESTADOS_PROYECTO),
+    /** Opcional: solo si se conoce la fecha real. */
+    fecha: z.coerce.date().optional(),
+    /** Opcional: repositorio público. */
+    repositorio: z.url().optional(),
+    /** true = no se publica (solo visible con `npm run dev`). */
+    borrador: z.boolean(),
+  }),
+});
+
+export const collections = { walkthroughs, proyectos };

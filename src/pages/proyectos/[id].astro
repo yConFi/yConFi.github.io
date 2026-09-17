@@ -1,0 +1,110 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Cmd from '../../components/Cmd.astro';
+import Pista from '../../components/Pista.astro';
+import { obtenerProyectos, type Proyecto } from '../../lib/coleccion';
+import { formatearFecha } from '../../lib/walkthroughs';
+
+export async function getStaticPaths() {
+  const proyectos = await obtenerProyectos();
+  return proyectos.map((proyecto) => ({ params: { id: proyecto.id }, props: { proyecto } }));
+}
+
+interface Props {
+  proyecto: Proyecto;
+}
+
+const { proyecto } = Astro.props;
+const { data } = proyecto;
+const { Content } = await render(proyecto);
+---
+
+<BaseLayout titulo={data.titulo} descripcion={data.resumen}>
+  <article class="lectura">
+    {
+      data.borrador && (
+        <p class="franja-borrador" role="note">
+          <strong>BORRADOR</strong>: solo se ve en desarrollo y no se publicará.
+        </p>
+      )
+    }
+
+    <p class="migas"><a href="/proyectos/">proyectos</a> / {proyecto.id}</p>
+    <h1>{data.titulo}</h1>
+    <p class="resumen">{data.resumen}</p>
+
+    <dl class="ficha">
+      <div><dt>Estado</dt><dd>{data.estado}</dd></div>
+      {
+        data.fecha && (
+          <div>
+            <dt>Fecha</dt>
+            <dd><time datetime={data.fecha.toISOString().slice(0, 10)}>{formatearFecha(data.fecha)}</time></dd>
+          </div>
+        )
+      }
+      <div><dt>Tecnologías</dt><dd>{data.tecnologias.join(' · ')}</dd></div>
+      {
+        data.repositorio && (
+          <div>
+            <dt>Código</dt>
+            <dd><a href={data.repositorio}>Repositorio</a></dd>
+          </div>
+        )
+      }
+    </dl>
+
+    <div class="prosa">
+      <Content components={{ Cmd, Pista }} />
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .franja-borrador {
+    margin: 0 0 1.5rem;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--peligro);
+    border-radius: var(--radio);
+    color: var(--peligro);
+    font-family: var(--fuente-mono);
+  }
+
+  .migas {
+    margin: 0 0 0.5rem;
+    font-family: var(--fuente-mono);
+    font-size: 0.85rem;
+    color: var(--texto-suave);
+  }
+
+  .resumen {
+    font-size: 1.1rem;
+    color: var(--texto-suave);
+  }
+
+  .ficha {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.75rem;
+    margin: 1.25rem 0 1.5rem;
+    padding: 1rem 0;
+    border-block: 1px solid var(--borde);
+    font-family: var(--fuente-mono);
+    font-size: 0.9rem;
+  }
+
+  .ficha dt {
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+  }
+
+  .ficha dd {
+    margin: 0;
+  }
+
+  .prosa :global(h2)::before {
+    content: '## ';
+    color: var(--acento-texto);
+  }
+</style>
