@@ -1,9 +1,338 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Todo from '../components/Todo.astro';
+import { HERRAMIENTAS, OPERADORES } from '../data/comandos';
+import type { Categoria, Opcion } from '../lib/comando/tipos';
+
+// Agrupadas por categoría y ordenadas alfabéticamente.
+const categorias = [...new Set(HERRAMIENTAS.map((h) => h.categoria))].sort((a, b) => a.localeCompare(b, 'es'));
+const porCategoria = (c: Categoria) =>
+  HERRAMIENTAS.filter((h) => h.categoria === c).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
+const totalOpciones = HERRAMIENTAS.reduce(
+  (n, h) => n + h.opciones.length + (h.subcomandos ?? []).reduce((m, s) => m + s.opciones.length, 0),
+  0,
+);
+
+const textoOpcion = (o: Opcion) => [...o.nombres, o.descripcion, o.valor?.nombre ?? '', o.valor?.descripcion ?? ''].join(' ');
 ---
 
-<BaseLayout titulo="Diccionario" descripcion="Herramientas y opciones de línea de comandos explicadas.">
+<BaseLayout
+  titulo="Diccionario"
+  descripcion="Herramientas, opciones y operadores de shell habituales en CTF, explicados con enlaces a su documentación oficial."
+>
   <h1 class="prompt">man -k .</h1>
-  <Todo>Diccionario de comandos con buscador (fases 3 y 5).</Todo>
+  <p class="lectura texto-suave">
+    Todo lo que explican los tooltips de los walkthroughs: {HERRAMIENTAS.length} herramientas, {totalOpciones} opciones y
+    {OPERADORES.length} operadores de shell. Cada explicación se puede comprobar en la documentación oficial enlazada.
+  </p>
+
+  <search class="buscador" data-buscador hidden>
+    <label for="consulta">Buscar herramienta, opción o descripción</label>
+    <input id="consulta" type="search" placeholder="p. ej. nmap -p, reverse shell, puerto…" autocomplete="off" />
+    <p class="contador" data-resultado aria-live="polite"></p>
+  </search>
+
+  <nav class="indice" aria-label="Herramientas">
+    <ul>
+      {
+        [...HERRAMIENTAS]
+          .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+          .map((h) => (
+            <li>
+              <a href={`#${h.nombre}`}>{h.nombre}</a>
+            </li>
+          ))
+      }
+      <li><a href="#operadores">operadores</a></li>
+    </ul>
+  </nav>
+
+  {
+    categorias.map((categoria) => (
+      <section class="categoria" data-grupo aria-labelledby={`cat-${categoria}`}>
+        <h2 id={`cat-${categoria}`}>{categoria}</h2>
+
+        {porCategoria(categoria).map((h) => (
+          <article class="herramienta" id={h.nombre} data-herramienta data-texto={`${h.nombre} ${h.descripcion} ${h.categoria}`}>
+            <h3>
+              <code>{h.nombre}</code>
+            </h3>
+            <p>{h.descripcion}</p>
+            {h.variantes && <p class="aviso">Ojo: {h.variantes}</p>}
+            <p class="docs">
+              <a href={h.docs} rel="noopener">Documentación oficial</a>
+              {h.docsVariantes?.map((d) => (
+                <>
+                  {' · '}
+                  <a href={d.url} rel="noopener">{d.nombre}</a>
+                </>
+              ))}
+            </p>
+            {h.argumentos && (
+              <p class="argumentos">
+                <span class="etiqueta">Argumentos:</span> {h.argumentos}
+              </p>
+            )}
+
+            {h.opciones.length > 0 && (
+              <dl class="opciones">
+                {h.opciones.map((o) => (
+                  <div class="opcion" data-opcion data-texto={textoOpcion(o)}>
+                    <dt>
+                      <code>{o.nombres.join(', ')}</code>
+                      {o.valor && <span class="valor"> &lt;{o.valor.nombre}&gt;</span>}
+                    </dt>
+                    <dd>{o.descripcion}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+
+            {h.subcomandos?.map((s) => (
+              <div class="subcomando">
+                <h4>
+                  <code>
+                    {h.nombre} {s.nombre}
+                  </code>
+                </h4>
+                <p>{s.descripcion}</p>
+                <dl class="opciones">
+                  {s.opciones.map((o) => (
+                    <div class="opcion" data-opcion data-texto={`${s.nombre} ${textoOpcion(o)}`}>
+                      <dt>
+                        <code>{o.nombres.join(', ')}</code>
+                        {o.valor && <span class="valor"> &lt;{o.valor.nombre}&gt;</span>}
+                      </dt>
+                      <dd>{o.descripcion}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            ))}
+          </article>
+        ))}
+      </section>
+    ))
+  }
+
+  <section class="categoria" data-grupo aria-labelledby="operadores">
+    <h2 id="operadores">Operadores de shell</h2>
+    <article class="herramienta" data-herramienta data-texto="operadores shell bash">
+      <dl class="opciones">
+        {
+          OPERADORES.map((op) => (
+            <div class="opcion" data-opcion data-texto={`${op.simbolo} ${op.nombre} ${op.descripcion}`}>
+              <dt>
+                <code>{op.simbolo}</code> <span class="valor">{op.nombre}</span>
+              </dt>
+              <dd>
+                {op.descripcion} <a href={op.docs} rel="noopener">Manual de Bash</a>
+              </dd>
+            </div>
+          ))
+        }
+      </dl>
+    </article>
+  </section>
+
+  <p class="vacio" data-sin-resultados hidden>No hay nada en el diccionario que coincida con la búsqueda.</p>
 </BaseLayout>
+
+<script>
+  import { coincide } from '../lib/buscar';
+
+  const buscador = document.querySelector<HTMLElement>('[data-buscador]');
+  const input = buscador?.querySelector<HTMLInputElement>('input');
+  const resultado = document.querySelector<HTMLElement>('[data-resultado]');
+  const sinResultados = document.querySelector<HTMLElement>('[data-sin-resultados]');
+  const grupos = [...document.querySelectorAll<HTMLElement>('[data-grupo]')];
+
+  function filtrar() {
+    const consulta = input?.value ?? '';
+    let herramientasVisibles = 0;
+    let opcionesVisibles = 0;
+
+    for (const grupo of grupos) {
+      let grupoVisible = false;
+      for (const h of grupo.querySelectorAll<HTMLElement>('[data-herramienta]')) {
+        // Si coincide la propia herramienta, se ven todas sus opciones.
+        const coincideHerramienta = coincide(h.dataset.texto ?? '', consulta);
+        let visiblesAqui = 0;
+        for (const o of h.querySelectorAll<HTMLElement>('[data-opcion]')) {
+          const visible = coincideHerramienta || coincide(o.dataset.texto ?? '', consulta);
+          o.hidden = !visible;
+          if (visible) visiblesAqui++;
+        }
+        // Oculta los subcomandos que se quedan sin opciones visibles.
+        for (const s of h.querySelectorAll<HTMLElement>('.subcomando')) {
+          s.hidden = !s.querySelector('[data-opcion]:not([hidden])');
+        }
+        const visible = coincideHerramienta || visiblesAqui > 0;
+        h.hidden = !visible;
+        if (visible) {
+          herramientasVisibles++;
+          opcionesVisibles += visiblesAqui;
+          grupoVisible = true;
+        }
+      }
+      grupo.hidden = !grupoVisible;
+    }
+
+    if (resultado) {
+      resultado.textContent = consulta.trim()
+        ? `${herramientasVisibles} ${herramientasVisibles === 1 ? 'sección' : 'secciones'} y ${opcionesVisibles} ${opcionesVisibles === 1 ? 'entrada' : 'entradas'} coinciden.`
+        : '';
+    }
+    if (sinResultados) sinResultados.hidden = herramientasVisibles > 0;
+  }
+
+  if (buscador && input) {
+    buscador.hidden = false;
+    input.addEventListener('input', filtrar);
+  }
+</script>
+
+<style>
+  .buscador {
+    display: grid;
+    gap: 0.4rem;
+    margin: 1.5rem 0;
+    padding: 1rem;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    background: var(--bg-elev);
+    max-width: var(--ancho-lectura);
+  }
+
+  .buscador[hidden] {
+    display: none;
+  }
+
+  .buscador label {
+    font-family: var(--fuente-mono);
+    font-size: 0.85rem;
+    color: var(--texto-suave);
+  }
+
+  .buscador input {
+    min-height: 2.75rem;
+    padding: 0 0.75rem;
+    background: var(--bg);
+    color: var(--texto);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    font: inherit;
+    width: 100%;
+  }
+
+  .contador {
+    margin: 0;
+    min-height: 1.4em;
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+  }
+
+  .indice ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    font-family: var(--fuente-mono);
+    font-size: 0.9rem;
+  }
+
+  .indice a {
+    display: inline-block;
+    padding: 0.3rem 0;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  .categoria h2 {
+    margin-top: 2.5rem;
+  }
+
+  .herramienta {
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    background: var(--bg-elev);
+    padding: 1rem 1.25rem;
+    margin: 1rem 0;
+    scroll-margin-top: 1rem;
+  }
+
+  .herramienta h3 {
+    margin: 0 0 0.25rem;
+    color: var(--tok-herramienta);
+  }
+
+  .herramienta > p {
+    margin: 0.35rem 0;
+  }
+
+  .aviso {
+    color: var(--aviso-borde);
+  }
+
+  .docs,
+  .argumentos {
+    font-size: 0.9rem;
+  }
+
+  .etiqueta {
+    font-family: var(--fuente-mono);
+    color: var(--texto-suave);
+  }
+
+  .subcomando h4 {
+    margin: 1.25rem 0 0.25rem;
+    color: var(--tok-subcomando);
+  }
+
+  .opciones {
+    margin: 0.75rem 0 0;
+  }
+
+  .opcion {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.1rem;
+    padding: 0.5rem 0;
+    border-top: 1px dashed var(--borde);
+  }
+
+  @media (min-width: 48rem) {
+    .opcion {
+      grid-template-columns: 16rem minmax(0, 1fr);
+      gap: 1rem;
+    }
+  }
+
+  .opcion dt code {
+    color: var(--tok-opcion);
+    overflow-wrap: anywhere;
+  }
+
+  .valor {
+    font-family: var(--fuente-mono);
+    font-size: 0.85rem;
+    color: var(--tok-valor);
+  }
+
+  .opcion dd {
+    margin: 0;
+  }
+
+  .vacio {
+    padding: 1.5rem;
+    border: 1px dashed var(--borde);
+    border-radius: var(--radio);
+    font-family: var(--fuente-mono);
+    color: var(--texto-suave);
+  }
+</style>

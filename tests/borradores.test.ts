@@ -31,7 +31,12 @@ describe('borradores', () => {
     // …pero no hay página…
     expect(existsSync(join(outDir, 'walkthroughs/plantilla'))).toBe(false);
     // …ni su texto en ningún archivo publicado (índices, técnicas, JS, CSS…).
-    const conPlantilla = ficheros(outDir).filter((f) => /plantilla/i.test(readFileSync(f, 'utf8')));
+    // Textos que solo existen en la plantilla ("plantilla" a secas aparece, p. ej., en nmap -T).
+    const marcas = ['no es una máquina real', 'Ejemplo de técnica', 'ejemplo-de-tecnica', 'walkthroughs/plantilla'];
+    const conPlantilla = ficheros(outDir).filter((f) => {
+      const contenido = readFileSync(f, 'utf8');
+      return marcas.some((m) => contenido.includes(m));
+    });
     expect(conPlantilla).toEqual([]);
   }, 120_000);
 });
