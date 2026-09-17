@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
+import sitemap from '@astrojs/sitemap';
 import { satteri } from '@astrojs/markdown-satteri';
 import { validarCmd } from './src/lib/comando/validar-mdx.ts';
 
@@ -23,13 +24,13 @@ function borradores() {
 
 // https://docs.astro.build/en/reference/configuration-reference/
 export default defineConfig({
-  // TODO: poner la URL pública cuando se decida el despliegue (fase 6).
-  // Es necesaria para el sitemap y las URL canónicas.
-  // site: 'https://...',
+  // GitHub Pages, repositorio yConFi/yConFi.github.io: se publica en la raíz, sin `base`.
+  // Si cambias a un dominio propio, cambia solo esta línea.
+  site: 'https://yconfi.github.io',
   markdown: {
     // Sätteri es el procesador por defecto de Astro 7; MDX hereda esta configuración.
     // validarCmd hace fallar la compilación si un <Cmd> usa algo que no está en el diccionario.
     processor: satteri({ mdastPlugins: [validarCmd] }),
   },
-  integrations: [mdx(), borradores()],
+  integrations: [mdx(), sitemap(), borradores()],
 });
