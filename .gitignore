@@ -1,0 +1,23 @@
+# build
+dist/
+.astro/
+
+# dependencias
+node_modules/
+
+# logs
+npm-debug.log*
+
+# entorno
+.env
+.env.*
+
+# sistema / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# herramientas locales
+.claude/
