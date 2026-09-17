@@ -1,18 +1,121 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Todo from '../components/Todo.astro';
+import TarjetaWalkthrough from '../components/TarjetaWalkthrough.astro';
+import TarjetaProyecto from '../components/TarjetaProyecto.astro';
+import { obtenerProyectos, obtenerWalkthroughs } from '../lib/coleccion';
 import { ENLACES } from '../data/site';
+
+const ultimosWalkthroughs = (await obtenerWalkthroughs()).slice(0, 3);
+const proyectos = (await obtenerProyectos()).slice(0, 3);
 ---
 
 <BaseLayout>
   <section class="lectura" aria-labelledby="titulo-inicio">
     <h1 id="titulo-inicio" class="prompt">whoami</h1>
-    <Todo>Texto de presentación (quién eres y qué vas a publicar aquí). Se completa en la fase 5.</Todo>
+    <p class="saludo">Soy <strong>Ricardo</strong>, y estoy haciendo el camino hacia la ciberseguridad.</p>
 
-    <h2>Enlaces</h2>
-    <ul>
-      <li><a href={ENLACES.github}>GitHub · yConFi</a></li>
-      <li><a href={ENLACES.linkedin}>LinkedIn</a></li>
+    <h2 id="sobre-mi">Sobre mí</h2>
+    <p>
+      Trabajo como auxiliar administrativo y decidí estudiar ciberseguridad por curiosidad y porque es algo que siempre
+      me ha llamado la atención. Empezó cuando tenía unos 12 años, jugando al famoso <em>Habbo</em>.
+    </p>
+    <p>
+      Lo que busco, sobre todo, es <strong>aprender</strong>. Y cuando se me dé la oportunidad, trabajar en ello para
+      aprender aún más.
+    </p>
+    <p>
+      Aquí publico mis proyectos y los walkthroughs de las máquinas y retos <strong>retirados</strong> que voy
+      resolviendo, con cada parte de cada comando explicada, para entender bien cada paso y que también le sirvan a
+      otros.
+    </p>
+
+    <h2>Formación</h2>
+    <ul class="formacion">
+      <li>
+        <strong>Grado Superior en ASIR</strong> (Administración de Sistemas Informáticos en Red) con especialización en
+        ciberseguridad, en LinkiaFP.{' '}
+        <span class="texto-suave">Finalizo en septiembre de 2027.</span>
+      </li>
+      <li>
+        <strong>Máster en Ciberseguridad &amp; IA</strong>, en Evolve.{' '}
+        <span class="texto-suave">Finalizo en abril-mayo de 2027.</span>
+      </li>
+    </ul>
+
+    <h2>Contacto</h2>
+    <ul class="enlaces">
+      <li><a href={ENLACES.linkedin} rel="me">LinkedIn</a></li>
+      <li><a href={ENLACES.github} rel="me">GitHub · yConFi</a></li>
     </ul>
   </section>
+
+  {
+    ultimosWalkthroughs.length > 0 && (
+      <section class="bloque" aria-labelledby="titulo-walkthroughs">
+        <h2 id="titulo-walkthroughs" class="prompt">ls -t walkthroughs/ | head -3</h2>
+        <div class="lista">
+          {ultimosWalkthroughs.map((w) => (
+            <TarjetaWalkthrough walkthrough={w} nivel="h3" />
+          ))}
+        </div>
+        <p><a href="/walkthroughs/">Ver todos los walkthroughs</a></p>
+      </section>
+    )
+  }
+
+  {
+    proyectos.length > 0 && (
+      <section class="bloque" aria-labelledby="titulo-proyectos">
+        <h2 id="titulo-proyectos" class="prompt">ls proyectos/</h2>
+        <div class="lista">
+          {proyectos.map((p) => (
+            <TarjetaProyecto proyecto={p} nivel="h3" />
+          ))}
+        </div>
+        <p><a href="/proyectos/">Ver todos los proyectos</a></p>
+      </section>
+    )
+  }
 </BaseLayout>
+
+<style>
+  .saludo {
+    font-size: 1.2rem;
+  }
+
+  .formacion {
+    padding-left: 1.25rem;
+  }
+
+  .formacion li + li {
+    margin-top: 0.75rem;
+  }
+
+  .enlaces {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    font-family: var(--fuente-mono);
+  }
+
+  .enlaces a {
+    display: inline-block;
+    padding: 0.4rem 0;
+  }
+
+  .bloque {
+    margin-top: 3rem;
+  }
+
+  .bloque h2 {
+    font-size: clamp(1.05rem, 3.5vw, 1.3rem);
+    overflow-wrap: anywhere;
+  }
+
+  .lista {
+    display: grid;
+    gap: 1rem;
+  }
+</style>
