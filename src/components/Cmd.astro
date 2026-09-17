@@ -1,0 +1,320 @@
+---
+// Comando con cada parte explicada.
+// Uso en MDX: <Cmd c="nmap -sV 10.10.10.10" notas={{ "10.10.10.10": "IP de la máquina objetivo" }} />
+//
+// La validación principal ocurre al compilar el MDX (src/lib/comando/validar-mdx.ts).
+// Aquí se vuelve a analizar para renderizar y como segunda red de seguridad.
+import { analizarComando } from '../lib/comando/analizar';
+import { ErrorComando, formatearError } from '../lib/comando/errores';
+import type { Segmento } from '../lib/comando/tipos';
+
+interface Props {
+  /** El comando tal cual se escribiría en la terminal. */
+  c: string;
+  /** Explicaciones concretas para argumentos y valores (IPs, rutas, puertos…). */
+  notas?: Record<string, string>;
+}
+
+const { c, notas } = Astro.props;
+
+let segmentos: Segmento[];
+try {
+  segmentos = analizarComando(c, { notas });
+} catch (e) {
+  if (e instanceof ErrorComando) throw new Error(formatearError(e, `página ${Astro.url.pathname}`));
+  throw e;
+}
+
+// Id único y estable dentro de la página para enlazar cada token con su descripción.
+const locals = Astro.locals as { cmdContador?: number };
+locals.cmdContador = (locals.cmdContador ?? 0) + 1;
+const id = `cmd-${locals.cmdContador}`;
+
+const escapar = (s: string) =>
+  s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+
+// El <pre> se genera como HTML para controlar exactamente los espacios.
+const codigo = segmentos
+  .map((s, i) => {
+    const espacio = i > 0 && !s.pegadoAlAnterior ? ' ' : '';
+    return `${espacio}<button type="button" class="tok tok-${s.clase}" aria-describedby="${id}-${i}">${escapar(s.texto)}</button>`;
+  })
+  .join('');
+---
+
+<figure class="cmd" data-cmd>
+  <div class="cmd-barra">
+    <span class="cmd-shell" aria-hidden="true">bash</span>
+    <button type="button" class="cmd-copiar" data-copiar={c}>
+      <span data-copiar-texto>Copiar</span><span class="visually-hidden"> comando</span>
+    </button>
+  </div>
+
+  <pre class="cmd-codigo"><code><span class="cmd-prompt" aria-hidden="true">$ </span><Fragment set:html={codigo} /></code></pre>
+
+  <!-- Descripciones accesibles (aria-describedby) y contenido de los tooltips -->
+  <div hidden>
+    {
+      segmentos.map((s, i) => (
+        <div id={`${id}-${i}`} class="tt-contenido">
+          <span class="tt-etiqueta">{s.etiqueta}<span class="visually-hidden">.</span></span>{' '}
+          <span class="tt-texto">{s.explicacion}</span>
+          {s.partes && (
+            <ul class="tt-partes">
+              {s.partes.map((p) => (
+                <li>
+                  <code>{p.texto}</code>: {p.explicacion}
+                </li>
+              ))}
+            </ul>
+          )}
+          {s.aviso && <span class="tt-aviso">Ojo: {s.aviso}</span>}
+        </div>
+      ))
+    }
+  </div>
+
+  <details class="cmd-desglose">
+    <summary>Desglose del comando</summary>
+    <dl>
+      {
+        segmentos.map((s) => (
+          <div class={`fila fila-${s.clase}`}>
+            <dt>
+              <code>{s.texto}</code>
+            </dt>
+            <dd>
+              <span class="tt-etiqueta">{s.etiqueta}</span>
+              <p>{s.explicacion}</p>
+              {s.partes && (
+                <ul>
+                  {s.partes.map((p) => (
+                    <li>
+                      <code>{p.texto}</code>: {p.explicacion}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {s.aviso && <p class="tt-aviso">Ojo: {s.aviso}</p>}
+              {s.docs && (
+                <a href={s.docs} rel="noopener">
+                  Documentación oficial
+                </a>
+              )}
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+  </details>
+
+  <span class="visually-hidden" aria-live="polite" data-copiar-estado></span>
+</figure>
+
+<script>
+  import { iniciarCmd } from '../scripts/cmd';
+  iniciarCmd();
+</script>
+
+<style>
+  .cmd {
+    margin: 1.5rem 0;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    background: var(--bg-code);
+    max-width: 100%;
+  }
+
+  .cmd-barra {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0.5rem 0.25rem 1rem;
+    border-bottom: 1px solid var(--borde);
+    background: var(--bg-elev);
+    border-radius: var(--radio) var(--radio) 0 0;
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+  }
+
+  .cmd-copiar {
+    min-height: 2.25rem;
+    padding: 0 0.75rem;
+    background: transparent;
+    color: var(--texto);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+
+  .cmd-copiar:hover {
+    border-color: var(--acento);
+  }
+
+  .cmd-codigo {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    /* El comando se parte en varias líneas antes que provocar scroll horizontal en móvil */
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.9;
+  }
+
+  .cmd-prompt {
+    color: var(--acento-texto);
+    user-select: none;
+  }
+
+  .cmd-codigo :global(.tok) {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    cursor: help;
+    user-select: text;
+    -webkit-user-select: text;
+    text-decoration: underline dotted;
+    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+    text-underline-offset: 0.3em;
+    border-radius: 2px;
+  }
+
+  .cmd-codigo :global(.tok:hover),
+  .cmd-codigo :global(.tok[data-activo]) {
+    background: color-mix(in srgb, currentColor 15%, transparent);
+    text-decoration-style: solid;
+  }
+
+  .cmd-codigo :global(.tok-herramienta) {
+    color: var(--tok-herramienta);
+    font-weight: 700;
+  }
+  .cmd-codigo :global(.tok-subcomando) {
+    color: var(--tok-subcomando);
+    font-weight: 700;
+  }
+  .cmd-codigo :global(.tok-opcion) {
+    color: var(--tok-opcion);
+  }
+  .cmd-codigo :global(.tok-valor) {
+    color: var(--tok-valor);
+  }
+  .cmd-codigo :global(.tok-argumento) {
+    color: var(--tok-argumento);
+  }
+  .cmd-codigo :global(.tok-operador) {
+    color: var(--tok-operador);
+    font-weight: 700;
+  }
+
+  .cmd-desglose {
+    border-top: 1px solid var(--borde);
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  .cmd-desglose summary {
+    cursor: pointer;
+    font-family: var(--fuente-mono);
+    font-size: 0.85rem;
+    color: var(--texto-suave);
+    padding: 0.25rem 0;
+  }
+
+  dl {
+    margin: 0.5rem 0 0;
+  }
+
+  .fila {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.1rem;
+    padding: 0.6rem 0;
+    border-top: 1px dashed var(--borde);
+  }
+
+  @media (min-width: 40rem) {
+    .fila {
+      grid-template-columns: minmax(6rem, max-content) minmax(0, 1fr);
+      gap: 1rem;
+    }
+  }
+
+  dt code {
+    word-break: break-all;
+  }
+
+  .fila-herramienta dt code { color: var(--tok-herramienta); }
+  .fila-subcomando dt code { color: var(--tok-subcomando); }
+  .fila-opcion dt code { color: var(--tok-opcion); }
+  .fila-valor dt code { color: var(--tok-valor); }
+  .fila-operador dt code { color: var(--tok-operador); }
+
+  dd {
+    margin: 0;
+  }
+
+  dd p {
+    margin: 0.15rem 0;
+  }
+
+  dd ul {
+    margin: 0.25rem 0;
+    padding-left: 1.25rem;
+  }
+
+  .tt-etiqueta {
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+  }
+
+  .tt-aviso {
+    color: var(--aviso-borde);
+  }
+
+  /* Tooltip flotante (lo crea src/scripts/cmd.ts) */
+  :global(.cmd-tooltip) {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    z-index: 1000;
+    max-width: min(24rem, calc(100vw - 16px));
+    padding: 0.6rem 0.8rem;
+    background: var(--bg-elev);
+    color: var(--texto);
+    border: 1px solid var(--acento);
+    border-radius: var(--radio);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+    font-family: var(--fuente-texto);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  :global(.cmd-tooltip .tt-etiqueta) {
+    display: block;
+    font-family: var(--fuente-mono);
+    font-size: 0.75rem;
+    color: var(--acento-texto);
+    margin-bottom: 0.2rem;
+  }
+
+  :global(.cmd-tooltip .tt-partes) {
+    margin: 0.35rem 0 0;
+    padding-left: 1.1rem;
+  }
+
+  :global(.cmd-tooltip .tt-aviso) {
+    display: block;
+    margin-top: 0.35rem;
+    color: var(--aviso-borde);
+  }
+</style>

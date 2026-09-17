@@ -1,0 +1,5 @@
+import Cmd from '../../../../../src/components/Cmd.astro';
+
+# Comando válido
+
+<Cmd c="nmap -sC -sV -p- --min-rate 5000 -oN nmap.txt 10.10.10.10" notas={{ "10.10.10.10": "IP de la máquina objetivo" }} />
