@@ -1,14 +1,8 @@
 ---
-import { NAVEGACION } from '../data/site';
+import { esSeccionActiva, NAVEGACION } from '../data/site';
 import ThemeToggle from './ThemeToggle.astro';
 
 const ruta = Astro.url.pathname;
-
-// "Inicio" solo está activo en "/"; el resto también en sus subpáginas.
-function esActivo(href: string): boolean {
-  if (href === '/') return ruta === '/';
-  return ruta === href || ruta.startsWith(href);
-}
 ---
 
 <header class="cabecera">
@@ -20,10 +14,10 @@ function esActivo(href: string): boolean {
     <nav aria-label="Principal">
       <ul>
         {
-          NAVEGACION.map(({ href, texto }) => (
+          NAVEGACION.map((enlace) => (
             <li>
-              <a href={href} aria-current={esActivo(href) ? 'page' : undefined}>
-                {texto}
+              <a href={enlace.href} aria-current={esSeccionActiva(enlace, ruta) ? 'page' : undefined}>
+                {enlace.texto}
               </a>
             </li>
           ))

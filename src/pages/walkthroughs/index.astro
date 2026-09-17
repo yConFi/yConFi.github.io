@@ -22,7 +22,15 @@ const dificultades = usados(DIFICULTADES, 'dificultad');
   <h1 class="prompt">ls walkthroughs/</h1>
   <p class="lectura texto-suave">
     Máquinas y retos <strong>retirados</strong>, resueltos paso a paso. Pasa el ratón (o toca) cada parte de un
-    comando para ver qué hace. Todas las técnicas están en <a href="/tecnicas/">/tecnicas</a>.
+    comando para ver qué hace.
+    {
+      tecnicas.length > 0 && (
+        <>
+          {' '}
+          Todas las técnicas están en <a href="/tecnicas/">/tecnicas</a>.
+        </>
+      )
+    }
   </p>
 
   {
