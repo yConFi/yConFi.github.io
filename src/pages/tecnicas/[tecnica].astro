@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TarjetaWalkthrough from '../../components/TarjetaWalkthrough.astro';
+import { obtenerWalkthroughs } from '../../lib/coleccion';
+import { agruparPorTecnica, type Tecnica } from '../../lib/walkthroughs';
+
+export async function getStaticPaths() {
+  const tecnicas = agruparPorTecnica(await obtenerWalkthroughs());
+  return tecnicas.map((tecnica) => ({ params: { tecnica: tecnica.slug }, props: { tecnica } }));
+}
+
+interface Props {
+  tecnica: Tecnica;
+}
+
+const { tecnica } = Astro.props;
+const n = tecnica.walkthroughs.length;
+---
+
+<BaseLayout
+  titulo={`Técnica: ${tecnica.nombre}`}
+  descripcion={`Walkthroughs en los que se usa la técnica ${tecnica.nombre}.`}
+>
+  <p class="migas"><a href="/tecnicas/">técnicas</a> / {tecnica.slug}</p>
+  <h1 class="prompt">grep -l "{tecnica.nombre}"</h1>
+  <p class="texto-suave">{n} {n === 1 ? 'walkthrough usa' : 'walkthroughs usan'} esta técnica.</p>
+
+  <div class="lista">
+    {tecnica.walkthroughs.map((w) => <TarjetaWalkthrough walkthrough={w} />)}
+  </div>
+</BaseLayout>
+
+<style>
+  .migas {
+    margin: 0 0 0.5rem;
+    font-family: var(--fuente-mono);
+    font-size: 0.85rem;
+    color: var(--texto-suave);
+  }
+
+  h1 {
+    overflow-wrap: anywhere;
+  }
+
+  .lista {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+</style>

@@ -1,0 +1,83 @@
+---
+// Pista plegada: el lector intenta resolverlo antes de abrirla.
+// Uso en MDX:
+//   <Pista>Mira qué versión del servicio está expuesta.</Pista>
+//   <Pista titulo="Solución">El comando es…</Pista>
+interface Props {
+  titulo?: string;
+}
+
+const { titulo = 'Pista' } = Astro.props;
+---
+
+<details class="pista">
+  <summary>
+    <span class="icono" aria-hidden="true">?</span>
+    <span class="titulo">{titulo}</span>
+    <span class="aviso">inténtalo antes de abrirla</span>
+  </summary>
+  <div class="contenido">
+    <slot />
+  </div>
+</details>
+
+<style>
+  .pista {
+    margin: 1.25rem 0;
+    border: 1px dashed var(--aviso-borde);
+    border-radius: var(--radio);
+    background: color-mix(in srgb, var(--aviso-bg) 45%, transparent);
+  }
+
+  summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.6rem;
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    font-family: var(--fuente-mono);
+    list-style: none;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .icono {
+    display: inline-grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: var(--aviso-borde);
+    color: var(--bg);
+    font-weight: 700;
+    transition: transform 0.15s;
+  }
+
+  .pista[open] .icono {
+    transform: rotate(180deg);
+  }
+
+  .titulo {
+    font-weight: 700;
+  }
+
+  .aviso {
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+  }
+
+  .pista[open] .aviso {
+    display: none;
+  }
+
+  .contenido {
+    padding: 0 1rem 0.75rem;
+  }
+
+  .contenido > :global(:first-child) {
+    margin-top: 0;
+  }
+</style>

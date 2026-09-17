@@ -1,0 +1,84 @@
+---
+# PLANTILLA: no es una máquina real. Copia este archivo con el nombre de la
+# máquina (p. ej. lame.mdx), cambia estos datos y pon borrador: false para publicar.
+titulo: "PLANTILLA · no es una máquina real"
+plataforma: HackTheBox        # HackTheBox | TryHackMe (ampliable en src/content.config.ts)
+dificultad: Fácil             # Fácil | Media | Difícil | Insana
+so: Linux                     # Linux | Windows | FreeBSD | OpenBSD | Android | Otro
+fecha: 2026-09-17             # AAAA-MM-DD
+tecnicas:                     # escribe cada técnica siempre igual en todos los walkthroughs
+  - Ejemplo de técnica
+resumen: "Plantilla de ejemplo que muestra todos los componentes. No se publica nunca."
+borrador: true
+---
+
+> **Esto es una plantilla.** Muestra la estructura obligatoria y los componentes disponibles.
+> Los comandos son ejemplos genéricos y la IP `10.10.10.10` es un marcador de posición.
+> Solo publiques máquinas y retos **retirados**, según las normas de cada plataforma.
+
+## Reconocimiento
+
+Qué hice primero y por qué. Cada comando va en un `<Cmd>`: pasa el ratón (o toca) cada parte.
+
+<Cmd
+  c="nmap -sC -sV -p- --min-rate 5000 -oN nmap.txt 10.10.10.10"
+  notas={{ "10.10.10.10": "IP de la máquina objetivo (marcador de posición)." }}
+/>
+
+Salida relevante (pega aquí solo las líneas importantes de la salida real):
+
+```text
+TODO: salida real de nmap
+```
+
+<Pista>
+  Una pista va plegada para que el lector lo intente antes. Por ejemplo: fíjate en qué servicios y
+  versiones aparecen en el escaneo.
+</Pista>
+
+## Enumeración
+
+### Subapartado de ejemplo
+
+Usa `###` para dividir una sección; los `##` están reservados a las cinco secciones fijas.
+
+<Cmd
+  c="gobuster dir -u http://10.10.10.10 -w /usr/share/wordlists/dirb/common.txt -x php,txt -o gobuster.txt"
+  notas={{
+    "http://10.10.10.10": "URL del servidor web de la máquina objetivo.",
+    "/usr/share/wordlists/dirb/common.txt": "Diccionario común incluido en Kali Linux.",
+    "php,txt": "Además de cada palabra, prueba palabra.php y palabra.txt."
+  }}
+/>
+
+<Cmd c="curl -s -i http://10.10.10.10/" notas={{ "http://10.10.10.10/": "Página principal del servidor web." }} />
+
+## Acceso inicial
+
+<Pista titulo="Solución">
+  Si una pista revela la solución, dale un título que lo avise, como este.
+</Pista>
+
+Pon un listener para recibir la reverse shell:
+
+<Cmd c="nc -lvnp 4444" notas={{ "4444": "Puerto local en el que se espera la conexión." }} />
+
+Y mejora la shell obtenida:
+
+<Cmd c={`python3 -c 'import pty;pty.spawn("/bin/bash")'`} />
+
+## Escalada de privilegios
+
+<Cmd c="id" />
+
+<Cmd c="sudo -l" />
+
+<Cmd c="find / -perm -4000 -type f 2>/dev/null" notas={{ "/": "Busca desde la raíz del sistema de ficheros." }} />
+
+<Cmd c="ls -la /home | grep -i user > usuarios.txt" notas={{ "/home": "Directorio de los usuarios.", "user": "Texto que se busca.", "usuarios.txt": "Fichero donde se guarda el resultado." }} />
+
+## Lecciones aprendidas
+
+- **Qué fallé:** TODO: en qué me atasqué o qué intenté que no funcionó.
+- **Por qué:** TODO: qué no entendía o qué pasé por alto.
+- **Qué haré la próxima vez:** TODO.

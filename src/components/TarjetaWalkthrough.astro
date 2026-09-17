@@ -1,0 +1,121 @@
+---
+import { formatearFecha, slugTecnica, type Walkthrough } from '../lib/walkthroughs';
+
+interface Props {
+  walkthrough: Walkthrough;
+  /** Nivel del título, para mantener la jerarquía de la página. */
+  nivel?: 'h2' | 'h3';
+}
+
+const { walkthrough: w, nivel: Titulo = 'h2' } = Astro.props;
+const { data } = w;
+const slugs = data.tecnicas.map(slugTecnica);
+---
+
+<article
+  class="tarjeta"
+  data-walkthrough
+  data-plataforma={data.plataforma}
+  data-dificultad={data.dificultad}
+  data-tecnicas={slugs.join('|')}
+>
+  <Titulo class="titulo">
+    <a href={`/walkthroughs/${w.id}/`}>{data.titulo}</a>
+    {data.borrador && <span class="borrador">borrador</span>}
+  </Titulo>
+
+  <ul class="meta" aria-label="Datos de la máquina">
+    <li>{data.plataforma}</li>
+    <li class={`dificultad dificultad-${slugTecnica(data.dificultad)}`}>{data.dificultad}</li>
+    <li>{data.so}</li>
+    <li><time datetime={data.fecha.toISOString().slice(0, 10)}>{formatearFecha(data.fecha)}</time></li>
+  </ul>
+
+  <p class="resumen">{data.resumen}</p>
+
+  <ul class="tecnicas" aria-label="Técnicas">
+    {
+      data.tecnicas.map((t, i) => (
+        <li>
+          <a href={`/tecnicas/${slugs[i]}/`}>#{t}</a>
+        </li>
+      ))
+    }
+  </ul>
+</article>
+
+<style>
+  .tarjeta {
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    background: var(--bg-elev);
+    padding: 1rem 1.25rem;
+  }
+
+  .tarjeta[hidden] {
+    display: none;
+  }
+
+  .titulo {
+    margin: 0 0 0.5rem;
+    font-size: 1.2rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .titulo a {
+    color: var(--texto);
+    text-decoration: none;
+  }
+
+  .titulo a:hover {
+    color: var(--acento-texto);
+    text-decoration: underline;
+  }
+
+  .borrador {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    border: 1px solid var(--peligro);
+    color: var(--peligro);
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.9rem;
+  }
+
+  .meta {
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+  }
+
+  .dificultad-facil { color: var(--acento-texto); }
+  .dificultad-media { color: var(--tok-valor); }
+  .dificultad-dificil,
+  .dificultad-insana { color: var(--peligro); }
+
+  .resumen {
+    margin: 0.6rem 0;
+  }
+
+  .tecnicas {
+    font-family: var(--fuente-mono);
+    font-size: 0.85rem;
+  }
+
+  .tecnicas a {
+    display: inline-block;
+    padding: 0.2rem 0;
+  }
+</style>

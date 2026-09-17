@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { obtenerWalkthroughs } from '../../lib/coleccion';
+import { agruparPorTecnica } from '../../lib/walkthroughs';
+
+const tecnicas = agruparPorTecnica(await obtenerWalkthroughs());
+---
+
+<BaseLayout titulo="Técnicas" descripcion="Técnicas de hacking usadas en los walkthroughs.">
+  <h1 class="prompt">ls tecnicas/</h1>
+
+  {
+    tecnicas.length === 0 ? (
+      <p class="vacio">Todavía no hay técnicas: aparecerán al publicar walkthroughs.</p>
+    ) : (
+      <ul class="tecnicas">
+        {tecnicas.map((t) => (
+          <li>
+            <a href={`/tecnicas/${t.slug}/`}>#{t.nombre}</a>
+            <span class="texto-suave"> ({t.walkthroughs.length})</span>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .tecnicas {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    font-family: var(--fuente-mono);
+  }
+
+  .tecnicas a {
+    display: inline-block;
+    padding: 0.3rem 0;
+  }
+
+  .vacio {
+    padding: 1.5rem;
+    border: 1px dashed var(--borde);
+    border-radius: var(--radio);
+    font-family: var(--fuente-mono);
+    color: var(--texto-suave);
+  }
+</style>

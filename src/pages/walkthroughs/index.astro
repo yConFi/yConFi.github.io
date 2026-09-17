@@ -1,9 +1,157 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import Todo from '../../components/Todo.astro';
+import TarjetaWalkthrough from '../../components/TarjetaWalkthrough.astro';
+import { DIFICULTADES, PLATAFORMAS } from '../../content.config';
+import { obtenerWalkthroughs } from '../../lib/coleccion';
+import { agruparPorTecnica } from '../../lib/walkthroughs';
+
+const lista = await obtenerWalkthroughs();
+const tecnicas = agruparPorTecnica(lista);
+
+// Solo se ofrecen valores que existen, en el orden definido en content.config.ts.
+const usados = <T extends string>(valores: readonly T[], campo: 'plataforma' | 'dificultad') =>
+  valores.filter((v) => lista.some((w) => w.data[campo] === v));
+const plataformas = usados(PLATAFORMAS, 'plataforma');
+const dificultades = usados(DIFICULTADES, 'dificultad');
 ---
 
-<BaseLayout titulo="Walkthroughs" descripcion="Walkthroughs de máquinas y retos retirados, explicados paso a paso.">
+<BaseLayout
+  titulo="Walkthroughs"
+  descripcion="Walkthroughs paso a paso de máquinas y retos retirados, con cada comando explicado."
+>
   <h1 class="prompt">ls walkthroughs/</h1>
-  <Todo>Índice con filtros por plataforma, dificultad y técnica (fase 4).</Todo>
+  <p class="lectura texto-suave">
+    Máquinas y retos <strong>retirados</strong>, resueltos paso a paso. Pasa el ratón (o toca) cada parte de un
+    comando para ver qué hace. Todas las técnicas están en <a href="/tecnicas/">/tecnicas</a>.
+  </p>
+
+  {
+    lista.length === 0 ? (
+      <p class="vacio">Todavía no hay walkthroughs publicados.</p>
+    ) : (
+      <>
+        <form class="filtros" data-filtros hidden aria-label="Filtrar walkthroughs">
+          <label>
+            <span>Plataforma</span>
+            <select name="plataforma">
+              <option value="">Todas</option>
+              {plataformas.map((p) => (
+                <option value={p}>{p}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Dificultad</span>
+            <select name="dificultad">
+              <option value="">Todas</option>
+              {dificultades.map((d) => (
+                <option value={d}>{d}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Técnica</span>
+            <select name="tecnica">
+              <option value="">Todas</option>
+              {tecnicas.map((t) => (
+                <option value={t.slug}>{t.nombre}</option>
+              ))}
+            </select>
+          </label>
+          <button type="reset">Quitar filtros</button>
+        </form>
+
+        <p class="contador" data-contador aria-live="polite">
+          {lista.length} {lista.length === 1 ? 'walkthrough' : 'walkthroughs'}
+        </p>
+
+        <div class="lista" data-lista>
+          {lista.map((w) => (
+            <TarjetaWalkthrough walkthrough={w} />
+          ))}
+        </div>
+
+        <p class="vacio" data-sin-resultados hidden>
+          Ningún walkthrough coincide con estos filtros.
+        </p>
+      </>
+    )
+  }
 </BaseLayout>
+
+<script>
+  import { iniciarFiltros } from '../../scripts/filtros';
+  iniciarFiltros();
+</script>
+
+<style>
+  .filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem 1rem;
+    margin: 1.5rem 0 0.5rem;
+    padding: 1rem;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    background: var(--bg-elev);
+  }
+
+  .filtros[hidden] {
+    display: none;
+  }
+
+  label {
+    display: grid;
+    gap: 0.25rem;
+    flex: 1 1 10rem;
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+  }
+
+  select,
+  button {
+    min-height: 2.75rem;
+    padding: 0 0.75rem;
+    background: var(--bg);
+    color: var(--texto);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    font: inherit;
+    font-size: 0.95rem;
+  }
+
+  button {
+    cursor: pointer;
+    font-family: var(--fuente-mono);
+    font-size: 0.85rem;
+  }
+
+  button:hover {
+    border-color: var(--acento);
+  }
+
+  .contador {
+    font-family: var(--fuente-mono);
+    font-size: 0.85rem;
+    color: var(--texto-suave);
+  }
+
+  .lista {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .vacio {
+    padding: 1.5rem;
+    border: 1px dashed var(--borde);
+    border-radius: var(--radio);
+    font-family: var(--fuente-mono);
+    color: var(--texto-suave);
+  }
+
+  .vacio[hidden] {
+    display: none;
+  }
+</style>
