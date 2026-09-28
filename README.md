@@ -226,7 +226,7 @@ con la fecha en que lo miraste:
 ```ts
 {
   nombre: 'HackTheBox',
-  url: 'https://app.hackthebox.com/users/3886164',
+  url: 'https://profile.hackthebox.com/profile/019ddedf-fe2d-70cf-93a9-c866d6fdb45c',
   rango: { nombre: 'Hacker', actualizado: '2026-10-01' },   // opcional
 },
 ```

@@ -24,7 +24,7 @@ export interface PerfilPlataforma {
 /** Perfiles en plataformas de práctica, para la página de logros. */
 export const PERFILES: readonly PerfilPlataforma[] = [
   // TODO: añadir `rango` cuando Ricardo lo indique, p. ej. { nombre: '…', actualizado: 'AAAA-MM-DD' }.
-  { nombre: 'HackTheBox', url: 'https://app.hackthebox.com/users/3886164' },
+  { nombre: 'HackTheBox', url: 'https://profile.hackthebox.com/profile/019ddedf-fe2d-70cf-93a9-c866d6fdb45c' },
 ];
 
 export interface EnlaceNavegacion {
