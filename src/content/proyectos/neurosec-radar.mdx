@@ -1,0 +1,57 @@
+---
+titulo: "NeuroSec Radar"
+resumen: "Portal personal de noticias de IA, ciberseguridad y la mezcla de ambas: recoge noticias de 30 fuentes cada 30 minutos, las resume en español con IA y destaca lo importante."
+tecnologias:
+  - Python
+  - Claude API
+  - Supabase
+  - PostgreSQL
+  - Next.js
+  - TypeScript
+  - GitHub Actions
+  - Vercel
+estado: En desarrollo
+repositorio: https://github.com/yConFi/neurosec-radar
+borrador: false
+---
+
+## Qué hace
+
+Reúne en un solo sitio las novedades de **ciberseguridad**, de **inteligencia artificial** y de lo que
+pasa entre las dos: prompt injection, seguridad de modelos de lenguaje, IA ofensiva y defensiva…
+Cada noticia llega resumida en español, con su importancia del 1 al 10 y el enlace a la fuente original.
+
+Lo hice para estar al día sin tener que visitar decenas de webs cada día.
+
+## Cómo funciona
+
+1. **Recogida.** Un recolector en Python consulta cada 30 minutos 30 fuentes:
+   - Medios de ciberseguridad e IA, en inglés y en español (Una al día, INCIBE-CERT, BleepingComputer…).
+   - El catálogo de vulnerabilidades explotadas de CISA (KEV).
+   - Los CVE críticos de la NVD.
+   - Los artículos de investigación nuevos de arXiv que tratan de IA y seguridad.
+2. **Limpieza.** Descarta duplicados por URL y por títulos parecidos. Cuando varios medios hablan del mismo
+   CVE, los agrupa en una sola noticia.
+3. **Análisis con IA.** Claude Haiku lee cada artículo y devuelve un JSON con la categoría, la importancia,
+   el resumen en español y los CVE mencionados. Uso la API de lotes (Message Batches), que cuesta la mitad.
+4. **Web.** Una aplicación en Next.js, con inicio de sesión, muestra el feed con filtros. Arriba van
+   los destacados y un aviso fijo para lo trascendental. Puedo marcar las noticias como leídas o favoritas
+   y añadir notas.
+
+## Decisiones de las que he aprendido
+
+- **La IA aporta hechos; la decisión la toma el código.** Al principio le pedía a la IA que dijera si una
+  noticia necesitaba **«Acción requerida»**, y marcaba de más. Ahora solo me dice qué producto está
+  afectado, si se está explotando y qué hay que hacer. Una regla en el código decide con eso.
+- **Una puntuación CVSS alta no significa que la noticia sea importante.** He ajustado las instrucciones a la IA
+  para que no confunda la gravedad técnica de un fallo con su importancia real.
+- **Programación fiable.** La programación de GitHub Actions se saltaba ejecuciones. Por eso el recolector
+  lo lanza ahora un cron de Supabase, que llama a la API de GitHub cada 30 minutos.
+- **Seguridad.**
+  - Todas las tablas tienen Row Level Security y solo el propietario puede leerlas.
+  - Las claves están en GitHub Secrets, en Vercel y en Supabase Vault; nunca en el código.
+
+## Próximos pasos
+
+- Un chat con la IA sobre cada noticia.
+- Un resumen semanal.
