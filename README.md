@@ -29,11 +29,12 @@ en los que **cada parte de cada comando tiene un tooltip** con lo que hace.
 src/
 ├─ content/
 │  ├─ walkthroughs/         # un .mdx por máquina (plantilla.mdx = plantilla, siempre borrador)
-│  └─ proyectos/            # un .mdx por proyecto
+│  ├─ proyectos/            # un .mdx por proyecto
+│  └─ certificaciones/      # un .yml por certificación (plantilla.yml = plantilla, siempre borrador)
 ├─ content.config.ts        # esquema del frontmatter (plataformas, dificultades, sistemas…)
 ├─ data/
 │  ├─ comandos.ts           # diccionario de herramientas, opciones y operadores
-│  └─ site.ts               # nombre, descripción y enlaces de la web
+│  └─ site.ts               # nombre, descripción, enlaces y perfiles de plataformas
 ├─ components/              # Cmd, Pista, tarjetas, cabecera, pie…
 ├─ lib/comando/             # tokenizador, analizador y validación de <Cmd>
 ├─ pages/                   # rutas de la web
@@ -196,6 +197,38 @@ borrador: false
 
 ## Qué hace
 …
+```
+
+## Añadir una certificación
+
+Se muestran en **Logros** (`/logros/`), de la más reciente a la más antigua. Copia la plantilla con el
+nombre de la certificación:
+
+```bash
+cp src/content/certificaciones/plantilla.yml src/content/certificaciones/ejpt.yml
+```
+
+Y rellénala:
+
+```yaml
+titulo: eJPT
+emisor: INE Security
+fecha: 2027-01-15            # fecha de obtención
+credencial: https://…        # opcional: enlace para verificarla
+borrador: false
+```
+
+## Actualizar el rango en una plataforma
+
+Los perfiles de **Logros** están en `PERFILES`, en `src/data/site.ts`. El rango se escribe a mano, junto
+con la fecha en que lo miraste:
+
+```ts
+{
+  nombre: 'HackTheBox',
+  url: 'https://app.hackthebox.com/users/3886164',
+  rango: { nombre: 'Hacker', actualizado: '2026-10-01' },   // opcional
+},
 ```
 
 ---

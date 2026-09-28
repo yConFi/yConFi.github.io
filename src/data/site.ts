@@ -14,6 +14,19 @@ export const ENLACES = {
   linkedin: 'https://www.linkedin.com/in/ricardo-hidalgo-bejarano-810155344',
 } as const;
 
+export interface PerfilPlataforma {
+  nombre: string;
+  url: string;
+  /** Opcional: rango o nivel, actualizado a mano. Si se pone, indica también la fecha en que lo miraste. */
+  rango?: { nombre: string; actualizado: string };
+}
+
+/** Perfiles en plataformas de práctica, para la página de logros. */
+export const PERFILES: readonly PerfilPlataforma[] = [
+  // TODO: añadir `rango` cuando Ricardo lo indique, p. ej. { nombre: '…', actualizado: 'AAAA-MM-DD' }.
+  { nombre: 'HackTheBox', url: 'https://app.hackthebox.com/users/3886164' },
+];
+
 export interface EnlaceNavegacion {
   href: string;
   texto: string;
@@ -26,6 +39,7 @@ export const NAVEGACION: readonly EnlaceNavegacion[] = [
   // Las técnicas son otra forma de recorrer los walkthroughs, no una sección aparte.
   { href: '/walkthroughs/', texto: 'Walkthroughs', incluye: ['/tecnicas/'] },
   { href: '/proyectos/', texto: 'Proyectos' },
+  { href: '/logros/', texto: 'Logros' },
   { href: '/diccionario/', texto: 'Diccionario' },
 ];
 

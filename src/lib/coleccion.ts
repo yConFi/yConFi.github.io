@@ -4,6 +4,7 @@ import { getCollection, type CollectionEntry } from 'astro:content';
 import type { Walkthrough } from './walkthroughs';
 
 export type Proyecto = CollectionEntry<'proyectos'>;
+export type Certificacion = CollectionEntry<'certificaciones'>;
 
 /**
  * Los borradores solo existen con `npm run dev`. En `npm run build` se excluyen del
@@ -25,4 +26,10 @@ export async function obtenerProyectos(): Promise<Proyecto[]> {
       (b.data.fecha?.getTime() ?? -Infinity) - (a.data.fecha?.getTime() ?? -Infinity) ||
       a.data.titulo.localeCompare(b.data.titulo, 'es'),
   );
+}
+
+/** Certificaciones visibles, de la más reciente a la más antigua. */
+export async function obtenerCertificaciones(): Promise<Certificacion[]> {
+  const todas = await getCollection('certificaciones', ({ data }) => MOSTRAR_BORRADORES || !data.borrador);
+  return todas.sort((a, b) => b.data.fecha.getTime() - a.data.fecha.getTime());
 }

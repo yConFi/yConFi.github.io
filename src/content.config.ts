@@ -43,4 +43,20 @@ const proyectos = defineCollection({
   }),
 });
 
-export const collections = { walkthroughs, proyectos };
+// Solo certificaciones ya obtenidas: un archivo por certificación.
+const certificaciones = defineCollection({
+  loader: glob({ pattern: '**/*.{yml,yaml}', base: './src/content/certificaciones' }),
+  schema: z.object({
+    titulo: z.string().min(1),
+    /** Entidad que la emite (INE Security, CompTIA…). */
+    emisor: z.string().min(1),
+    /** Fecha de obtención. */
+    fecha: z.coerce.date(),
+    /** Opcional: enlace público para verificarla (Credly, página del emisor…). */
+    credencial: z.url().optional(),
+    /** true = no se publica (solo visible con `npm run dev`). */
+    borrador: z.boolean(),
+  }),
+});
+
+export const collections = { walkthroughs, proyectos, certificaciones };
