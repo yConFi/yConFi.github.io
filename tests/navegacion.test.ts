@@ -12,6 +12,7 @@ describe('navegación', () => {
     ['/tecnicas/', ['Walkthroughs']],
     ['/tecnicas/sqli/', ['Walkthroughs']],
     ['/proyectos/fichas-tecnicas/', ['Proyectos']],
+    ['/logros/', ['Logros']],
     ['/diccionario/', ['Diccionario']],
     ['/no-existe/', []],
   ])('%s → %j', (ruta, esperadas) => {

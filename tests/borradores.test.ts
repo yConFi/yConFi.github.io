@@ -28,11 +28,19 @@ describe('borradores', () => {
 
     // La plantilla existe como contenido…
     expect(existsSync('src/content/walkthroughs/plantilla.mdx')).toBe(true);
-    // …pero no hay página…
+    expect(existsSync('src/content/certificaciones/plantilla.yml')).toBe(true);
+    // …pero no hay página (las certificaciones no tienen página propia)…
     expect(existsSync(join(outDir, 'walkthroughs/plantilla'))).toBe(false);
     // …ni su texto en ningún archivo publicado (índices, técnicas, JS, CSS…).
     // Textos que solo existen en la plantilla ("plantilla" a secas aparece, p. ej., en nmap -T).
-    const marcas = ['no es una máquina real', 'Ejemplo de técnica', 'ejemplo-de-tecnica', 'walkthroughs/plantilla'];
+    const marcas = [
+      'no es una máquina real',
+      'Ejemplo de técnica',
+      'ejemplo-de-tecnica',
+      'walkthroughs/plantilla',
+      'certificación de ejemplo',
+      'Entidad emisora de ejemplo',
+    ];
     const conPlantilla = ficheros(outDir).filter((f) => {
       const contenido = readFileSync(f, 'utf8');
       return marcas.some((m) => contenido.includes(m));

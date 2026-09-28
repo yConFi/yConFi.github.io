@@ -1,0 +1,128 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { obtenerCertificaciones } from '../lib/coleccion';
+import { formatearFecha } from '../lib/walkthroughs';
+import { PERFILES } from '../data/site';
+
+const certificaciones = await obtenerCertificaciones();
+const iso = (fecha: Date) => fecha.toISOString().slice(0, 10);
+---
+
+<BaseLayout titulo="Logros" descripcion="Certificaciones conseguidas y progreso en plataformas de práctica de ciberseguridad.">
+  <h1 class="prompt">ls logros/</h1>
+  <p class="lectura texto-suave">Certificaciones que he conseguido y mi progreso en plataformas de práctica.</p>
+
+  <section aria-labelledby="titulo-certificaciones">
+    <h2 id="titulo-certificaciones">Certificaciones</h2>
+    {
+      certificaciones.length === 0 ? (
+        <p class="vacio">Todavía no tengo ninguna certificación.</p>
+      ) : (
+        <ul class="lista">
+          {certificaciones.map(({ data }) => (
+            <li class="tarjeta">
+              <h3 class="titulo">
+                {data.titulo}
+                {data.borrador && <span class="borrador">borrador</span>}
+              </h3>
+              <p class="meta">
+                {data.emisor} · <time datetime={iso(data.fecha)}>{formatearFecha(data.fecha)}</time>
+              </p>
+              {data.credencial && (
+                <p class="enlace">
+                  <a href={data.credencial}>Verificar credencial</a>
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+
+  <section aria-labelledby="titulo-plataformas">
+    <h2 id="titulo-plataformas">Plataformas</h2>
+    <ul class="lista">
+      {
+        PERFILES.map((p) => (
+          <li class="tarjeta">
+            <h3 class="titulo">{p.nombre}</h3>
+            {p.rango && (
+              <p class="meta">
+                Rango: <strong>{p.rango.nombre}</strong> · actualizado el{' '}
+                <time datetime={p.rango.actualizado}>{formatearFecha(new Date(p.rango.actualizado))}</time>
+              </p>
+            )}
+            <p class="enlace">
+              <a href={p.url} rel="me">
+                Ver mi perfil en {p.nombre}
+              </a>
+            </p>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</BaseLayout>
+
+<style>
+  section {
+    margin-top: 2rem;
+  }
+
+  .lista {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .tarjeta {
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    background: var(--bg-elev);
+    padding: 1rem 1.25rem;
+  }
+
+  .titulo {
+    margin: 0 0 0.35rem;
+    font-size: 1.2rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .borrador {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    border: 1px solid var(--peligro);
+    color: var(--peligro);
+  }
+
+  .meta {
+    margin: 0;
+    font-family: var(--fuente-mono);
+    font-size: 0.85rem;
+    color: var(--texto-suave);
+  }
+
+  .enlace {
+    margin: 0.5rem 0 0;
+  }
+
+  .enlace a {
+    display: inline-block;
+    padding: 0.2rem 0;
+  }
+
+  .vacio {
+    padding: 1.5rem;
+    border: 1px dashed var(--borde);
+    border-radius: var(--radio);
+    font-family: var(--fuente-mono);
+    color: var(--texto-suave);
+  }
+</style>

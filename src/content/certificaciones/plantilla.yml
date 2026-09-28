@@ -1,0 +1,7 @@
+# Plantilla: cópiala con el nombre de la certificación (p. ej. ejpt.yml) y rellénala.
+# Esta copia es siempre un borrador y nunca se publica.
+titulo: Nombre de la certificación de ejemplo
+emisor: Entidad emisora de ejemplo
+fecha: 2026-01-01
+# credencial: https://…   # opcional: enlace público para verificarla
+borrador: true
