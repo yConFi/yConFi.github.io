@@ -38,6 +38,8 @@ const proyectos = defineCollection({
     fecha: z.coerce.date().optional(),
     /** Opcional: repositorio público. */
     repositorio: z.url().optional(),
+    /** Opcional: web pública donde se puede probar. */
+    demo: z.url().optional(),
     /** true = no se publica (solo visible con `npm run dev`). */
     borrador: z.boolean(),
   }),
