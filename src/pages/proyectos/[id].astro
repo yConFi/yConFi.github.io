@@ -53,6 +53,14 @@ const { Content } = await render(proyecto);
           </div>
         )
       }
+      {
+        data.demo && (
+          <div>
+            <dt>Demo</dt>
+            <dd><a href={data.demo}>{new URL(data.demo).host}</a></dd>
+          </div>
+        )
+      }
     </dl>
 
     <div class="prosa">

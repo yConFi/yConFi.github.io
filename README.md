@@ -192,11 +192,19 @@ tecnologias: [Python, Flask]
 estado: En producción        # En producción | En desarrollo | Terminado | Archivado
 fecha: 2026-01-01            # opcional
 repositorio: https://github.com/yConFi/...   # opcional
+demo: https://...            # opcional: web pública donde probarlo
 borrador: false
 ---
 
 ## Qué hace
 …
+```
+
+Para añadir capturas, guárdalas en `src/assets/proyectos/<nombre>/` y enlázalas con una ruta relativa;
+Astro las optimiza al compilar:
+
+```md
+![Descripción de la captura](../../assets/proyectos/<nombre>/captura.png)
 ```
 
 ## Añadir una certificación
