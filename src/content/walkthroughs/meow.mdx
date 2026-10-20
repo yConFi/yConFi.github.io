@@ -1,0 +1,129 @@
+---
+titulo: "Meow"
+plataforma: HackTheBox
+dificultad: Muy fácil
+so: Linux
+fecha: 2026-10-20
+tecnicas:
+  - Escaneo de puertos
+  - Telnet
+  - Acceso sin contraseña
+resumen: "Máquina Linux con Telnet expuesto en el puerto 23 que permite entrar como root sin contraseña."
+serie:
+  nombre: Starting Point
+  tier: 0
+borrador: true
+---
+
+Primera máquina de Starting Point. Las preguntas guiadas (tasks) de HackTheBox aparecen plegadas en la
+sección donde se responden: intenta contestarlas antes de abrirlas.
+
+> La IP `10.129.61.241` es la que tenía la máquina en mi sesión; a ti te saldrá otra.
+
+## Reconocimiento
+
+Antes de conectarse a la máquina conviene repasar lo básico del entorno de HackTheBox.
+
+<Pista titulo="Tarea 1 · Los entornos aislados, como Pwnbox o las máquinas vulnerables, suelen ser VM. ¿Qué significa VM?">
+  **Virtual Machine** (máquina virtual).
+</Pista>
+
+<Pista titulo="Tarea 2 · ¿Qué herramienta usamos para dar órdenes al sistema operativo por línea de comandos, como la que inicia la VPN? También se llama consola o shell.">
+  El **terminal** (respuesta en HTB: `terminal`).
+</Pista>
+
+<Pista titulo="Tarea 3 · ¿Qué servicio usamos para conectarnos por VPN a los laboratorios de HTB?">
+  **OpenVPN** (respuesta en HTB: `openvpn`).
+</Pista>
+
+Lo primero es comprobar que llega la conexión con la máquina:
+
+<Cmd c="ping 10.129.61.241" notas={{ "10.129.61.241": "IP de la máquina objetivo." }} />
+
+Como no lleva `-c`, sigue enviando paquetes hasta que se detiene con `Ctrl+C`, y entonces muestra el resumen:
+
+```text
+64 bytes from 10.129.61.241: icmp_seq=1 ttl=63 time=7.52 ms
+64 bytes from 10.129.61.241: icmp_seq=2 ttl=63 time=7.84 ms
+...
+^C
+--- 10.129.61.241 ping statistics ---
+8 packets transmitted, 8 received, 0% packet loss, time 7013ms
+```
+
+La máquina responde a todo: 8 paquetes enviados y 8 recibidos.
+
+<Pista titulo="Tarea 4 · ¿Qué herramienta usamos para probar la conexión con el objetivo mediante una petición ICMP echo?">
+  **ping**.
+</Pista>
+
+## Enumeración
+
+Con la conexión comprobada, toca ver qué puertos están abiertos y qué servicio hay detrás de cada uno:
+
+<Cmd c="sudo nmap -sV 10.129.61.241" notas={{ "10.129.61.241": "IP de la máquina objetivo." }} />
+
+Sin indicar puertos, nmap revisa los 1000 más comunes. Con `sudo`, el tipo de escaneo por defecto es el SYN
+(`-sS`):
+
+```text
+Not shown: 999 closed tcp ports (reset)
+PORT   STATE SERVICE VERSION
+23/tcp open  telnet  Linux telnetd
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+```
+
+Solo hay un puerto abierto: el **23/tcp**, con un servidor Telnet.
+
+<Pista titulo="Tarea 5 · ¿Cómo se llama la herramienta más común para encontrar puertos abiertos en un objetivo?">
+  **nmap**.
+</Pista>
+
+<Pista titulo="Tarea 6 · ¿Qué servicio identificamos en el puerto 23/tcp durante el escaneo?">
+  **telnet**.
+</Pista>
+
+## Acceso inicial
+
+Me conecto al servicio Telnet. Como no indico puerto, `telnet` usa el suyo por defecto, el 23:
+
+<Cmd c="telnet 10.129.61.241" notas={{ "10.129.61.241": "IP de la máquina objetivo." }} />
+
+Al pedir el usuario escribo `root`, y entra directamente, **sin pedir contraseña**:
+
+```text
+Meow login: root
+Welcome to Ubuntu 20.04.2 LTS (GNU/Linux 5.4.0-77-generic x86_64)
+...
+root@Meow:~#
+```
+
+<Pista titulo="Tarea 7 · ¿Qué usuario puede iniciar sesión en el objetivo por Telnet con la contraseña en blanco?">
+  **root**.
+</Pista>
+
+Ya dentro, miro qué hay en el directorio personal de root y leo la flag:
+
+<Cmd c="ls" />
+
+```text
+flag.txt  snap
+```
+
+<Cmd c="cat flag.txt" notas={{ "flag.txt": "Fichero con la flag, en el directorio personal de root." }} />
+
+La flag no se publica: la tienes que conseguir tú.
+
+<Pista titulo="Flag · Envía la flag que está en el directorio personal de root">
+  Está en `flag.txt`, dentro del directorio personal de root, que es donde aparece la sesión al entrar.
+</Pista>
+
+## Escalada de privilegios
+
+No hace falta: el acceso inicial ya es como **root**, el usuario con más privilegios del sistema.
+
+## Lecciones aprendidas
+
+- **Qué fallé:** TODO: en qué me atasqué o qué intenté que no funcionó.
+- **Por qué:** TODO: qué no entendía o qué pasé por alto.
+- **Qué haré la próxima vez:** TODO.
