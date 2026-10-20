@@ -3,6 +3,7 @@ import { render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Cmd from '../../components/Cmd.astro';
 import Pista from '../../components/Pista.astro';
+import Ruta from '../../components/Ruta.astro';
 import { obtenerWalkthroughs } from '../../lib/coleccion';
 import { comprobarSecciones, formatearFecha, nombreSerie, slugTecnica, type Walkthrough } from '../../lib/walkthroughs';
 
@@ -70,7 +71,7 @@ const indice = headings.filter((h) => h.depth === 2);
       </nav>
 
       <div class="prosa">
-        <Content components={{ Cmd, Pista }} />
+        <Content components={{ Cmd, Pista, Ruta }} />
       </div>
     </div>
   </article>

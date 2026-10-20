@@ -12,11 +12,21 @@ resumen: "Máquina Linux con Telnet expuesto en el puerto 23 que permite entrar 
 serie:
   nombre: Starting Point
   tier: 0
-borrador: true
+borrador: false
 ---
 
-Primera máquina de Starting Point. Las preguntas guiadas (tasks) de HackTheBox aparecen plegadas en la
+Máquina del Tier 0 de Starting Point. Las preguntas guiadas (tasks) de HackTheBox aparecen plegadas en la
 sección donde se responden: intenta contestarlas antes de abrirlas.
+
+<Ruta
+  titulo="Camino seguido en Meow, de la conexión a root"
+  pasos={[
+    { titulo: 'ping', detalle: 'La máquina responde' },
+    { titulo: 'nmap -sV', detalle: 'Solo 23/tcp abierto: Telnet' },
+    { titulo: 'telnet', detalle: 'Usuario root sin contraseña' },
+    { titulo: 'root@Meow', detalle: 'flag.txt en el directorio de root', meta: true },
+  ]}
+/>
 
 > La IP `10.129.61.241` es la que tenía la máquina en mi sesión; a ti te saldrá otra.
 
@@ -124,6 +134,8 @@ No hace falta: el acceso inicial ya es como **root**, el usuario con más privil
 
 ## Lecciones aprendidas
 
-- **Qué fallé:** TODO: en qué me atasqué o qué intenté que no funcionó.
-- **Por qué:** TODO: qué no entendía o qué pasé por alto.
-- **Qué haré la próxima vez:** TODO.
+- **Qué fallé:** nada; la máquina salió a la primera siguiendo los pasos.
+- **Lo que enseña la máquina:** el fallo no está en el software sino en la configuración: un servicio de
+  acceso remoto que deja entrar como root sin contraseña da el control total del sistema sin explotar nada.
+- **Qué haré la próxima vez:** al encontrar un servicio de acceso remoto, probar primero usuarios comunes
+  como root sin contraseña antes de buscar ataques más complicados.

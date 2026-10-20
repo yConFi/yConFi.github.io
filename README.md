@@ -130,7 +130,22 @@ tests/                      # tests con Vitest
    ![Descripción de la captura](../../assets/walkthroughs/<maquina>/captura.png)
    ```
 
-8. **Revísalo** con `npm run dev` (verás la franja roja de BORRADOR). Cuando esté listo, pon
+8. **Esquema del camino** (opcional): `<Ruta>` dibuja los pasos clave, de la enumeración a root. Va
+   antes de `## Reconocimiento`, se adapta al tema claro/oscuro y en móvil se apila en vertical:
+
+   ```mdx
+   <Ruta
+     titulo="Camino seguido en Lame, de la conexión a root"
+     pasos={[
+       { titulo: 'nmap', detalle: 'Puertos abiertos' },
+       { titulo: 'root', detalle: 'Acceso completo', meta: true },
+     ]}
+   />
+   ```
+
+   `meta: true` resalta el paso final.
+
+9. **Revísalo** con `npm run dev` (verás la franja roja de BORRADOR). Cuando esté listo, pon
    `borrador: false` y [publica](#publicar).
 
 Si un `<Cmd>` usa algo que no está en el diccionario, la compilación se detiene con un mensaje así:
