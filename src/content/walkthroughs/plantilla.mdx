@@ -3,12 +3,15 @@
 # máquina (p. ej. lame.mdx), cambia estos datos y pon borrador: false para publicar.
 titulo: "PLANTILLA · no es una máquina real"
 plataforma: HackTheBox        # HackTheBox | TryHackMe (ampliable en src/content.config.ts)
-dificultad: Fácil             # Fácil | Media | Difícil | Insana
+dificultad: Fácil             # Muy fácil | Fácil | Media | Difícil | Insana
 so: Linux                     # Linux | Windows | FreeBSD | OpenBSD | Android | Otro
 fecha: 2026-09-17             # AAAA-MM-DD
 tecnicas:                     # escribe cada técnica siempre igual en todos los walkthroughs
   - Ejemplo de técnica
 resumen: "Plantilla de ejemplo que muestra todos los componentes. No se publica nunca."
+# serie:                      # opcional: solo si la máquina es de una serie, p. ej. Starting Point
+#   nombre: Starting Point    # Starting Point (ampliable en src/content.config.ts)
+#   tier: 0                   # nivel dentro de la serie: 0, 1, 2…
 borrador: true
 ---
 
@@ -30,6 +33,16 @@ Salida relevante (pega aquí solo las líneas importantes de la salida real):
 ```text
 TODO: salida real de nmap
 ```
+
+Si la máquina tiene preguntas guiadas (tasks), pon cada una como una `<Pista>` cuyo título es la pregunta
+y cuyo contenido es la respuesta, en la sección donde se responde. La pregunta de la flag nunca lleva la flag:
+
+<Pista titulo="Tarea 1 · ¿Qué puerto TCP está abierto en la máquina?">
+  Respuesta de ejemplo: el 80, según el escaneo de nmap.
+</Pista>
+
+Para una captura, guárdala en `src/assets/walkthroughs/<maquina>/` y enlázala así (Astro la optimiza):
+`![Qué se ve en la captura](../../assets/walkthroughs/<maquina>/captura.png)`
 
 <Pista>
   Una pista va plegada para que el lector lo intente antes. Por ejemplo: fíjate en qué servicios y
@@ -68,6 +81,9 @@ Y mejora la shell obtenida:
 <Cmd c={`python3 -c 'import pty;pty.spawn("/bin/bash")'`} />
 
 ## Escalada de privilegios
+
+Si la máquina se termina sin escalar privilegios, deja la sección y explica en una o dos frases por qué no
+hace falta (por ejemplo, porque el acceso inicial ya es como root).
 
 <Cmd c="id" />
 

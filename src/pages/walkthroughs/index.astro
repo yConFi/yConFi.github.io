@@ -1,9 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TarjetaWalkthrough from '../../components/TarjetaWalkthrough.astro';
-import { DIFICULTADES, PLATAFORMAS } from '../../content.config';
+import { DIFICULTADES, PLATAFORMAS, SERIES } from '../../content.config';
 import { obtenerWalkthroughs } from '../../lib/coleccion';
-import { agruparPorTecnica } from '../../lib/walkthroughs';
+import { agruparPorTecnica, nombreSerie } from '../../lib/walkthroughs';
 
 const lista = await obtenerWalkthroughs();
 const tecnicas = agruparPorTecnica(lista);
@@ -13,6 +13,17 @@ const usados = <T extends string>(valores: readonly T[], campo: 'plataforma' | '
   valores.filter((v) => lista.some((w) => w.data[campo] === v));
 const plataformas = usados(PLATAFORMAS, 'plataforma');
 const dificultades = usados(DIFICULTADES, 'dificultad');
+
+// Cada serie usada y, debajo, sus tiers usados en orden ("Starting Point", "Starting Point · Tier 0"…).
+const series = SERIES.flatMap((nombre) => {
+  const tiers = [...new Set(lista.flatMap((w) => (w.data.serie?.nombre === nombre ? [w.data.serie.tier] : [])))];
+  if (tiers.length === 0) return [];
+  tiers.sort((a, b) => a - b);
+  return [
+    { valor: nombre, texto: `${nombre} (todos los tiers)` },
+    ...tiers.map((tier) => ({ valor: nombreSerie({ nombre, tier }), texto: nombreSerie({ nombre, tier }) })),
+  ];
+});
 ---
 
 <BaseLayout
@@ -57,6 +68,19 @@ const dificultades = usados(DIFICULTADES, 'dificultad');
               ))}
             </select>
           </label>
+          {
+            series.length > 0 && (
+              <label>
+                <span>Serie</span>
+                <select name="serie">
+                  <option value="">Todas</option>
+                  {series.map((s) => (
+                    <option value={s.valor}>{s.texto}</option>
+                  ))}
+                </select>
+              </label>
+            )
+          }
           <label>
             <span>Técnica</span>
             <select name="tecnica">

@@ -1,8 +1,8 @@
 // Filtros del índice de walkthroughs. Sin JavaScript se ve la lista completa;
 // con JavaScript aparece el formulario. Los filtros se guardan en la URL
-// (?plataforma=...&tecnica=...) para poder compartir un enlace ya filtrado.
+// (?plataforma=...&serie=...&tecnica=...) para poder compartir un enlace ya filtrado.
 
-const CAMPOS = ['plataforma', 'dificultad', 'tecnica'] as const;
+const CAMPOS = ['plataforma', 'dificultad', 'serie', 'tecnica'] as const;
 type Campo = (typeof CAMPOS)[number];
 
 export function iniciarFiltros(): void {
@@ -12,25 +12,30 @@ export function iniciarFiltros(): void {
   const tarjetas = [...document.querySelectorAll<HTMLElement>('[data-walkthrough]')];
   const contador = document.querySelector<HTMLElement>('[data-contador]');
   const sinResultados = document.querySelector<HTMLElement>('[data-sin-resultados]');
-  const select = (campo: Campo) => form.elements.namedItem(campo) as HTMLSelectElement;
+  // El selector de serie solo existe si algún walkthrough tiene serie.
+  const select = (campo: Campo) => form.elements.namedItem(campo) as HTMLSelectElement | null;
+  const valor = (campo: Campo) => select(campo)?.value ?? '';
 
   // Valores iniciales desde la URL (solo si existen como opción).
   const params = new URLSearchParams(location.search);
   for (const campo of CAMPOS) {
-    const valor = params.get(campo);
-    if (valor && [...select(campo).options].some((o) => o.value === valor)) select(campo).value = valor;
+    const inicial = params.get(campo);
+    const s = select(campo);
+    if (s && inicial && [...s.options].some((o) => o.value === inicial)) s.value = inicial;
   }
 
   const aplicar = () => {
-    const plataforma = select('plataforma').value;
-    const dificultad = select('dificultad').value;
-    const tecnica = select('tecnica').value;
+    const plataforma = valor('plataforma');
+    const dificultad = valor('dificultad');
+    const serie = valor('serie');
+    const tecnica = valor('tecnica');
 
     let visibles = 0;
     for (const t of tarjetas) {
       const coincide =
         (!plataforma || t.dataset.plataforma === plataforma) &&
         (!dificultad || t.dataset.dificultad === dificultad) &&
+        (!serie || (t.dataset.serie ?? '').split('|').includes(serie)) &&
         (!tecnica || (t.dataset.tecnicas ?? '').split('|').includes(tecnica));
       t.hidden = !coincide;
       if (coincide) visibles++;
@@ -47,8 +52,8 @@ export function iniciarFiltros(): void {
 
     const url = new URL(location.href);
     for (const campo of CAMPOS) {
-      const valor = select(campo).value;
-      if (valor) url.searchParams.set(campo, valor);
+      const v = valor(campo);
+      if (v) url.searchParams.set(campo, v);
       else url.searchParams.delete(campo);
     }
     history.replaceState(null, '', url);

@@ -60,14 +60,25 @@ tests/                      # tests con Vitest
    | ------------ | -------------------------------------------------------------------- |
    | `titulo`     | Texto.                                                               |
    | `plataforma` | `HackTheBox` o `TryHackMe`.                                          |
-   | `dificultad` | `Fácil`, `Media`, `Difícil` o `Insana`.                              |
+   | `dificultad` | `Muy fácil`, `Fácil`, `Media`, `Difícil` o `Insana`.                 |
    | `so`         | `Linux`, `Windows`, `FreeBSD`, `OpenBSD`, `Android` u `Otro`.        |
    | `fecha`      | `AAAA-MM-DD`.                                                        |
    | `tecnicas`   | Lista. Escribe cada técnica **siempre igual** en todos los walkthroughs. |
    | `resumen`    | Una o dos frases (se usa también como descripción para buscadores).  |
+   | `serie`      | Opcional. Solo si la máquina es de una serie: `nombre` (`Starting Point`) y `tier` (0, 1, 2…). |
    | `borrador`   | `true` mientras lo escribes; `false` para publicarlo.                |
 
-   Para añadir otra plataforma, dificultad o sistema, amplía la lista en `src/content.config.ts`.
+   Ejemplo de `serie`:
+
+   ```yaml
+   serie:
+     nombre: Starting Point
+     tier: 0
+   ```
+
+   Si algún walkthrough tiene serie, el índice muestra un filtro **Serie** (la serie entera o un tier concreto).
+
+   Para añadir otra plataforma, dificultad, sistema o serie, amplía la lista en `src/content.config.ts`.
 
 3. **Respeta las cinco secciones**, como títulos `##` y en este orden (la compilación falla si no):
 
@@ -79,7 +90,8 @@ tests/                      # tests con Vitest
    ## Lecciones aprendidas
    ```
 
-   Para subapartados usa `###`.
+   Para subapartados usa `###`. Si la máquina se termina sin escalar privilegios, deja igualmente
+   `## Escalada de privilegios` y explica en una o dos frases por qué no hace falta.
 
 4. **Escribe los comandos con `<Cmd>`** (no hace falta importarlo):
 
@@ -104,7 +116,21 @@ tests/                      # tests con Vitest
    <Pista titulo="Solución">…</Pista>
    ```
 
-6. **Revísalo** con `npm run dev` (verás la franja roja de BORRADOR). Cuando esté listo, pon
+6. **Preguntas guiadas (tasks)**: cada una es una `<Pista>` con la pregunta como título y la respuesta
+   dentro, en la sección donde se responde. **Nunca publiques una flag**, tampoco en la respuesta:
+
+   ```mdx
+   <Pista titulo="Tarea 1 · ¿Qué puerto TCP está abierto?">El 23, según nmap.</Pista>
+   ```
+
+7. **Capturas** (opcional): guárdalas en `src/assets/walkthroughs/<maquina>/` y enlázalas con una ruta
+   relativa; Astro las optimiza al compilar:
+
+   ```md
+   ![Descripción de la captura](../../assets/walkthroughs/<maquina>/captura.png)
+   ```
+
+8. **Revísalo** con `npm run dev` (verás la franja roja de BORRADOR). Cuando esté listo, pon
    `borrador: false` y [publica](#publicar).
 
 Si un `<Cmd>` usa algo que no está en el diccionario, la compilación se detiene con un mensaje así:
