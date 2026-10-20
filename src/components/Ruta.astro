@@ -1,0 +1,136 @@
+---
+// Esquema visual del camino seguido en la máquina, de la máquina atacante al objetivo.
+// Se adapta al tema claro/oscuro y en móvil se apila en vertical.
+// Uso en MDX:
+//   <Ruta
+//     titulo="Camino hasta root"
+//     pasos={[
+//       { titulo: 'nmap', detalle: '23/tcp abierto' },
+//       { titulo: 'root', detalle: 'Acceso completo', meta: true },
+//     ]}
+//   />
+interface Paso {
+  titulo: string;
+  detalle: string;
+  /** Paso final (p. ej. root): se resalta. */
+  meta?: boolean;
+}
+
+interface Props {
+  titulo: string;
+  pasos: Paso[];
+}
+
+const { titulo, pasos } = Astro.props;
+---
+
+<figure class="ruta">
+  <ol>
+    {
+      pasos.map((p, i) => (
+        <li class:list={['paso', { meta: p.meta }]}>
+          <span class="numero" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+          <strong class="titulo">{p.titulo}</strong>
+          <span class="detalle">{p.detalle}</span>
+        </li>
+      ))
+    }
+  </ol>
+  <figcaption>{titulo}</figcaption>
+</figure>
+
+<style>
+  .ruta {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    background:
+      radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--borde) 70%, transparent) 1px, transparent 0) 0 0 /
+        16px 16px,
+      var(--bg-elev);
+  }
+
+  ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1.75rem;
+  }
+
+  .paso {
+    position: relative;
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--borde);
+    border-left: 3px solid var(--tok-opcion);
+    border-radius: var(--radio);
+    background: var(--bg);
+    font-family: var(--fuente-mono);
+  }
+
+  .paso.meta {
+    border-color: var(--acento);
+    border-left-color: var(--acento);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--acento) 35%, transparent);
+  }
+
+  /* Flecha hacia el siguiente paso (abajo en móvil, a la derecha en escritorio). */
+  .paso:not(:last-child)::after {
+    content: '↓';
+    position: absolute;
+    left: 50%;
+    bottom: -1.6rem;
+    transform: translateX(-50%);
+    color: var(--texto-suave);
+    font-size: 1.1rem;
+  }
+
+  .numero {
+    font-size: 0.7rem;
+    color: var(--texto-suave);
+  }
+
+  .titulo {
+    font-size: 0.95rem;
+    color: var(--tok-opcion);
+    overflow-wrap: anywhere;
+  }
+
+  .meta .titulo {
+    color: var(--acento-texto);
+  }
+
+  .detalle {
+    font-family: var(--fuente-texto);
+    font-size: 0.85rem;
+    color: var(--texto-suave);
+  }
+
+  figcaption {
+    margin-top: 0.85rem;
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+    text-align: center;
+  }
+
+  @media (min-width: 48rem) {
+    ol {
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(0, 1fr);
+      gap: 1.5rem;
+    }
+
+    .paso:not(:last-child)::after {
+      content: '→';
+      left: auto;
+      right: -1.25rem;
+      bottom: auto;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+  }
+</style>

@@ -979,12 +979,82 @@ const python3: Herramienta = {
   ],
 };
 
+// ============================================================
+// ping (iputils) — https://man7.org/linux/man-pages/man8/ping.8.html
+// ============================================================
+const ping: Herramienta = {
+  nombre: 'ping',
+  descripcion:
+    'Envía paquetes ICMP ECHO_REQUEST a un host y espera su ECHO_RESPONSE: comprueba si responde y mide el tiempo de ida y vuelta. Sin -c sigue enviando hasta que lo paras con Ctrl+C (SIGINT), y entonces muestra un resumen.',
+  categoria: 'Conexiones',
+  docs: 'https://man7.org/linux/man-pages/man8/ping.8.html',
+  variantes: 'Explicaciones según ping de iputils (versión 20240117), el habitual en Linux.',
+  estilo: 'posix',
+  combinables: true,
+  argumentos: 'Host de destino: dirección IP o nombre.',
+  opciones: [
+    {
+      nombres: ['-c'],
+      descripcion: 'Se detiene tras enviar el número de paquetes indicado.',
+      valor: { nombre: 'número', descripcion: 'Número de paquetes que se envían.' },
+    },
+    {
+      nombres: ['-i'],
+      descripcion: 'Segundos de espera entre cada paquete (por defecto, uno).',
+      valor: { nombre: 'segundos', descripcion: 'Intervalo en segundos; admite decimales con punto.' },
+    },
+    {
+      nombres: ['-W'],
+      descripcion: 'Segundos que espera una respuesta cuando no ha recibido ninguna.',
+      valor: { nombre: 'segundos', descripcion: 'Tiempo de espera en segundos; 0 es infinito.' },
+    },
+    {
+      nombres: ['-w'],
+      descripcion: 'Segundos tras los que ping termina, sin importar cuántos paquetes haya enviado o recibido.',
+      valor: { nombre: 'segundos', descripcion: 'Tiempo límite en segundos.' },
+    },
+    { nombres: ['-n'], descripcion: 'Salida solo numérica: no resuelve los nombres de las direcciones.' },
+    { nombres: ['-q'], descripcion: 'Salida silenciosa: solo muestra las líneas de resumen al empezar y al terminar.' },
+    { nombres: ['-4'], descripcion: 'Usa solo IPv4.' },
+    { nombres: ['-6'], descripcion: 'Usa solo IPv6.' },
+  ],
+};
+
+// ============================================================
+// telnet (GNU inetutils) — https://www.gnu.org/software/inetutils/manual/html_node/telnet-invocation.html
+// ============================================================
+const telnet: Herramienta = {
+  nombre: 'telnet',
+  descripcion:
+    'Cliente del protocolo TELNET: abre una sesión de texto interactiva con otro host. El carácter de escape es Ctrl+] y lleva al modo de comandos (telnet>), donde "quit" sale.',
+  categoria: 'Conexiones',
+  docs: 'https://www.gnu.org/software/inetutils/manual/html_node/telnet-invocation.html',
+  variantes:
+    'Explicaciones según telnet de GNU inetutils (versión 2.5), el que instalan Debian y Ubuntu actuales. Otras distribuciones pueden traer el de netkit, con opciones parecidas.',
+  estilo: 'posix',
+  combinables: false,
+  argumentos:
+    'Host remoto (nombre o dirección IP) y, opcionalmente, el puerto. Sin puerto se usa el de telnet (23/tcp). Sin host, entra en el modo de comandos.',
+  opciones: [
+    {
+      nombres: ['-l', '--user'],
+      descripcion:
+        'Envía el usuario indicado al sistema remoto como variable USER, si este entiende la opción ENVIRON de TELNET.',
+      valor: { nombre: 'usuario', descripcion: 'Nombre de usuario remoto.' },
+    },
+    { nombres: ['-4', '--ipv4'], descripcion: 'Usa IPv4 para conectarse.' },
+    { nombres: ['-6', '--ipv6'], descripcion: 'Usa IPv6 para conectarse.' },
+  ],
+};
+
 export const HERRAMIENTAS: Herramienta[] = [
   nmap,
   gobuster,
   ffuf,
   curl,
   nc,
+  ping,
+  telnet,
   ssh,
   sudo,
   find,

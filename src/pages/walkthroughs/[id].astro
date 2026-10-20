@@ -3,8 +3,9 @@ import { render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Cmd from '../../components/Cmd.astro';
 import Pista from '../../components/Pista.astro';
+import Ruta from '../../components/Ruta.astro';
 import { obtenerWalkthroughs } from '../../lib/coleccion';
-import { comprobarSecciones, formatearFecha, slugTecnica, type Walkthrough } from '../../lib/walkthroughs';
+import { comprobarSecciones, formatearFecha, nombreSerie, slugTecnica, type Walkthrough } from '../../lib/walkthroughs';
 
 export async function getStaticPaths() {
   const lista = await obtenerWalkthroughs();
@@ -39,6 +40,7 @@ const indice = headings.filter((h) => h.depth === 2);
       <p class="resumen">{data.resumen}</p>
       <dl class="ficha">
         <div><dt>Plataforma</dt><dd>{data.plataforma}</dd></div>
+        {data.serie && <div><dt>Serie</dt><dd>{nombreSerie(data.serie)}</dd></div>}
         <div><dt>Dificultad</dt><dd>{data.dificultad}</dd></div>
         <div><dt>Sistema</dt><dd>{data.so}</dd></div>
         <div>
@@ -69,7 +71,7 @@ const indice = headings.filter((h) => h.depth === 2);
       </nav>
 
       <div class="prosa">
-        <Content components={{ Cmd, Pista }} />
+        <Content components={{ Cmd, Pista, Ruta }} />
       </div>
     </div>
   </article>

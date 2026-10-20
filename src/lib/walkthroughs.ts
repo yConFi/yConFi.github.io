@@ -73,5 +73,18 @@ export function comprobarSecciones(id: string, headings: { depth: number; text: 
   }
 }
 
+/** Nombre visible de la serie y su nivel: "Starting Point · Tier 0". */
+export function nombreSerie(serie: { nombre: string; tier: number }): string {
+  return `${serie.nombre} · Tier ${serie.tier}`;
+}
+
+/**
+ * Valores por los que se puede filtrar la serie de un walkthrough: la serie entera
+ * y la serie con su nivel. Sin serie, ninguno.
+ */
+export function filtrosSerie(serie?: { nombre: string; tier: number }): string[] {
+  return serie ? [serie.nombre, nombreSerie(serie)] : [];
+}
+
 const formatoFecha = new Intl.DateTimeFormat('es-ES', { dateStyle: 'long', timeZone: 'UTC' });
 export const formatearFecha = (fecha: Date) => formatoFecha.format(fecha);

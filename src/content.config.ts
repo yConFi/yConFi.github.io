@@ -7,8 +7,10 @@ import { z } from 'astro/zod';
 
 // Para añadir una plataforma, dificultad o sistema, amplía estas listas.
 export const PLATAFORMAS = ['HackTheBox', 'TryHackMe'] as const;
-export const DIFICULTADES = ['Fácil', 'Media', 'Difícil', 'Insana'] as const;
+export const DIFICULTADES = ['Muy fácil', 'Fácil', 'Media', 'Difícil', 'Insana'] as const;
 export const SISTEMAS = ['Linux', 'Windows', 'FreeBSD', 'OpenBSD', 'Android', 'Otro'] as const;
+/** Series o rutas guiadas dentro de una plataforma (p. ej. Starting Point de HackTheBox). */
+export const SERIES = ['Starting Point'] as const;
 
 const walkthroughs = defineCollection({
   loader: glob({ pattern: '**/*.mdx', base: './src/content/walkthroughs' }),
@@ -20,6 +22,13 @@ const walkthroughs = defineCollection({
     fecha: z.coerce.date(),
     tecnicas: z.array(z.string().min(1)).min(1),
     resumen: z.string().min(1),
+    /** Opcional: solo si la máquina pertenece a una serie, con su nivel (Tier 0, Tier 1…). */
+    serie: z
+      .object({
+        nombre: z.enum(SERIES),
+        tier: z.number().int().min(0),
+      })
+      .optional(),
     /** true = no se publica (solo visible con `npm run dev`). */
     borrador: z.boolean(),
   }),

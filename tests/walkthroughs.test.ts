@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   agruparPorTecnica,
   comprobarSecciones,
+  filtrosSerie,
+  nombreSerie,
   SECCIONES,
   slugTecnica,
   type Walkthrough,
@@ -53,5 +55,16 @@ describe('agruparPorTecnica', () => {
 
   it('falla si la misma técnica está escrita de dos formas', () => {
     expect(() => agruparPorTecnica([wt('a', ['SQLi']), wt('b', ['sqli'])])).toThrow(/misma técnica escrita distinto/);
+  });
+});
+
+describe('series', () => {
+  it('muestra la serie con su tier', () => {
+    expect(nombreSerie({ nombre: 'Starting Point', tier: 0 })).toBe('Starting Point · Tier 0');
+  });
+
+  it('permite filtrar por la serie entera y por la serie con su tier', () => {
+    expect(filtrosSerie({ nombre: 'Starting Point', tier: 2 })).toEqual(['Starting Point', 'Starting Point · Tier 2']);
+    expect(filtrosSerie(undefined)).toEqual([]);
   });
 });
