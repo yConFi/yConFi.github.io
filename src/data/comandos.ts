@@ -1047,6 +1047,48 @@ const telnet: Herramienta = {
   ],
 };
 
+// ============================================================
+// ftp (tnftp) — https://man.netbsd.org/ftp.1
+// ============================================================
+const ftp: Herramienta = {
+  nombre: 'ftp',
+  descripcion:
+    'Cliente del protocolo FTP: abre una sesión interactiva (prompt ftp>) para transferir ficheros con un servidor. Dentro, "ls" o "dir" listan, "get" descarga, "put" sube y "bye" sale.',
+  categoria: 'Conexiones',
+  docs: 'https://man.netbsd.org/ftp.1',
+  variantes:
+    'Explicaciones según tnftp (el cliente de NetBSD que Debian, Ubuntu y Parrot instalan como `ftp`; el paquete `ftp` es transicional a `tnftp`). Prueba a usar modo pasivo por defecto. Otros sistemas traen clientes `ftp` distintos, como el de GNU inetutils, con órdenes parecidas.',
+  estilo: 'posix',
+  combinables: true,
+  argumentos:
+    'Opcionalmente `[usuario@]host` y un puerto. Sin ellos, arranca en modo interactivo y la conexión se abre con la orden "open". También admite una URL, p. ej. ftp://host/ruta.',
+  opciones: [
+    {
+      nombres: ['-?'],
+      descripcion: 'Muestra el mensaje de uso (la lista de opciones y argumentos) y termina.',
+    },
+    {
+      nombres: ['-n'],
+      descripcion:
+        'No intenta el inicio de sesión automático al conectarse; el usuario y la contraseña se introducen a mano con la orden "user".',
+    },
+    {
+      nombres: ['-A'],
+      descripcion:
+        'Fuerza el modo activo. Por defecto se usa modo pasivo y se recurre al activo solo si el servidor no lo admite.',
+    },
+    {
+      nombres: ['-p'],
+      descripcion:
+        'Activa el modo pasivo, pensado para funcionar detrás de cortafuegos. Está en desuso porque el modo pasivo ya es el comportamiento por defecto.',
+    },
+    {
+      nombres: ['-i'],
+      descripcion: 'Desactiva la confirmación interactiva al transferir varios ficheros a la vez.',
+    },
+  ],
+};
+
 export const HERRAMIENTAS: Herramienta[] = [
   nmap,
   gobuster,
@@ -1055,6 +1097,7 @@ export const HERRAMIENTAS: Herramienta[] = [
   nc,
   ping,
   telnet,
+  ftp,
   ssh,
   sudo,
   find,
