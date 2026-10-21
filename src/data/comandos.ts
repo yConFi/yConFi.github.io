@@ -1089,6 +1089,39 @@ const ftp: Herramienta = {
   ],
 };
 
+// ============================================================
+// smbclient (Samba) — https://www.samba.org/samba/docs/current/man-html/smbclient.1.html
+// ============================================================
+const smbclient: Herramienta = {
+  nombre: 'smbclient',
+  descripcion:
+    'Cliente de Samba para acceder a recursos compartidos SMB/CIFS, con una sesión interactiva parecida a la de ftp (prompt smb: \\>). Dentro, "ls" lista, "cd" cambia de directorio, "get" descarga y "quit" sale.',
+  categoria: 'Conexiones',
+  docs: 'https://www.samba.org/samba/docs/current/man-html/smbclient.1.html',
+  variantes: 'Explicaciones según smbclient de Samba (versión 4.19.5).',
+  estilo: 'posix',
+  combinables: false,
+  argumentos:
+    'Recurso al que se conecta, con la forma //servidor/recurso (por ejemplo //10.10.10.10/C$). Opcionalmente, después, la contraseña.',
+  opciones: [
+    {
+      nombres: ['-L', '--list'],
+      descripcion: 'Muestra la lista de recursos compartidos que ofrece el servidor.',
+      valor: { nombre: 'host', descripcion: 'Servidor del que se listan los recursos.' },
+    },
+    {
+      nombres: ['-N', '--no-pass'],
+      descripcion:
+        'No pide contraseña. Útil para recursos que no la necesitan. Sin esta opción ni una contraseña en la línea de comandos, smbclient la pide (con Enter se envía vacía).',
+    },
+    {
+      nombres: ['-U', '--user'],
+      descripcion: 'Indica el usuario SMB y, opcionalmente, su contraseña tras un %. Si no se da contraseña, la pide.',
+      valor: { nombre: 'usuario', descripcion: '[DOMINIO\\]USUARIO[%CONTRASEÑA].' },
+    },
+  ],
+};
+
 export const HERRAMIENTAS: Herramienta[] = [
   nmap,
   gobuster,
@@ -1098,6 +1131,7 @@ export const HERRAMIENTAS: Herramienta[] = [
   ping,
   telnet,
   ftp,
+  smbclient,
   ssh,
   sudo,
   find,

