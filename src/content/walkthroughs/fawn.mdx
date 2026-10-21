@@ -1,0 +1,176 @@
+---
+titulo: "Fawn"
+plataforma: HackTheBox
+dificultad: Muy fácil
+so: Linux
+fecha: 2026-10-21
+tecnicas:
+  - Escaneo de puertos
+  - FTP
+  - Acceso anónimo
+resumen: "Máquina Linux con un servidor FTP en el puerto 21 que admite el usuario anonymous y deja descargar la flag."
+serie:
+  nombre: Starting Point
+  tier: 0
+borrador: false
+---
+
+Máquina del Tier 0 de Starting Point. Las preguntas guiadas (tasks) de HackTheBox aparecen plegadas en la
+sección donde se responden: intenta contestarlas antes de abrirlas.
+
+<Ruta
+  titulo="Camino seguido en Fawn, de la conexión a la flag"
+  pasos={[
+    { titulo: 'ping', detalle: 'Comprobar la conexión' },
+    { titulo: 'nmap -sV -p 21', detalle: 'vsftpd 3.0.3 en 21/tcp' },
+    { titulo: 'ftp', detalle: 'Usuario anonymous' },
+    { titulo: 'get flag.txt', detalle: 'La flag, descargada a Pwnbox', meta: true },
+  ]}
+/>
+
+> La IP `10.129.63.60` es la que tenía la máquina en mi sesión; a ti te saldrá otra.
+
+## Reconocimiento
+
+Esta máquina gira en torno a FTP, así que las primeras preguntas repasan qué es el protocolo.
+
+<Pista titulo="Tarea 1 · ¿Qué significan las siglas FTP?">
+  **File Transfer Protocol** (protocolo de transferencia de ficheros).
+</Pista>
+
+<Pista titulo="Tarea 2 · ¿En qué puerto escucha normalmente el servicio FTP?">
+  En el **21**.
+</Pista>
+
+<Pista titulo="Tarea 3 · FTP envía los datos en claro, sin cifrar. ¿Qué siglas tiene el protocolo posterior que ofrece algo parecido de forma segura, como extensión de SSH?">
+  **SFTP**.
+</Pista>
+
+Antes de nada, compruebo que llega la conexión con la máquina:
+
+<Cmd c="ping 10.129.63.60" notas={{ "10.129.63.60": "IP de la máquina objetivo." }} />
+
+<Pista titulo="Tarea 4 · ¿Qué comando usamos para enviar una petición ICMP echo y probar la conexión con el objetivo?">
+  **ping**.
+</Pista>
+
+## Enumeración
+
+Para saber qué versión de FTP corre y en qué sistema, escaneo el puerto 21 con detección de versiones:
+
+<Cmd
+  c="nmap -sV -p 21 10.129.63.60"
+  notas={{ "21": "Solo se escanea el puerto de FTP.", "10.129.63.60": "IP de la máquina objetivo." }}
+/>
+
+El escaneo muestra el puerto **21/tcp** abierto con el servidor **vsftpd 3.0.3**, y como sistema
+operativo, **Unix**.
+
+<Pista titulo="Tarea 5 · Según tus escaneos, ¿qué versión de FTP corre en el objetivo?">
+  **vsftpd 3.0.3**.
+</Pista>
+
+<Pista titulo="Tarea 6 · Según tus escaneos, ¿qué tipo de sistema operativo corre en el objetivo?">
+  **Unix**.
+</Pista>
+
+## Acceso inicial
+
+Me conecto al servidor FTP. Sin indicar puerto, `ftp` usa el 21:
+
+<Cmd c="ftp 10.129.63.60" notas={{ "10.129.63.60": "IP de la máquina objetivo." }} />
+
+<Pista titulo="Tarea 7 · ¿Qué comando hay que ejecutar para mostrar el menú de ayuda del cliente ftp?">
+  **ftp -?** (respuesta en HTB: `ftp -?`). Muestra el mensaje de uso con las opciones del cliente.
+</Pista>
+
+Al pedir el usuario escribo `anonymous`, el usuario que usan muchos servidores FTP para dar acceso sin
+cuenta. Después pide una contraseña y el servidor acepta el inicio de sesión:
+
+```text
+Connected to 10.129.63.60.
+220 (vsFTPd 3.0.3)
+Name (10.129.63.60:root): anonymous
+331 Please specify the password.
+Password:
+230 Login successful.
+Remote system type is UNIX.
+Using binary mode to transfer files.
+```
+
+<Pista titulo="Tarea 8 · ¿Qué usuario se usa en FTP para iniciar sesión sin tener cuenta?">
+  **anonymous**.
+</Pista>
+
+<Pista titulo="Tarea 9 · ¿Qué código de respuesta recibimos con el mensaje de FTP «Login successful»?">
+  **230**.
+</Pista>
+
+Ya dentro, listo los ficheros del servidor con `ls`:
+
+```text
+ftp> ls
+229 Entering Extended Passive Mode (|||11041|)
+150 Here comes the directory listing.
+-rw-r--r--    1 0        0              32 Jun 04  2021 flag.txt
+226 Directory send OK.
+```
+
+<Pista titulo="Tarea 10 · Hay un par de comandos para listar ficheros y directorios en el servidor FTP. Uno es dir. ¿Cuál es el otro, el habitual para listar ficheros en Linux?">
+  **ls**.
+</Pista>
+
+Hay un `flag.txt`. Intenté leerlo con `cat` y entrar en él con `cd`, pero el cliente FTP no tiene `cat` y
+`flag.txt` no es un directorio:
+
+```text
+ftp> cat flag.txt
+?Invalid command.
+ftp> cd flag.txt
+550 Failed to change directory.
+```
+
+Con FTP los ficheros no se leen en el servidor: se descargan con `get` y se leen en local:
+
+```text
+ftp> get flag.txt
+local: flag.txt remote: flag.txt
+229 Entering Extended Passive Mode (|||31901|)
+150 Opening BINARY mode data connection for flag.txt (32 bytes).
+226 Transfer complete.
+32 bytes received in 00:00 (3.27 KiB/s)
+ftp> bye
+221 Goodbye.
+```
+
+<Pista titulo="Tarea 11 · ¿Qué comando se usa para descargar el fichero que encontramos en el servidor FTP?">
+  **get**.
+</Pista>
+
+De vuelta en Pwnbox, el fichero está en el directorio actual y ya se puede leer:
+
+<Cmd c="ls" />
+
+<Cmd c="cat flag.txt" notas={{ "flag.txt": "Fichero descargado del servidor FTP." }} />
+
+La flag no se publica: la tienes que conseguir tú.
+
+<Pista titulo="Flag · Envía la flag que está en el servidor FTP">
+  Está en `flag.txt`, en el directorio al que entra el usuario anonymous. Descárgala con `get` y léela en
+  tu equipo.
+</Pista>
+
+## Escalada de privilegios
+
+No hace falta: la flag se consigue descargándola por FTP con el usuario anonymous, sin llegar a tener una
+shell en la máquina.
+
+## Lecciones aprendidas
+
+- **Qué fallé:** en la tarea 7 respondí primero `help`, que es la orden de ayuda dentro del cliente, cuando
+  se pedía el comando para mostrarla desde el terminal (`ftp -?`). Además intenté leer la flag con `cat` y
+  `cd` dentro de FTP, que no funcionan.
+- **Lo que enseña la máquina:** un servidor FTP con acceso anónimo activado deja descargar sus ficheros a
+  cualquiera, sin credenciales.
+- **Qué haré la próxima vez:** ante un FTP, probar primero el usuario anonymous y recordar que los ficheros
+  se descargan con `get` y se leen en local.
