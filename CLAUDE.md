@@ -60,6 +60,8 @@ porque Ricardo la aprueba, apúntala aquí:
 - Escaneo de puertos
 - Telnet
 - Acceso sin contraseña
+- FTP
+- Acceso anónimo
 
 ### Estructura
 
