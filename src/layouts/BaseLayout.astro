@@ -11,9 +11,11 @@ interface Props {
   descripcion?: string;
   /** true para pedir a los buscadores que no indexen (p. ej. 404). */
   noindex?: boolean;
+  /** true en las páginas que maquetan su propio ancho (la portada). */
+  anchoCompleto?: boolean;
 }
 
-const { titulo, descripcion = SITE.descripcion, noindex = false } = Astro.props;
+const { titulo, descripcion = SITE.descripcion, noindex = false, anchoCompleto = false } = Astro.props;
 
 const tituloCompleto = titulo ? `${titulo} · ${SITE.titulo}` : SITE.titulo;
 // Solo hay URL canónica si `site` está configurado en astro.config.mjs.
@@ -39,23 +41,38 @@ const canonica = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : und
     {canonica && <meta property="og:url" content={canonica} />}
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="theme-color" content="#0d1117" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0c1116" media="(prefers-color-scheme: dark)" />
 
-    <!-- Aplica el tema guardado antes de pintar, para evitar parpadeo. -->
+    <!-- Las dos fuentes que se ven desde el primer pintado. El resto se piden solo si hacen falta. -->
+    <link rel="preload" href="/fuentes/ibm-plex-sans-var-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fuentes/ibm-plex-mono-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+
+    <!--
+      Sin preferencia guardada manda el tema del sistema (color-scheme: light dark).
+      Si el visitante eligió uno, se aplica antes de pintar para evitar el parpadeo.
+    -->
     <script is:inline>
       try {
-        if (localStorage.getItem('tema') === 'light') {
-          document.documentElement.dataset.theme = 'light';
-        }
+        const tema = localStorage.getItem('tema');
+        if (tema === 'light' || tema === 'dark') document.documentElement.dataset.theme = tema;
       } catch {}
     </script>
   </head>
   <body>
     <a class="skip-link" href="#contenido">Saltar al contenido</a>
     <Header />
-    <main id="contenido" tabindex="-1">
+    <main id="contenido" tabindex="-1" class:list={{ ancho: anchoCompleto }}>
       <slot />
     </main>
     <Footer />
   </body>
 </html>
+
+<style>
+  /* La portada maqueta sus propias bandas, así que el <main> no añade relleno lateral. */
+  main.ancho {
+    max-width: none;
+    padding: 0;
+  }
+</style>

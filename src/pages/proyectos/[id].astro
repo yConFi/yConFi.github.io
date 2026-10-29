@@ -30,9 +30,12 @@ const { Content } = await render(proyecto);
       )
     }
 
-    <p class="migas"><a href="/proyectos/">proyectos</a> / {proyecto.id}</p>
-    <h1>{data.titulo}</h1>
-    <p class="resumen">{data.resumen}</p>
+    <p class="migas"><a href="/proyectos/">proyectos</a> <span aria-hidden="true">/</span> {proyecto.id}</p>
+
+    <div class="cabecera-pagina">
+      <h1>{data.titulo}</h1>
+      <p>{data.resumen}</p>
+    </div>
 
     <dl class="ficha">
       <div><dt>Estado</dt><dd>{data.estado}</dd></div>
@@ -73,46 +76,66 @@ const { Content } = await render(proyecto);
   .franja-borrador {
     margin: 0 0 1.5rem;
     padding: 0.75rem 1rem;
-    border: 2px solid var(--peligro);
+    border: 1px solid var(--peligro);
     border-radius: var(--radio);
+    background: var(--peligro-bg);
     color: var(--peligro);
-    font-family: var(--fuente-mono);
-  }
-
-  .migas {
-    margin: 0 0 0.5rem;
-    font-family: var(--fuente-mono);
-    font-size: 0.85rem;
-    color: var(--texto-suave);
-  }
-
-  .resumen {
-    font-size: 1.1rem;
-    color: var(--texto-suave);
-  }
-
-  .ficha {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem 1.75rem;
-    margin: 1.25rem 0 1.5rem;
-    padding: 1rem 0;
-    border-block: 1px solid var(--borde);
     font-family: var(--fuente-mono);
     font-size: 0.9rem;
   }
 
+  .migas {
+    margin: 0 0 1rem;
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+  }
+
+  .migas a {
+    text-decoration: none;
+  }
+
+  .migas a:hover {
+    text-decoration: underline;
+  }
+
+  .ficha {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 0.9rem 1.25rem;
+    margin: 0 0 2rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-lg);
+    background: var(--bg-elev);
+    font-family: var(--fuente-mono);
+  }
+
   .ficha dt {
-    font-size: 0.75rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--texto-suave);
   }
 
   .ficha dd {
-    margin: 0;
+    margin: 0.1rem 0 0;
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
   }
 
-  .prosa :global(h2)::before {
-    content: '## ';
-    color: var(--acento-texto);
+  .prosa :global(h2) {
+    margin-top: 2.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--borde);
+  }
+
+  .prosa :global(blockquote) {
+    margin: 1.25rem 0;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    background: var(--bg-elev);
+    color: var(--texto-suave);
   }
 </style>

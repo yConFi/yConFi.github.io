@@ -26,6 +26,8 @@ en los que **cada parte de cada comando tiene un tooltip** con lo que hace.
 ## Estructura
 
 ```text
+public/
+└─ fuentes/                 # IBM Plex en .woff2 y su licencia (no se pide nada a terceros)
 src/
 ├─ content/
 │  ├─ walkthroughs/         # un .mdx por máquina (plantilla.mdx = plantilla, siempre borrador)
@@ -35,12 +37,57 @@ src/
 ├─ data/
 │  ├─ comandos.ts           # diccionario de herramientas, opciones y operadores
 │  └─ site.ts               # nombre, descripción, enlaces y perfiles de plataformas
-├─ components/              # Cmd, Pista, tarjetas, cabecera, pie…
+├─ components/              # Cmd, Pista, Ruta, Avatar, tarjetas, cabecera, pie…
 ├─ lib/comando/             # tokenizador, analizador y validación de <Cmd>
+├─ lib/diccionario.ts       # cuentas del diccionario (se usan en /diccionario/ y en la portada)
 ├─ pages/                   # rutas de la web
-└─ styles/global.css        # colores (tema oscuro y claro) y estilos base
+└─ styles/global.css        # tokens de color, tipografía y estilos base
 tests/                      # tests con Vitest
 ```
+
+---
+
+## Diseño
+
+Todo el diseño sale de `src/styles/global.css`; las páginas y los componentes solo usan sus variables.
+
+### Colores y tema
+
+Cada color se escribe **una sola vez**, con los dos valores juntos:
+
+```css
+--bg: light-dark(#ffffff, #0c1116);
+```
+
+Cuál de los dos se usa lo decide `color-scheme`, no una media query:
+
+| `<html>`             | `color-scheme` | Resultado                 |
+| -------------------- | -------------- | ------------------------- |
+| sin `data-theme`     | `light dark`   | **el tema del sistema**   |
+| `data-theme="light"` | `light`        | siempre claro             |
+| `data-theme="dark"`  | `dark`         | siempre oscuro            |
+
+El botón de la cabecera (`ThemeToggle.astro`) escribe `data-theme` y lo guarda en `localStorage`;
+`BaseLayout.astro` lo aplica con un script en línea **antes de pintar**, para que no haya parpadeo.
+Quien no toque el botón sigue viendo lo que tenga configurado en su sistema.
+
+Para añadir un color, añade la variable al bloque `:root` con `light-dark(claro, oscuro)` y comprueba
+que el contraste llega a 4,5:1 en los dos temas.
+
+### Tipografía
+
+**IBM Plex Sans** para el texto e **IBM Plex Mono** para comandos, datos y etiquetas. Los archivos
+están en `public/fuentes/` (unos 145 KB en total), así que la web no pide nada a Google ni a ningún
+otro servidor. La licencia (SIL OFL 1.1) va al lado, en `LICENCIA-IBM-Plex.txt`.
+
+Sans es una fuente **variable**: un solo archivo por subconjunto cubre de 100 a 700. De Mono se
+guardan dos pesos, 400 y 600. De cada familia hay dos archivos, `latin` y `latin-ext`: el navegador
+solo descarga el que necesite según los caracteres de la página.
+
+### Avatar
+
+`src/components/Avatar.astro` es la marca personal de la portada. Ahora mismo dibuja el monograma
+`~/` con CSS. Cuando esté el avatar definitivo, se cambia **solo ese archivo**.
 
 ---
 

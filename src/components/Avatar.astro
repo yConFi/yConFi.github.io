@@ -1,0 +1,32 @@
+---
+// Marca personal de la portada. De momento es el monograma del sitio (`~/`).
+// Cuando esté diseñado el avatar definitivo, se cambia solo este archivo:
+// bastará con poner aquí la imagen (optimizada con <Image> de Astro).
+interface Props {
+  /** Lado del círculo. Por defecto 5.5rem. */
+  tamano?: string;
+}
+
+const { tamano = '5.5rem' } = Astro.props;
+---
+
+<span class="avatar" style={`--lado: ${tamano}`} aria-hidden="true">~/</span>
+
+<style>
+  .avatar {
+    display: inline-grid;
+    place-items: center;
+    width: var(--lado);
+    height: var(--lado);
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 2px solid var(--acento);
+    background: var(--acento-bg);
+    color: var(--acento-texto);
+    font-family: var(--fuente-mono);
+    font-weight: 600;
+    font-size: calc(var(--lado) / 2.8);
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+</style>

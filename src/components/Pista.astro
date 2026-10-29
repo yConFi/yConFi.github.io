@@ -1,20 +1,32 @@
 ---
-// Pista plegada: el lector intenta resolverlo antes de abrirla.
+// Pista plegada: el lector intenta resolverlo antes de abrirla. También se usa
+// para las preguntas (tasks) de HackTheBox.
 // Uso en MDX:
 //   <Pista>Mira qué versión del servicio está expuesta.</Pista>
-//   <Pista titulo="Solución">El comando es…</Pista>
+//   <Pista titulo="Tarea 1 · ¿Qué puerto TCP está abierto?">El 23, según nmap.</Pista>
 interface Props {
   titulo?: string;
 }
 
 const { titulo = 'Pista' } = Astro.props;
+
+// "Tarea 4 · ¿Qué herramienta…?" se parte en etiqueta ("Tarea 4") y pregunta.
+// Sin "·" (p. ej. "Solución") el título entero es la pregunta.
+const separador = titulo.indexOf('·');
+const etiqueta = separador === -1 ? null : titulo.slice(0, separador).trim();
+const pregunta = separador === -1 ? titulo : titulo.slice(separador + 1).trim();
 ---
 
 <details class="pista">
   <summary>
     <span class="icono" aria-hidden="true">?</span>
-    <span class="titulo">{titulo}</span>
-    <span class="aviso">inténtalo antes de abrirla</span>
+    <span class="texto">
+      {etiqueta && <span class="etiqueta-tarea">{etiqueta}</span>}
+      <span class="pregunta">{pregunta}</span>
+    </span>
+    <svg class="flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="m6 9 6 6 6-6"></path>
+    </svg>
   </summary>
   <div class="contenido">
     <slot />
@@ -24,19 +36,18 @@ const { titulo = 'Pista' } = Astro.props;
 <style>
   .pista {
     margin: 1.25rem 0;
-    border: 1px dashed var(--aviso-borde);
-    border-radius: var(--radio);
-    background: color-mix(in srgb, var(--aviso-bg) 45%, transparent);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-lg);
+    background: var(--bg-elev);
+    overflow: hidden;
   }
 
   summary {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.25rem 0.6rem;
-    padding: 0.6rem 1rem;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
     cursor: pointer;
-    font-family: var(--fuente-mono);
     list-style: none;
   }
 
@@ -44,40 +55,74 @@ const { titulo = 'Pista' } = Astro.props;
     display: none;
   }
 
+  summary:hover {
+    background: var(--bg-elev-2);
+  }
+
   .icono {
     display: inline-grid;
     place-items: center;
     width: 1.5rem;
     height: 1.5rem;
-    border-radius: 50%;
-    background: var(--aviso-borde);
-    color: var(--bg);
-    font-weight: 700;
+    flex-shrink: 0;
+    border-radius: var(--radio-sm);
+    background: var(--acento2-bg);
+    color: var(--acento2-texto);
+    font-family: var(--fuente-mono);
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+
+  .texto {
+    flex-grow: 1;
+    min-width: 0;
+  }
+
+  .etiqueta-tarea {
+    display: block;
+    font-family: var(--fuente-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--acento2-texto);
+    margin-bottom: 0.1rem;
+  }
+
+  .pregunta {
+    display: block;
+    font-size: 0.97rem;
+    line-height: 1.45;
+  }
+
+  .flecha {
+    width: 1.1rem;
+    height: 1.1rem;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+    color: var(--texto-suave);
     transition: transform 0.15s;
   }
 
-  .pista[open] .icono {
+  .pista[open] .flecha {
     transform: rotate(180deg);
   }
 
-  .titulo {
-    font-weight: 700;
-  }
-
-  .aviso {
-    font-size: 0.8rem;
-    color: var(--texto-suave);
-  }
-
-  .pista[open] .aviso {
-    display: none;
-  }
-
   .contenido {
-    padding: 0 1rem 0.75rem;
+    padding: 0.9rem 1rem 1rem 3.25rem;
+    border-top: 1px solid var(--borde-suave);
   }
 
   .contenido > :global(:first-child) {
     margin-top: 0;
+  }
+
+  .contenido > :global(:last-child) {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 30rem) {
+    .contenido {
+      padding-left: 1rem;
+    }
   }
 </style>

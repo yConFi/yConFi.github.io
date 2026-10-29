@@ -1,27 +1,36 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TarjetaWalkthrough from '../../components/TarjetaWalkthrough.astro';
-import { DIFICULTADES, PLATAFORMAS, SERIES } from '../../content.config';
+import { DIFICULTADES, PLATAFORMAS, SERIES, SISTEMAS } from '../../content.config';
 import { obtenerWalkthroughs } from '../../lib/coleccion';
 import { agruparPorTecnica, nombreSerie } from '../../lib/walkthroughs';
 
 const lista = await obtenerWalkthroughs();
 const tecnicas = agruparPorTecnica(lista);
 
-// Solo se ofrecen valores que existen, en el orden definido en content.config.ts.
-const usados = <T extends string>(valores: readonly T[], campo: 'plataforma' | 'dificultad') =>
-  valores.filter((v) => lista.some((w) => w.data[campo] === v));
+// Solo se ofrece un filtro si de verdad separa la lista en dos o más montones:
+// con una sola plataforma o una sola dificultad, el desplegable sobra.
+const usados = <T extends string>(valores: readonly T[], campo: 'plataforma' | 'dificultad' | 'so') => {
+  const presentes = valores.filter((v) => lista.some((w) => w.data[campo] === v));
+  return presentes.length > 1 ? presentes : [];
+};
 const plataformas = usados(PLATAFORMAS, 'plataforma');
 const dificultades = usados(DIFICULTADES, 'dificultad');
+const sistemas = usados(SISTEMAS, 'so');
 
-// Cada serie usada y, debajo, sus tiers usados en orden ("Starting Point", "Starting Point · Tier 0"…).
+// Botones de serie: la serie entera y, debajo, cada tier usado en orden.
 const series = SERIES.flatMap((nombre) => {
   const tiers = [...new Set(lista.flatMap((w) => (w.data.serie?.nombre === nombre ? [w.data.serie.tier] : [])))];
   if (tiers.length === 0) return [];
   tiers.sort((a, b) => a - b);
+  const cuantos = (valor: string) => lista.filter((w) => w.data.serie && nombreSerie(w.data.serie).startsWith(valor)).length;
   return [
-    { valor: nombre, texto: `${nombre} (todos los tiers)` },
-    ...tiers.map((tier) => ({ valor: nombreSerie({ nombre, tier }), texto: nombreSerie({ nombre, tier }) })),
+    { valor: nombre, texto: nombre, total: cuantos(nombre) },
+    ...tiers.map((tier) => ({
+      valor: nombreSerie({ nombre, tier }),
+      texto: `Tier ${tier}`,
+      total: lista.filter((w) => w.data.serie?.nombre === nombre && w.data.serie.tier === tier).length,
+    })),
   ];
 });
 ---
@@ -30,82 +39,118 @@ const series = SERIES.flatMap((nombre) => {
   titulo="Walkthroughs"
   descripcion="Walkthroughs paso a paso de máquinas y retos retirados, con cada comando explicado."
 >
-  <h1 class="prompt">ls walkthroughs/</h1>
-  <p class="lectura texto-suave">
-    Máquinas y retos <strong>retirados</strong>, resueltos paso a paso. Pasa el ratón (o toca) cada parte de un
-    comando para ver qué hace.
-    {
-      tecnicas.length > 0 && (
-        <>
-          {' '}
-          Todas las técnicas están en <a href="/tecnicas/">/tecnicas</a>.
-        </>
-      )
-    }
-  </p>
-
   {
     lista.length === 0 ? (
-      <p class="vacio">Todavía no hay walkthroughs publicados.</p>
+      <>
+        <div class="cabecera-pagina">
+          <h1>Walkthroughs</h1>
+        </div>
+        <p class="vacio">Todavía no hay walkthroughs publicados.</p>
+      </>
     ) : (
       <>
+        <div class="encabezado">
+          <div class="cabecera-pagina">
+            <h1>Walkthroughs</h1>
+            <p>
+              Máquinas y retos <strong>retirados</strong>, resueltos paso a paso. Pasa el ratón por cualquier parte
+              de un comando y te dice qué hace.
+              {tecnicas.length > 0 && (
+                <>
+                  {' '}
+                  Todas las técnicas están en <a href="/tecnicas/">/tecnicas</a>.
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+
         <form class="filtros" data-filtros hidden aria-label="Filtrar walkthroughs">
-          <label>
-            <span>Plataforma</span>
-            <select name="plataforma">
-              <option value="">Todas</option>
-              {plataformas.map((p) => (
-                <option value={p}>{p}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Dificultad</span>
-            <select name="dificultad">
-              <option value="">Todas</option>
-              {dificultades.map((d) => (
-                <option value={d}>{d}</option>
-              ))}
-            </select>
-          </label>
-          {
-            series.length > 0 && (
-              <label>
-                <span>Serie</span>
-                <select name="serie">
-                  <option value="">Todas</option>
-                  {series.map((s) => (
-                    <option value={s.valor}>{s.texto}</option>
-                  ))}
-                </select>
-              </label>
-            )
-          }
-          <label>
-            <span>Técnica</span>
-            <select name="tecnica">
-              <option value="">Todas</option>
-              {tecnicas.map((t) => (
-                <option value={t.slug}>{t.nombre}</option>
-              ))}
-            </select>
-          </label>
-          <button type="reset">Quitar filtros</button>
+          <div class="buscador">
+            <label for="q">Buscar</label>
+            <input id="q" name="q" type="search" class="campo" placeholder="nombre, servicio, técnica…" autocomplete="off" />
+          </div>
+
+          <div class="fila-filtros">
+            {series.length > 0 && (
+              <fieldset class="chips">
+                <legend class="visually-hidden">Serie</legend>
+                <label class="chip">
+                  <input type="radio" name="serie" value="" checked />
+                  <span>Todas · {lista.length}</span>
+                </label>
+                {series.map((s) => (
+                  <label class="chip">
+                    <input type="radio" name="serie" value={s.valor} />
+                    <span>
+                      {s.texto} · {s.total}
+                    </span>
+                  </label>
+                ))}
+              </fieldset>
+            )}
+
+            <div class="listas">
+              {sistemas.length > 0 && (
+                <label class="desplegable">
+                  <span class="visually-hidden">Sistema</span>
+                  <select name="so">
+                    <option value="">Sistema: todos</option>
+                    {sistemas.map((s) => (
+                      <option value={s}>{s}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {dificultades.length > 0 && (
+                <label class="desplegable">
+                  <span class="visually-hidden">Dificultad</span>
+                  <select name="dificultad">
+                    <option value="">Dificultad: todas</option>
+                    {dificultades.map((d) => (
+                      <option value={d}>{d}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {plataformas.length > 0 && (
+                <label class="desplegable">
+                  <span class="visually-hidden">Plataforma</span>
+                  <select name="plataforma">
+                    <option value="">Plataforma: todas</option>
+                    {plataformas.map((p) => (
+                      <option value={p}>{p}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {tecnicas.length > 0 && (
+                <label class="desplegable">
+                  <span class="visually-hidden">Técnica</span>
+                  <select name="tecnica">
+                    <option value="">Técnica: todas</option>
+                    {tecnicas.map((t) => (
+                      <option value={t.slug}>{t.nombre}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <button type="reset" class="quitar">Quitar filtros</button>
+            </div>
+          </div>
         </form>
 
         <p class="contador" data-contador aria-live="polite">
-          {lista.length} {lista.length === 1 ? 'walkthrough' : 'walkthroughs'}
+          {lista.length} {lista.length === 1 ? 'máquina' : 'máquinas'}
         </p>
 
-        <div class="lista" data-lista>
+        <div class="rejilla" data-lista>
           {lista.map((w) => (
             <TarjetaWalkthrough walkthrough={w} />
           ))}
         </div>
 
-        <p class="vacio" data-sin-resultados hidden>
-          Ningún walkthrough coincide con estos filtros.
-        </p>
+        <p class="vacio" data-sin-resultados hidden>Ninguna máquina coincide con estos filtros.</p>
       </>
     )
   }
@@ -117,73 +162,126 @@ const series = SERIES.flatMap((nombre) => {
 </script>
 
 <style>
+  .encabezado {
+    margin-bottom: 1.5rem;
+  }
+
   .filtros {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 0.75rem 1rem;
-    margin: 1.5rem 0 0.5rem;
-    padding: 1rem;
-    border: 1px solid var(--borde);
-    border-radius: var(--radio);
-    background: var(--bg-elev);
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--borde);
   }
 
   .filtros[hidden] {
     display: none;
   }
 
-  label {
+  .buscador {
     display: grid;
-    gap: 0.25rem;
-    flex: 1 1 10rem;
+    gap: 0.35rem;
+    max-width: 26rem;
+  }
+
+  .buscador label {
+    font-family: var(--fuente-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+  }
+
+  .fila-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+  }
+
+  /* Botones de serie: radios de verdad, para que el teclado funcione solo. */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .chip input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
+  .chip span {
+    display: inline-block;
+    min-height: 2.5rem;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-pill);
+    background: var(--bg-elev);
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+    cursor: pointer;
+  }
+
+  .chip span:hover {
+    border-color: var(--acento);
+    color: var(--texto);
+  }
+
+  .chip input:checked + span {
+    border-color: var(--acento);
+    background: var(--acento-bg);
+    color: var(--acento-texto);
+  }
+
+  .chip input:focus-visible + span {
+    outline: 3px solid var(--foco);
+    outline-offset: 2px;
+  }
+
+  .listas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+
+  select,
+  .quitar {
+    min-height: 2.5rem;
+    padding: 0 0.7rem;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-pill);
+    background: var(--bg-elev);
+    color: var(--texto-suave);
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+
+  select:hover,
+  .quitar:hover {
+    border-color: var(--acento);
+    color: var(--texto);
+  }
+
+  .contador {
+    margin: 0 0 1rem;
     font-family: var(--fuente-mono);
     font-size: 0.8rem;
     color: var(--texto-suave);
   }
 
-  select,
-  button {
-    min-height: 2.75rem;
-    padding: 0 0.75rem;
-    background: var(--bg);
-    color: var(--texto);
-    border: 1px solid var(--borde);
-    border-radius: var(--radio);
-    font: inherit;
-    font-size: 0.95rem;
-  }
-
-  button {
-    cursor: pointer;
-    font-family: var(--fuente-mono);
-    font-size: 0.85rem;
-  }
-
-  button:hover {
-    border-color: var(--acento);
-  }
-
-  .contador {
-    font-family: var(--fuente-mono);
-    font-size: 0.85rem;
-    color: var(--texto-suave);
-  }
-
-  .lista {
+  .rejilla {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
     gap: 1rem;
-  }
-
-  .vacio {
-    padding: 1.5rem;
-    border: 1px dashed var(--borde);
-    border-radius: var(--radio);
-    font-family: var(--fuente-mono);
-    color: var(--texto-suave);
-  }
-
-  .vacio[hidden] {
-    display: none;
+    align-items: stretch;
   }
 </style>
