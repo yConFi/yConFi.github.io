@@ -7,31 +7,46 @@ interface Props {
 }
 
 const { proyecto: p, nivel: Titulo = 'h2' } = Astro.props;
+// "En producción" y "Terminado" son estados buenos; el resto se quedan en gris.
+const activo = p.data.estado === 'En producción';
 ---
 
 <article class="tarjeta">
-  <Titulo class="titulo">
-    <a href={`/proyectos/${p.id}/`}>{p.data.titulo}</a>
-    {p.data.borrador && <span class="borrador">borrador</span>}
-  </Titulo>
-  <p class="estado">{p.data.estado}</p>
+  <div class="encabezado">
+    <Titulo class="titulo">
+      <a href={`/proyectos/${p.id}/`}>{p.data.titulo}</a>
+      {p.data.borrador && <span class="borrador">borrador</span>}
+    </Titulo>
+    <p class:list={['estado', { activo }]}>
+      <span class="punto" aria-hidden="true"></span>{p.data.estado}
+    </p>
+  </div>
+
   <p class="resumen">{p.data.resumen}</p>
+
   <ul class="tecnologias" aria-label="Tecnologías">
-    {p.data.tecnologias.map((t) => <li>{t}</li>)}
+    {p.data.tecnologias.map((t) => <li class="etiqueta">{t}</li>)}
   </ul>
 </article>
 
 <style>
   .tarjeta {
-    border: 1px solid var(--borde);
-    border-radius: var(--radio);
-    background: var(--bg-elev);
-    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .encabezado {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem 0.75rem;
   }
 
   .titulo {
-    margin: 0 0 0.35rem;
-    font-size: 1.2rem;
+    margin: 0;
+    font-size: 1.25rem;
+    flex-grow: 1;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -49,39 +64,49 @@ const { proyecto: p, nivel: Titulo = 'h2' } = Astro.props;
   }
 
   .borrador {
+    font-family: var(--fuente-mono);
     font-size: 0.7rem;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
     padding: 0.1rem 0.45rem;
-    border-radius: 999px;
+    border-radius: var(--radio-pill);
     border: 1px solid var(--peligro);
     color: var(--peligro);
   }
 
   .estado {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
     margin: 0;
     font-family: var(--fuente-mono);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
+    color: var(--texto-suave);
+  }
+
+  .punto {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .estado.activo {
     color: var(--acento-texto);
   }
 
   .resumen {
-    margin: 0.5rem 0;
+    margin: 0;
+    font-size: 0.97rem;
+    color: var(--texto-suave);
   }
 
   .tecnologias {
     list-style: none;
-    margin: 0;
+    margin: auto 0 0;
     padding: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem;
-  }
-
-  .tecnologias li {
-    font-family: var(--fuente-mono);
-    font-size: 0.8rem;
-    padding: 0.1rem 0.5rem;
-    border: 1px solid var(--borde);
-    border-radius: 999px;
+    gap: 0.35rem;
   }
 </style>

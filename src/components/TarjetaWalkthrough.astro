@@ -10,6 +10,14 @@ interface Props {
 const { walkthrough: w, nivel: Titulo = 'h2' } = Astro.props;
 const { data } = w;
 const slugs = data.tecnicas.map(slugTecnica);
+
+// Origen: de dónde sale la máquina. La serie, si la hay, se parte en nombre y tier
+// para que al cambiar de línea no empiece por el punto separador.
+const origen = [data.plataforma, data.serie?.nombre, data.serie && `Tier ${data.serie.tier}`].filter(
+  (p): p is string => Boolean(p),
+);
+// Texto sobre el que busca el buscador del índice.
+const texto = [data.titulo, ...origen, data.so, data.dificultad, data.resumen, ...data.tecnicas].join(' ');
 ---
 
 <article
@@ -17,50 +25,64 @@ const slugs = data.tecnicas.map(slugTecnica);
   data-walkthrough
   data-plataforma={data.plataforma}
   data-dificultad={data.dificultad}
+  data-so={data.so}
   data-serie={filtrosSerie(data.serie).join('|')}
   data-tecnicas={slugs.join('|')}
+  data-texto={texto}
 >
-  <Titulo class="titulo">
-    <a href={`/walkthroughs/${w.id}/`}>{data.titulo}</a>
-    {data.borrador && <span class="borrador">borrador</span>}
-  </Titulo>
+  <div class="encabezado">
+    <Titulo class="titulo">
+      <a href={`/walkthroughs/${w.id}/`}>{data.titulo}</a>
+      {data.borrador && <span class="borrador">borrador</span>}
+    </Titulo>
+    <span class={`dificultad dificultad-${slugTecnica(data.dificultad)}`}>{data.dificultad}</span>
+  </div>
 
-  <ul class="meta" aria-label="Datos de la máquina">
-    <li>{data.plataforma}</li>
-    {data.serie && <li>{nombreSerie(data.serie)}</li>}
-    <li class={`dificultad dificultad-${slugTecnica(data.dificultad)}`}>{data.dificultad}</li>
-    <li>{data.so}</li>
-    <li><time datetime={data.fecha.toISOString().slice(0, 10)}>{formatearFecha(data.fecha)}</time></li>
+  <ul class="origen">
+    {origen.map((parte) => <li>{parte}</li>)}
   </ul>
 
   <p class="resumen">{data.resumen}</p>
 
-  <ul class="tecnicas" aria-label="Técnicas">
-    {
-      data.tecnicas.map((t, i) => (
-        <li>
-          <a href={`/tecnicas/${slugs[i]}/`}>#{t}</a>
-        </li>
-      ))
-    }
-  </ul>
+  <div class="pie">
+    <span class="so">{data.so}</span>
+    <time class="fecha" datetime={data.fecha.toISOString().slice(0, 10)}>{formatearFecha(data.fecha)}</time>
+    <ul class="tecnicas" aria-label="Técnicas">
+      {
+        data.tecnicas.map((t, i) => (
+          <li>
+            <a class="etiqueta" href={`/tecnicas/${slugs[i]}/`}>
+              #{t}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
 </article>
 
 <style>
   .tarjeta {
-    border: 1px solid var(--borde);
-    border-radius: var(--radio);
-    background: var(--bg-elev);
-    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 
   .tarjeta[hidden] {
     display: none;
   }
 
+  .encabezado {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
   .titulo {
-    margin: 0 0 0.5rem;
-    font-size: 1.2rem;
+    flex-grow: 1;
+    min-width: 0;
+    margin: 0;
+    font-size: 1.3rem;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -78,47 +100,62 @@ const slugs = data.tecnicas.map(slugTecnica);
   }
 
   .borrador {
+    font-family: var(--fuente-mono);
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     padding: 0.1rem 0.45rem;
-    border-radius: 999px;
+    border-radius: var(--radio-pill);
     border: 1px solid var(--peligro);
     color: var(--peligro);
   }
 
-  ul {
+  .origen {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.3rem 0.9rem;
-  }
-
-  .meta {
+    gap: 0 0.35rem;
     font-family: var(--fuente-mono);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: var(--texto-suave);
   }
 
-  .dificultad-muy-facil,
-  .dificultad-facil { color: var(--acento-texto); }
-  .dificultad-media { color: var(--tok-valor); }
-  .dificultad-dificil,
-  .dificultad-insana { color: var(--peligro); }
+  /* El separador va pegado a la parte anterior, así ninguna línea empieza por "·". */
+  .origen li:not(:last-child)::after {
+    content: ' ·';
+  }
 
   .resumen {
-    margin: 0.6rem 0;
+    margin: 0.25rem 0 0;
+    font-size: 0.97rem;
+    color: var(--texto-suave);
+  }
+
+  .pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.75rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--borde-suave);
+  }
+
+  .so,
+  .fecha {
+    font-family: var(--fuente-mono);
+    font-size: 0.75rem;
+    color: var(--texto-suave);
   }
 
   .tecnicas {
-    font-family: var(--fuente-mono);
-    font-size: 0.85rem;
-  }
-
-  .tecnicas a {
-    display: inline-block;
-    padding: 0.2rem 0;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
   }
 </style>

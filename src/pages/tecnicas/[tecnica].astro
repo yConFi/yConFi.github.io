@@ -21,30 +21,46 @@ const n = tecnica.walkthroughs.length;
   titulo={`Técnica: ${tecnica.nombre}`}
   descripcion={`Walkthroughs en los que se usa la técnica ${tecnica.nombre}.`}
 >
-  <p class="migas"><a href="/tecnicas/">técnicas</a> / {tecnica.slug}</p>
-  <h1 class="prompt">grep -l "{tecnica.nombre}"</h1>
-  <p class="texto-suave">{n} {n === 1 ? 'walkthrough usa' : 'walkthroughs usan'} esta técnica.</p>
+  <p class="migas"><a href="/tecnicas/">técnicas</a> <span aria-hidden="true">/</span> {tecnica.slug}</p>
 
-  <div class="lista">
+  <div class="cabecera-pagina">
+    <h1><span class="almohadilla" aria-hidden="true">#</span>{tecnica.nombre}</h1>
+    <p>{n} {n === 1 ? 'máquina usa' : 'máquinas usan'} esta técnica.</p>
+  </div>
+
+  <div class="rejilla">
     {tecnica.walkthroughs.map((w) => <TarjetaWalkthrough walkthrough={w} />)}
   </div>
 </BaseLayout>
 
 <style>
   .migas {
-    margin: 0 0 0.5rem;
+    margin: 0 0 1rem;
     font-family: var(--fuente-mono);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--texto-suave);
+  }
+
+  .migas a {
+    text-decoration: none;
+  }
+
+  .migas a:hover {
+    text-decoration: underline;
   }
 
   h1 {
     overflow-wrap: anywhere;
   }
 
-  .lista {
+  .almohadilla {
+    color: var(--acento-texto);
+  }
+
+  .rejilla {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
     gap: 1rem;
-    margin-top: 1.5rem;
+    align-items: stretch;
   }
 </style>

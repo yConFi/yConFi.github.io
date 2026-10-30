@@ -1,0 +1,37 @@
+---
+// Marca personal de la portada: el avatar ilustrado de Ricardo.
+// Para cambiarlo basta con sustituir la imagen de src/assets/avatar/.
+import { Image } from 'astro:assets';
+import avatar from '../assets/avatar/ricardo.webp';
+
+interface Props {
+  /** Lado del círculo. Por defecto 5.5rem. */
+  tamano?: string;
+  /** Lado en píxeles que se le pide a Astro al optimizar (el doble, para pantallas densas). */
+  ancho?: number;
+}
+
+const { tamano = '5.5rem', ancho = 256 } = Astro.props;
+---
+
+<Image
+  class="avatar"
+  style={`--lado: ${tamano}`}
+  src={avatar}
+  width={ancho}
+  height={ancho}
+  alt="Avatar ilustrado de Ricardo Hidalgo"
+  loading="eager"
+/>
+
+<style>
+  .avatar {
+    width: var(--lado);
+    height: var(--lado);
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 2px solid var(--acento);
+    object-fit: cover;
+    background: var(--acento-bg);
+  }
+</style>

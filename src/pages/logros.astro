@@ -9,16 +9,21 @@ const iso = (fecha: Date) => fecha.toISOString().slice(0, 10);
 ---
 
 <BaseLayout titulo="Logros" descripcion="Certificaciones conseguidas y progreso en plataformas de práctica de ciberseguridad.">
-  <h1 class="prompt">ls logros/</h1>
-  <p class="lectura texto-suave">Certificaciones que he conseguido y mi progreso en plataformas de práctica.</p>
+  <div class="cabecera-pagina">
+    <h1>Logros</h1>
+    <p>Certificaciones que he conseguido y mi progreso en plataformas de práctica.</p>
+  </div>
 
   <section aria-labelledby="titulo-certificaciones">
     <h2 id="titulo-certificaciones">Certificaciones</h2>
     {
       certificaciones.length === 0 ? (
-        <p class="vacio">Todavía no tengo ninguna certificación.</p>
+        <p class="vacio">
+          Todavía no tengo ninguna certificación. Mientras tanto, lo que voy aprendiendo está en los{' '}
+          <a href="/walkthroughs/">walkthroughs</a>.
+        </p>
       ) : (
-        <ul class="lista">
+        <ul class="rejilla">
           {certificaciones.map(({ data }) => (
             <li class="tarjeta">
               <h3 class="titulo">
@@ -42,7 +47,7 @@ const iso = (fecha: Date) => fecha.toISOString().slice(0, 10);
 
   <section aria-labelledby="titulo-plataformas">
     <h2 id="titulo-plataformas">Plataformas</h2>
-    <ul class="lista">
+    <ul class="rejilla">
       {
         PERFILES.map((p) => (
           <li class="tarjeta">
@@ -66,27 +71,26 @@ const iso = (fecha: Date) => fecha.toISOString().slice(0, 10);
 </BaseLayout>
 
 <style>
-  section {
-    margin-top: 2rem;
+  section + section {
+    margin-top: 2.5rem;
   }
 
-  .lista {
+  section h2 {
+    margin-top: 0;
+  }
+
+  .rejilla {
     list-style: none;
+    margin: 0;
     padding: 0;
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
     gap: 1rem;
   }
 
-  .tarjeta {
-    border: 1px solid var(--borde);
-    border-radius: var(--radio);
-    background: var(--bg-elev);
-    padding: 1rem 1.25rem;
-  }
-
   .titulo {
-    margin: 0 0 0.35rem;
-    font-size: 1.2rem;
+    margin: 0;
+    font-size: 1.15rem;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -94,35 +98,31 @@ const iso = (fecha: Date) => fecha.toISOString().slice(0, 10);
   }
 
   .borrador {
+    font-family: var(--fuente-mono);
     font-size: 0.7rem;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
     padding: 0.1rem 0.45rem;
-    border-radius: 999px;
+    border-radius: var(--radio-pill);
     border: 1px solid var(--peligro);
     color: var(--peligro);
   }
 
   .meta {
-    margin: 0;
+    margin: 0.4rem 0 0;
     font-family: var(--fuente-mono);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--texto-suave);
   }
 
   .enlace {
-    margin: 0.5rem 0 0;
+    margin: 0.75rem 0 0;
+    font-family: var(--fuente-mono);
+    font-size: 0.85rem;
   }
 
   .enlace a {
     display: inline-block;
     padding: 0.2rem 0;
-  }
-
-  .vacio {
-    padding: 1.5rem;
-    border: 1px dashed var(--borde);
-    border-radius: var(--radio);
-    font-family: var(--fuente-mono);
-    color: var(--texto-suave);
   }
 </style>

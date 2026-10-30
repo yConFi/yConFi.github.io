@@ -25,30 +25,38 @@ const { titulo, pasos } = Astro.props;
 ---
 
 <figure class="ruta">
+  <figcaption>{titulo}</figcaption>
   <ol>
     {
       pasos.map((p, i) => (
         <li class:list={['paso', { meta: p.meta }]}>
-          <span class="numero" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+          <span class="numero" aria-hidden="true">
+            {String(i + 1).padStart(2, '0')}
+          </span>
           <strong class="titulo">{p.titulo}</strong>
           <span class="detalle">{p.detalle}</span>
         </li>
       ))
     }
   </ol>
-  <figcaption>{titulo}</figcaption>
 </figure>
 
 <style>
   .ruta {
-    margin: 1.5rem 0;
-    padding: 1rem;
+    margin: 1.75rem 0;
+    padding: 1.1rem 1.2rem;
     border: 1px solid var(--borde);
-    border-radius: var(--radio);
-    background:
-      radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--borde) 70%, transparent) 1px, transparent 0) 0 0 /
-        16px 16px,
-      var(--bg-elev);
+    border-radius: var(--radio-lg);
+    background: var(--bg-elev);
+  }
+
+  figcaption {
+    font-family: var(--fuente-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+    margin-bottom: 0.9rem;
   }
 
   ol {
@@ -62,19 +70,16 @@ const { titulo, pasos } = Astro.props;
   .paso {
     position: relative;
     display: grid;
-    gap: 0.15rem;
-    padding: 0.6rem 0.75rem;
+    gap: 0.1rem;
+    padding: 0.7rem 0.85rem;
     border: 1px solid var(--borde);
-    border-left: 3px solid var(--tok-opcion);
     border-radius: var(--radio);
     background: var(--bg);
-    font-family: var(--fuente-mono);
   }
 
   .paso.meta {
     border-color: var(--acento);
-    border-left-color: var(--acento);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--acento) 35%, transparent);
+    background: var(--acento-bg);
   }
 
   /* Flecha hacia el siguiente paso (abajo en móvil, a la derecha en escritorio). */
@@ -82,19 +87,23 @@ const { titulo, pasos } = Astro.props;
     content: '↓';
     position: absolute;
     left: 50%;
-    bottom: -1.6rem;
+    bottom: -1.55rem;
     transform: translateX(-50%);
-    color: var(--texto-suave);
-    font-size: 1.1rem;
+    color: var(--texto-tenue);
+    font-size: 1.05rem;
+    line-height: 1;
   }
 
   .numero {
-    font-size: 0.7rem;
-    color: var(--texto-suave);
+    font-family: var(--fuente-mono);
+    font-size: 0.65rem;
+    color: var(--texto-tenue);
   }
 
   .titulo {
+    font-family: var(--fuente-mono);
     font-size: 0.95rem;
+    font-weight: 600;
     color: var(--tok-opcion);
     overflow-wrap: anywhere;
   }
@@ -104,17 +113,9 @@ const { titulo, pasos } = Astro.props;
   }
 
   .detalle {
-    font-family: var(--fuente-texto);
     font-size: 0.85rem;
+    line-height: 1.45;
     color: var(--texto-suave);
-  }
-
-  figcaption {
-    margin-top: 0.85rem;
-    font-family: var(--fuente-mono);
-    font-size: 0.8rem;
-    color: var(--texto-suave);
-    text-align: center;
   }
 
   @media (min-width: 48rem) {
@@ -127,7 +128,7 @@ const { titulo, pasos } = Astro.props;
     .paso:not(:last-child)::after {
       content: '→';
       left: auto;
-      right: -1.25rem;
+      right: -1.2rem;
       bottom: auto;
       top: 50%;
       transform: translateY(-50%);

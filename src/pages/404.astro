@@ -4,8 +4,51 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 <BaseLayout titulo="Página no encontrada" noindex>
   <section class="lectura">
-    <h1 class="prompt">cd {Astro.url.pathname}</h1>
-    <pre><code>bash: cd: No such file or directory</code></pre>
-    <p>Esta página no existe. <a href="/">Volver al inicio</a>.</p>
+    <div class="cabecera-pagina">
+      <h1>Esta página no existe</h1>
+    </div>
+
+    <div class="terminal">
+      <div class="barra">bash</div>
+      <pre><code><span class="prompt">$</span> cd {Astro.url.pathname}
+bash: cd: {Astro.url.pathname}: No such file or directory</code></pre>
+    </div>
+
+    <p>
+      Quizá buscabas los <a href="/walkthroughs/">walkthroughs</a>, el <a href="/diccionario/">diccionario</a> o el
+      <a href="/">inicio</a>.
+    </p>
   </section>
 </BaseLayout>
+
+<style>
+  .terminal {
+    margin: 1.5rem 0;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-lg);
+    background: var(--bg-code);
+    overflow: hidden;
+  }
+
+  .barra {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--borde);
+    background: var(--bg-elev);
+    font-family: var(--fuente-mono);
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+  }
+
+  pre {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    font-size: 0.88rem;
+    line-height: 1.8;
+  }
+
+  .prompt {
+    color: var(--acento);
+  }
+</style>

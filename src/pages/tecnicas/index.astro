@@ -7,7 +7,12 @@ const tecnicas = agruparPorTecnica(await obtenerWalkthroughs());
 ---
 
 <BaseLayout titulo="Técnicas" descripcion="Técnicas de hacking usadas en los walkthroughs.">
-  <h1 class="prompt">ls tecnicas/</h1>
+  <div class="cabecera-pagina">
+    <h1>Técnicas</h1>
+    <p>
+      Otra forma de recorrer los <a href="/walkthroughs/">walkthroughs</a>: por lo que se hace en cada máquina.
+    </p>
+  </div>
 
   {
     tecnicas.length === 0 ? (
@@ -16,8 +21,10 @@ const tecnicas = agruparPorTecnica(await obtenerWalkthroughs());
       <ul class="tecnicas">
         {tecnicas.map((t) => (
           <li>
-            <a href={`/tecnicas/${t.slug}/`}>#{t.nombre}</a>
-            <span class="texto-suave"> ({t.walkthroughs.length})</span>
+            <a href={`/tecnicas/${t.slug}/`}>
+              <span class="nombre">#{t.nombre}</span>
+              <span class="total">{t.walkthroughs.length}</span>
+            </a>
           </li>
         ))}
       </ul>
@@ -28,23 +35,42 @@ const tecnicas = agruparPorTecnica(await obtenerWalkthroughs());
 <style>
   .tecnicas {
     list-style: none;
+    margin: 0;
     padding: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem 1.5rem;
-    font-family: var(--fuente-mono);
+    gap: 0.6rem;
   }
 
   .tecnicas a {
-    display: inline-block;
-    padding: 0.3rem 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 2.5rem;
+    padding: 0.4rem 0.5rem 0.4rem 0.9rem;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-pill);
+    background: var(--bg-elev);
+    font-family: var(--fuente-mono);
+    font-size: 0.9rem;
+    color: var(--texto);
+    text-decoration: none;
   }
 
-  .vacio {
-    padding: 1.5rem;
-    border: 1px dashed var(--borde);
-    border-radius: var(--radio);
-    font-family: var(--fuente-mono);
+  .tecnicas a:hover {
+    border-color: var(--acento);
+    color: var(--acento-texto);
+  }
+
+  .total {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.6rem;
+    height: 1.6rem;
+    padding: 0 0.4rem;
+    border-radius: var(--radio-pill);
+    background: var(--bg-elev-2);
+    font-size: 0.78rem;
     color: var(--texto-suave);
   }
 </style>
