@@ -1,32 +1,37 @@
 ---
-// Marca personal de la portada. De momento es el monograma del sitio (`~/`).
-// Cuando esté diseñado el avatar definitivo, se cambia solo este archivo:
-// bastará con poner aquí la imagen (optimizada con <Image> de Astro).
+// Marca personal de la portada: el avatar ilustrado de Ricardo.
+// Para cambiarlo basta con sustituir la imagen de src/assets/avatar/.
+import { Image } from 'astro:assets';
+import avatar from '../assets/avatar/ricardo.webp';
+
 interface Props {
   /** Lado del círculo. Por defecto 5.5rem. */
   tamano?: string;
+  /** Lado en píxeles que se le pide a Astro al optimizar (el doble, para pantallas densas). */
+  ancho?: number;
 }
 
-const { tamano = '5.5rem' } = Astro.props;
+const { tamano = '5.5rem', ancho = 256 } = Astro.props;
 ---
 
-<span class="avatar" style={`--lado: ${tamano}`} aria-hidden="true">~/</span>
+<Image
+  class="avatar"
+  style={`--lado: ${tamano}`}
+  src={avatar}
+  width={ancho}
+  height={ancho}
+  alt="Avatar ilustrado de Ricardo Hidalgo"
+  loading="eager"
+/>
 
 <style>
   .avatar {
-    display: inline-grid;
-    place-items: center;
     width: var(--lado);
     height: var(--lado);
     flex-shrink: 0;
     border-radius: 50%;
     border: 2px solid var(--acento);
+    object-fit: cover;
     background: var(--acento-bg);
-    color: var(--acento-texto);
-    font-family: var(--fuente-mono);
-    font-weight: 600;
-    font-size: calc(var(--lado) / 2.8);
-    line-height: 1;
-    letter-spacing: -0.03em;
   }
 </style>
