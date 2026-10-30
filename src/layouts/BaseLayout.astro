@@ -40,7 +40,9 @@ const canonica = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : und
     <meta property="og:locale" content="es_ES" />
     {canonica && <meta property="og:url" content={canonica} />}
 
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- El avatar, recortado a la cara: es lo que mejor se lee a 16-18 px en la pestaña. -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0c1116" media="(prefers-color-scheme: dark)" />
 
