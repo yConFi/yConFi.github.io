@@ -63,6 +63,7 @@ porque Ricardo la aprueba, apúntala aquí:
 - FTP
 - Acceso anónimo
 - SMB
+- Redis
 
 ### Estructura
 

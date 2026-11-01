@@ -1122,6 +1122,48 @@ const smbclient: Herramienta = {
   ],
 };
 
+// ============================================================
+// redis-cli — https://redis.io/docs/latest/develop/tools/cli/
+// ============================================================
+const redisCli: Herramienta = {
+  nombre: 'redis-cli',
+  descripcion:
+    'Cliente de línea de comandos de Redis. Sin una orden como argumento abre una sesión interactiva (prompt host:puerto>) donde se escriben órdenes de Redis como INFO, SELECT, KEYS o GET.',
+  categoria: 'Conexiones',
+  docs: 'https://redis.io/docs/latest/develop/tools/cli/',
+  variantes:
+    'Explicaciones según redis-cli 8.0.2 (la versión de Pwnbox) y la documentación de redis.io.',
+  estilo: 'posix',
+  combinables: false,
+  argumentos:
+    'Opcionalmente, una orden de Redis con sus argumentos, que se envía al servidor y después termina. Sin orden, entra en el modo interactivo. Ojo: el host no va como argumento sino con -h; sin -h se conecta a 127.0.0.1:6379.',
+  opciones: [
+    {
+      nombres: ['-h'],
+      descripcion: 'Servidor al que se conecta, por nombre o dirección IP. Por defecto, 127.0.0.1.',
+      valor: { nombre: 'host', descripcion: 'Nombre o dirección IP del servidor Redis.' },
+    },
+    {
+      nombres: ['-p'],
+      descripcion: 'Puerto del servidor. Por defecto, 6379.',
+      valor: { nombre: 'puerto', descripcion: 'Número de puerto.' },
+    },
+    {
+      nombres: ['-a'],
+      descripcion:
+        'Contraseña para autenticarse al conectar, sin tener que enviar después la orden AUTH. Es más seguro pasarla en la variable de entorno REDISCLI_AUTH.',
+      valor: { nombre: 'contraseña', descripcion: 'Contraseña del servidor Redis.' },
+    },
+    {
+      nombres: ['-n'],
+      descripcion: 'Número de la base de datos que se usa. Por defecto, la 0.',
+      valor: { nombre: 'número', descripcion: 'Índice de la base de datos, empezando por 0.' },
+    },
+    { nombres: ['--version'], descripcion: 'Muestra la versión de redis-cli (del cliente, no del servidor) y termina.' },
+    { nombres: ['--help'], descripcion: 'Muestra la ayuda con todas las opciones y termina.' },
+  ],
+};
+
 export const HERRAMIENTAS: Herramienta[] = [
   nmap,
   gobuster,
@@ -1132,6 +1174,7 @@ export const HERRAMIENTAS: Herramienta[] = [
   telnet,
   ftp,
   smbclient,
+  redisCli,
   ssh,
   sudo,
   find,

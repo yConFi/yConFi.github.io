@@ -1,0 +1,220 @@
+---
+titulo: "Redeemer"
+plataforma: HackTheBox
+dificultad: Muy fácil
+so: Linux
+fecha: 2026-11-01
+tecnicas:
+  - Escaneo de puertos
+  - Redis
+  - Acceso sin contraseña
+resumen: "Máquina Linux con Redis en el puerto 6379, abierto sin contraseña, que guarda la flag como una clave de su base de datos."
+serie:
+  nombre: Starting Point
+  tier: 0
+borrador: false
+---
+
+Máquina del Tier 0 de Starting Point. Las preguntas guiadas (tasks) de HackTheBox aparecen plegadas en la
+sección donde se responden: intenta contestarlas antes de abrirlas.
+
+<Ruta
+  titulo="Camino seguido en Redeemer, de la conexión a la flag"
+  pasos={[
+    { titulo: 'ping', detalle: 'La máquina responde' },
+    { titulo: 'nmap -p-', detalle: '6379/tcp abierto: Redis' },
+    { titulo: 'nmap -sV', detalle: 'Redis 5.0.7' },
+    { titulo: 'redis-cli -h', detalle: 'Entra sin contraseña' },
+    { titulo: 'get flag', detalle: 'La flag, en la base de datos 0', meta: true },
+  ]}
+/>
+
+> La IP `10.129.91.63` es la que tenía la máquina en mi sesión; a ti te saldrá otra.
+
+## Reconocimiento
+
+Lo primero es comprobar que llega la conexión con la máquina:
+
+<Cmd c="ping 10.129.91.63" notas={{ "10.129.91.63": "IP de la máquina objetivo." }} />
+
+Lo detengo con `Ctrl+C` y muestra el resumen:
+
+```text
+64 bytes from 10.129.91.63: icmp_seq=1 ttl=63 time=7.58 ms
+64 bytes from 10.129.91.63: icmp_seq=2 ttl=63 time=7.72 ms
+...
+^C
+--- 10.129.91.63 ping statistics ---
+11 packets transmitted, 11 received, 0% packet loss, time 10016ms
+```
+
+La máquina responde a todo: 11 paquetes enviados y 11 recibidos.
+
+## Enumeración
+
+### Puertos abiertos
+
+Empiezo con un escaneo sin opciones:
+
+<Cmd c="nmap 10.129.91.63" notas={{ "10.129.91.63": "IP de la máquina objetivo." }} />
+
+```text
+All 1000 scanned ports on 10.129.91.63 are in ignored states.
+Not shown: 1000 closed tcp ports (conn-refused)
+```
+
+Sin indicar puertos, nmap revisa los 1000 más comunes, y los 1000 salen cerrados. Lo lancé sin `sudo`, y
+sin privilegios el tipo de escaneo por defecto ya es el TCP connect (`-sT`), así que repetirlo con esa opción
+dio exactamente el mismo resultado:
+
+<Cmd c="nmap -sT 10.129.91.63" notas={{ "10.129.91.63": "IP de la máquina objetivo." }} />
+
+Si no hay nada entre los puertos más comunes, toca escanearlos todos:
+
+<Cmd
+  c="nmap -p- --open --min-rate 5000 10.129.91.63"
+  notas={{
+    "5000": "Al menos 5000 paquetes por segundo, para revisar los 65535 puertos en pocos segundos.",
+    "10.129.91.63": "IP de la máquina objetivo.",
+  }}
+/>
+
+En mi sesión escribí `-min-rate` con un solo guion y nmap lo aceptó igual; la forma que recoge la
+documentación es `--min-rate`. El escaneo terminó en menos de 3 segundos:
+
+```text
+Not shown: 65507 closed tcp ports (conn-refused), 27 filtered tcp ports (no-response)
+PORT     STATE SERVICE
+6379/tcp open  redis
+```
+
+Hay un único puerto abierto, el **6379/tcp**, con **Redis**. No está entre los 1000 que nmap revisa por
+defecto, y por eso el primer escaneo no lo vio.
+
+<Pista titulo="Tarea 1 · ¿Qué puerto TCP está abierto en la máquina?">
+  El **6379**.
+</Pista>
+
+<Pista titulo="Tarea 2 · ¿Qué servicio corre en el puerto que está abierto en la máquina?">
+  **Redis** (respuesta en HTB: `redis`).
+</Pista>
+
+### Versión de Redis
+
+Para saber la versión, primero probé con el cliente de Redis que trae Pwnbox:
+
+<Cmd c="redis-cli --version" />
+
+```text
+redis-cli 8.0.2
+```
+
+Pero esa es la versión del **cliente** instalado en Pwnbox, no la del servidor de la máquina. La del servidor
+la da nmap con la detección de versiones, escaneando solo ese puerto:
+
+<Cmd
+  c="nmap -p 6379 -sV 10.129.91.63"
+  notas={{ "6379": "Solo se escanea el puerto de Redis.", "10.129.91.63": "IP de la máquina objetivo." }}
+/>
+
+```text
+PORT     STATE SERVICE VERSION
+6379/tcp open  redis   Redis key-value store 5.0.7
+```
+
+El servidor es **Redis 5.0.7**. Nmap lo describe como *key-value store*: Redis guarda los datos como pares
+clave-valor y, según su documentación, es una base de datos **en memoria** que además los guarda en disco.
+
+<Pista titulo="Tarea 3 · ¿Qué tipo de base de datos es Redis? Elige entre: (i) base de datos en memoria, (ii) base de datos tradicional">
+  **Base de datos en memoria** (respuesta en HTB: `In memory Database`).
+</Pista>
+
+<Pista titulo="Tarea 7 · ¿Qué versión del servidor Redis se usa en la máquina?">
+  **5.0.7**.
+</Pista>
+
+## Acceso inicial
+
+Para hablar con el servidor se usa `redis-cli`, que en Pwnbox ya viene instalado.
+
+<Pista titulo="Tarea 4 · ¿Qué utilidad de línea de comandos se usa para interactuar con el servidor Redis? Escribe el nombre del programa tal como lo pondrías en el terminal, sin argumentos.">
+  **redis-cli**.
+</Pista>
+
+Mi primer intento fue pasarle la IP como argumento, sin más (`redis-cli 10.129.91.63`):
+
+```text
+Could not connect to Redis at 127.0.0.1:6379: Connection refused
+```
+
+Intentaba conectarse a `127.0.0.1`, es decir, a la propia Pwnbox. `redis-cli` no toma el servidor como
+argumento: lo que va detrás de las opciones es una orden de Redis para enviar. El servidor se indica con
+`-h`, y si no se pone, se conecta a `127.0.0.1:6379`:
+
+<Cmd c="redis-cli -h 10.129.91.63" notas={{ "10.129.91.63": "IP de la máquina objetivo." }} />
+
+Esta vez aparece el prompt del servidor, `10.129.91.63:6379>`, **sin pedir contraseña**.
+
+<Pista titulo="Tarea 5 · ¿Qué opción de la utilidad de línea de comandos de Redis se usa para indicar el nombre del host?">
+  **-h**.
+</Pista>
+
+<Pista titulo="Tarea 6 · Una vez conectado a un servidor Redis, ¿qué orden se usa para obtener información y estadísticas sobre el servidor?">
+  **INFO** (respuesta en HTB: `info`). Su sección *server* incluye la versión en el campo `redis_version`.
+  En mi sesión saqué la versión con nmap, pero esta es la otra forma.
+</Pista>
+
+Ya dentro, elijo la base de datos 0, cuento cuántas claves tiene y las listo todas:
+
+```text
+10.129.91.63:6379> select 0
+OK
+10.129.91.63:6379> dbsize
+(integer) 4
+10.129.91.63:6379> keys *
+1) "temp"
+2) "flag"
+3) "numb"
+4) "stor"
+```
+
+- `SELECT` elige la base de datos por su número, empezando en 0. Las conexiones nuevas ya usan la 0, así que
+  aquí no cambia nada, pero sirve para moverse a otra.
+- `DBSIZE` devuelve el número de claves de la base de datos seleccionada: **4**.
+- `KEYS` devuelve las claves que coinciden con un patrón; con `*` salen todas. La documentación de Redis
+  avisa de que no se use en producción porque en bases de datos grandes puede ir muy lento.
+
+<Pista titulo="Tarea 8 · ¿Qué orden se usa para seleccionar la base de datos deseada en Redis?">
+  **SELECT** (respuesta en HTB: `select`).
+</Pista>
+
+<Pista titulo="Tarea 9 · ¿Cuántas claves hay en la base de datos con índice 0?">
+  **4**.
+</Pista>
+
+<Pista titulo="Tarea 10 · ¿Qué orden se usa para obtener todas las claves de una base de datos?">
+  **KEYS \*** (respuesta en HTB: `keys *`).
+</Pista>
+
+Una de las claves se llama `flag`. Su valor se lee con `GET`, que devuelve el texto guardado en esa clave.
+
+La flag no se publica: la tienes que conseguir tú.
+
+<Pista titulo="Flag · Envía la flag que está en la base de datos">
+  Es el valor de la clave `flag`, en la base de datos 0. Léelo con `get flag` desde `redis-cli`.
+</Pista>
+
+## Escalada de privilegios
+
+No hace falta: la flag se lee directamente de la base de datos de Redis, sin llegar a tener una shell en la
+máquina.
+
+## Lecciones aprendidas
+
+- **Qué fallé:** el primer `nmap` no encontró nada porque el 6379 no está entre los 1000 puertos que revisa
+  por defecto. Después intenté conectarme poniendo la IP como argumento de `redis-cli` en lugar de con `-h`,
+  y saqué la versión del cliente (`redis-cli --version`) cuando se pedía la del servidor.
+- **Lo que enseña la máquina:** un Redis expuesto en la red sin contraseña deja leer todas sus claves a
+  cualquiera que llegue a su puerto.
+- **Qué haré la próxima vez:** si el escaneo por defecto no encuentra nada, escanear todos los puertos con
+  `-p-`, y mirar la ayuda de un cliente nuevo antes de conectarme para saber cómo se indica el servidor.
