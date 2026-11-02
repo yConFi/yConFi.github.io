@@ -1,0 +1,175 @@
+---
+titulo: "Preignition"
+plataforma: HackTheBox
+dificultad: Muy fácil
+so: Linux
+fecha: 2026-11-02
+tecnicas:
+  - Escaneo de puertos
+  - Fuerza bruta de directorios
+  - Credenciales por defecto
+resumen: "Máquina Linux con una web en nginx que esconde una página de administración, admin.php, con el usuario admin y la contraseña admin."
+serie:
+  nombre: Starting Point
+  tier: 0
+borrador: false
+---
+
+Máquina del Tier 0 de Starting Point. Las preguntas guiadas (tasks) de HackTheBox aparecen plegadas en la
+sección donde se responden: intenta contestarlas antes de abrirlas.
+
+<Ruta
+  titulo="Camino seguido en Preignition, de la conexión a la flag"
+  pasos={[
+    { titulo: 'ping', detalle: 'La máquina responde' },
+    { titulo: 'nmap -p 80 -sV', detalle: '80/tcp abierto: nginx 1.14.2' },
+    { titulo: 'dirb', detalle: 'Encuentra admin.php (código 200)' },
+    { titulo: 'admin.php', detalle: 'Entra con admin / admin: la flag', meta: true },
+  ]}
+/>
+
+> La IP `10.129.92.42` es la que tenía la máquina en mi sesión; a ti te saldrá otra.
+
+## Reconocimiento
+
+Lo primero es comprobar que llega la conexión con la máquina:
+
+<Cmd c="ping 10.129.92.42" notas={{ "10.129.92.42": "IP de la máquina objetivo." }} />
+
+Lo detengo con `Ctrl+C` y muestra el resumen:
+
+```text
+64 bytes from 10.129.92.42: icmp_seq=1 ttl=63 time=7.60 ms
+64 bytes from 10.129.92.42: icmp_seq=2 ttl=63 time=7.56 ms
+...
+^C
+--- 10.129.92.42 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 4006ms
+```
+
+La máquina responde a todo: 5 paquetes enviados y 5 recibidos.
+
+## Enumeración
+
+### El puerto 80
+
+Las tareas preguntan por el puerto 80, así que escaneo solo ese:
+
+<Cmd
+  c="nmap -p 80 10.129.92.42"
+  notas={{ "80": "Solo se escanea el puerto 80.", "10.129.92.42": "IP de la máquina objetivo." }}
+/>
+
+```text
+PORT   STATE SERVICE
+80/tcp open  http
+```
+
+El **80/tcp** está abierto con **http**: la máquina tiene un servidor web.
+
+<Pista titulo="Tarea 3 · ¿Qué servicio indica nmap que corre en el puerto 80/tcp?">
+  **http**.
+</Pista>
+
+Sin `-sV`, nmap no pregunta al servicio qué es: solo pone el nombre que suele usar ese puerto. Para saber qué
+servidor web hay y en qué versión, repito el escaneo con la detección de versiones:
+
+<Cmd
+  c="nmap -p 80 -sV 10.129.92.42"
+  notas={{ "80": "Solo se escanea el puerto 80.", "10.129.92.42": "IP de la máquina objetivo." }}
+/>
+
+```text
+PORT   STATE SERVICE VERSION
+80/tcp open  http    nginx 1.14.2
+```
+
+El servidor web es **nginx 1.14.2**.
+
+<Pista titulo="Tarea 2 · ¿Qué opción de nmap se usa para indicar que queremos detectar las versiones?">
+  **-sV**.
+</Pista>
+
+<Pista titulo="Tarea 4 · ¿Qué nombre y versión de servidor corre en el puerto 80/tcp?">
+  **nginx 1.14.2**.
+</Pista>
+
+### Fuerza bruta de directorios
+
+Una web puede tener páginas a las que no lleva ningún enlace. Para encontrarlas se prueban muchas rutas
+seguidas, sacadas de un diccionario, y se mira cuáles existen en el servidor. Es la fuerza bruta de
+directorios, o *dir busting*.
+
+<Pista titulo="Tarea 1 · La fuerza bruta de directorios es una técnica que prueba muchas rutas en un servidor web para encontrar páginas ocultas. ¿Qué otro nombre tiene? (i) Local File Inclusion, (ii) dir busting, (iii) hash cracking">
+  **dir busting**.
+</Pista>
+
+Para hacerlo uso `dirb`, pasándole solo la URL de la web:
+
+<Cmd c="dirb http://10.129.92.42" notas={{ "http://10.129.92.42": "URL de la web de la máquina objetivo." }} />
+
+Como no le indico diccionario, usa `/usr/share/dirb/wordlists/common.txt`, como se ve en la cabecera de la
+salida:
+
+```text
+URL_BASE: http://10.129.92.42/
+WORDLIST_FILES: /usr/share/dirb/wordlists/common.txt
+-----------------
+GENERATED WORDS: 4612
+---- Scanning URL: http://10.129.92.42/ ----
++ http://10.129.92.42/admin.php (CODE:200|SIZE:999)
+-----------------
+DOWNLOADED: 4612 - FOUND: 1
+```
+
+Prueba las 4612 palabras del diccionario y encuentra una sola página: **`admin.php`**, con el código HTTP
+**200**, que quiere decir que la página existe y el servidor la devuelve.
+
+<Pista titulo="Tarea 7 · ¿Qué página encontramos con la fuerza bruta de directorios?">
+  **admin.php**.
+</Pista>
+
+Las tareas 5, 6 y 8 preguntan por Gobuster, otra herramienta de fuerza bruta de directorios. Yo usé `dirb`,
+pero las respuestas son las mismas ideas con la sintaxis de Gobuster:
+
+<Pista titulo="Tarea 5 · ¿Qué opción de Gobuster indica que queremos hacer fuerza bruta de directorios?">
+  **dir**. En Gobuster no es una opción con guion sino el modo con el que se lanza: `gobuster dir`.
+</Pista>
+
+<Pista titulo="Tarea 6 · Al hacer fuerza bruta de directorios con Gobuster, ¿qué opción se añade para que encuentre páginas PHP?">
+  **-x php** (respuesta en HTB: `x php`). `-x` añade a cada palabra del diccionario las extensiones
+  indicadas. `dirb` encontró `admin.php` sin nada parecido porque esa entrada ya estaba en su diccionario;
+  su opción equivalente es `-X .php`.
+</Pista>
+
+<Pista titulo="Tarea 8 · ¿Qué código de estado HTTP da Gobuster para la página encontrada?">
+  **200**. En mi caso lo dio `dirb`, en el `CODE:200` de la salida.
+</Pista>
+
+## Acceso inicial
+
+Abro en el navegador la página que encontró `dirb`, `http://10.129.92.42/admin.php`. Es un formulario de
+inicio de sesión para administradores.
+
+Pruebo las credenciales más típicas, y entra a la primera con el usuario **admin** y la contraseña
+**admin**. Al iniciar sesión, la página muestra la flag.
+
+La flag no se publica: la tienes que conseguir tú.
+
+<Pista titulo="Flag · Envía la flag que aparece en la página web">
+  Aparece en `admin.php` después de iniciar sesión en su formulario con unas credenciales por defecto.
+</Pista>
+
+## Escalada de privilegios
+
+No hace falta: la flag aparece en la propia página web, sin llegar a tener una shell en la máquina.
+
+## Lecciones aprendidas
+
+- **Qué fallé:** nada; la máquina salió a la primera siguiendo los pasos.
+- **Lo que enseña la máquina:** que una página no tenga enlaces no la esconde: con un diccionario de rutas
+  comunes se encuentra en segundos. Y si además protege el panel de administración con credenciales por
+  defecto como admin/admin, cualquiera puede entrar.
+- **Qué haré la próxima vez:** al encontrar un servidor web, lanzar desde el principio una herramienta de
+  fuerza bruta de directorios y, ante un formulario de inicio de sesión, probar primero las credenciales por
+  defecto más comunes.

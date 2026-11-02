@@ -65,6 +65,8 @@ porque Ricardo la aprueba, apúntala aquí:
 - SMB
 - Redis
 - RDP
+- Fuerza bruta de directorios
+- Credenciales por defecto
 
 ### Estructura
 

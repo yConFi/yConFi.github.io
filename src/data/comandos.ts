@@ -427,6 +427,76 @@ const ffuf: Herramienta = {
 };
 
 // ============================================================
+// dirb 2.22 — https://manpages.ubuntu.com/manpages/noble/man1/dirb.1.html
+// Comprobado con la página man y el README del paquete dirb 2.22+dfsg-5build2 de Ubuntu.
+// ============================================================
+const dirb: Herramienta = {
+  nombre: 'dirb',
+  descripcion:
+    'Escáner de contenido web: busca objetos web existentes u ocultos (directorios y ficheros) probando las palabras de un diccionario contra el servidor y analizando las respuestas. No sigue los enlaces de las páginas ni busca vulnerabilidades.',
+  categoria: 'Enumeración web',
+  docs: 'https://manpages.ubuntu.com/manpages/noble/man1/dirb.1.html',
+  variantes: 'Explicaciones según dirb 2.22, la versión que trae Pwnbox.',
+  estilo: 'posix',
+  combinables: false,
+  argumentos:
+    'URL base que se analiza (también puede ser un subdirectorio, o una URL HTTPS) y, opcionalmente, uno o varios diccionarios separados por comas, con una palabra por línea.',
+  opciones: [
+    {
+      nombres: ['-a'],
+      descripcion: 'User-Agent personalizado para las peticiones.',
+      valor: { nombre: 'user-agent', descripcion: 'Valor de la cabecera User-Agent.' },
+    },
+    {
+      nombres: ['-c'],
+      descripcion: 'Cookie que se envía en las peticiones HTTP.',
+      valor: { nombre: 'cookie', descripcion: 'Cookie en formato "nombre=valor".' },
+    },
+    {
+      nombres: ['-H'],
+      descripcion: 'Añade una cabecera personalizada a las peticiones HTTP.',
+      valor: { nombre: 'cabecera', descripcion: 'Cabecera en formato "Nombre: valor".' },
+    },
+    { nombres: ['-i'], descripcion: 'Búsqueda sin distinguir mayúsculas y minúsculas.' },
+    {
+      nombres: ['-N'],
+      descripcion: 'Ignora las respuestas con este código HTTP.',
+      valor: { nombre: 'código', descripcion: 'Código de estado HTTP que se descarta.' },
+    },
+    {
+      nombres: ['-o'],
+      descripcion: 'Guarda la salida en un fichero.',
+      valor: { nombre: 'fichero', descripcion: 'Fichero de salida.' },
+    },
+    {
+      nombres: ['-p'],
+      descripcion: 'Envía las peticiones a través de un proxy (puerto por defecto, 1080).',
+      valor: { nombre: 'proxy[:puerto]', descripcion: 'Proxy y, opcionalmente, su puerto.' },
+    },
+    { nombres: ['-r'], descripcion: 'No busca de forma recursiva dentro de los directorios que encuentra.' },
+    { nombres: ['-R'], descripcion: 'Recursión interactiva: pregunta en qué directorios encontrados quieres seguir.' },
+    { nombres: ['-S'], descripcion: 'Modo silencioso: no muestra las palabras que va probando.' },
+    {
+      nombres: ['-u'],
+      descripcion: 'Usuario y contraseña para autenticarse en el servidor.',
+      valor: { nombre: 'usuario:contraseña', descripcion: 'Credenciales en formato usuario:contraseña.' },
+    },
+    { nombres: ['-v'], descripcion: 'Muestra también las páginas que no existen.' },
+    { nombres: ['-w'], descripcion: 'No se detiene con los mensajes de aviso (WARNING).' },
+    {
+      nombres: ['-x'],
+      descripcion: 'Amplía la búsqueda con las extensiones que contiene un fichero.',
+      valor: { nombre: 'fichero', descripcion: 'Fichero con las extensiones.' },
+    },
+    {
+      nombres: ['-X'],
+      descripcion: 'Amplía la búsqueda añadiendo a cada palabra estas extensiones, p. ej. .php,.html.',
+      valor: { nombre: 'extensiones', descripcion: 'Extensiones separadas por comas.' },
+    },
+  ],
+};
+
+// ============================================================
 // curl — https://curl.se/docs/manpage.html
 // ============================================================
 const curl: Herramienta = {
@@ -1220,6 +1290,7 @@ export const HERRAMIENTAS: Herramienta[] = [
   nmap,
   gobuster,
   ffuf,
+  dirb,
   curl,
   nc,
   ping,
