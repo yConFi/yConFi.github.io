@@ -1048,6 +1048,58 @@ const telnet: Herramienta = {
 };
 
 // ============================================================
+// xfreerdp (FreeRDP 3) — https://manpages.ubuntu.com/manpages/noble/man1/xfreerdp3.1.html
+// Comprobado con las páginas man de FreeRDP 3.32 (freerdp3-x11) y 2.11 (freerdp2-x11).
+// ============================================================
+const xfreerdp: Herramienta = {
+  nombre: 'xfreerdp',
+  descripcion:
+    'Cliente de RDP (Remote Desktop Protocol) para X11, del proyecto FreeRDP: abre en una ventana el escritorio remoto de un servidor RDP, como el que traen muchas ediciones de Windows.',
+  categoria: 'Conexiones',
+  docs: 'https://manpages.ubuntu.com/manpages/noble/man1/xfreerdp3.1.html',
+  docsVariantes: [{ nombre: 'FreeRDP 2', url: 'https://manpages.ubuntu.com/manpages/noble/man1/xfreerdp.1.html' }],
+  variantes:
+    'Explicaciones según FreeRDP 3. En Debian y Ubuntu, el cliente de FreeRDP 3 se instala como "xfreerdp3" (paquete freerdp3-x11) y "xfreerdp" es el de FreeRDP 2; en Pwnbox, "xfreerdp" ya es FreeRDP 3. Las opciones de aquí existen en las dos versiones, pero FreeRDP 2 admite además formas antiguas como /cert-ignore, que la 3 ya no incluye.',
+  estilo: 'freerdp',
+  argumentos: 'Opcionalmente, un fichero de conexión .rdp con una configuración guardada.',
+  opciones: [
+    {
+      nombres: ['/v'],
+      descripcion: 'Servidor al que se conecta: nombre de host, IPv4 o IPv6, con el puerto opcional detrás (/v:servidor:puerto).',
+      valor: { nombre: 'servidor[:puerto]', descripcion: 'Servidor RDP y, opcionalmente, su puerto.' },
+    },
+    {
+      nombres: ['/u'],
+      descripcion: 'Usuario con el que se inicia sesión. Admite dominio: DOMINIO\\usuario o usuario@dominio.',
+      valor: { nombre: 'usuario', descripcion: 'Nombre de usuario en el servidor remoto.' },
+    },
+    {
+      nombres: ['/p'],
+      descripcion:
+        'Contraseña. En FreeRDP 3 puede ir sin valor (/p) para que no la pida cuando la conexión no necesita credenciales; en FreeRDP 2 el valor es obligatorio.',
+      valor: { nombre: 'contraseña', descripcion: 'Contraseña del usuario.', soloConIgual: true },
+    },
+    {
+      nombres: ['/d'],
+      descripcion: 'Dominio del usuario.',
+      valor: { nombre: 'dominio', descripcion: 'Nombre del dominio.' },
+    },
+    {
+      nombres: ['/port'],
+      descripcion: 'Puerto del servidor.',
+      valor: { nombre: 'puerto', descripcion: 'Número de puerto.' },
+    },
+    {
+      nombres: ['/cert'],
+      descripcion:
+        'Cómo se acepta el certificado del servidor. "ignore" no lo comprueba en absoluto; "tofu" lo acepta en la primera conexión y lo rechaza después si cambia; "deny" corta la conexión si no coincide, sin preguntar. La documentación avisa de usarlo con cuidado.',
+      valor: { nombre: 'modo', descripcion: 'deny, ignore, tofu, name:<nombre> o fingerprint:<hash>.' },
+    },
+    { nombres: ['/help', '/?'], descripcion: 'Muestra la ayuda con todas las opciones.' },
+  ],
+};
+
+// ============================================================
 // ftp (tnftp) — https://man.netbsd.org/ftp.1
 // ============================================================
 const ftp: Herramienta = {
@@ -1172,6 +1224,7 @@ export const HERRAMIENTAS: Herramienta[] = [
   nc,
   ping,
   telnet,
+  xfreerdp,
   ftp,
   smbclient,
   redisCli,

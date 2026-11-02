@@ -132,6 +132,34 @@ describe('analizarComando: casos válidos', () => {
       'argumento:fichero',
     ]);
   });
+
+  it('xfreerdp (estilo FreeRDP): /opcion:valor con el valor pegado tras ":"', () => {
+    expect(
+      resumen('xfreerdp /v:10.10.10.10 /u:Administrator /cert:ignore', { '10.10.10.10': 'IP de la máquina objetivo' }),
+    ).toEqual([
+      'herramienta:xfreerdp',
+      'opcion:/v:',
+      'valor:+10.10.10.10',
+      'opcion:/u:',
+      'valor:+Administrator',
+      'opcion:/cert:',
+      'valor:+ignore',
+    ]);
+    const [, , ip] = analizarComando('xfreerdp /v:10.10.10.10', { notas: { '10.10.10.10': 'IP objetivo' } });
+    expect(ip!.explicacion).toBe('IP objetivo');
+  });
+
+  it('xfreerdp: opciones sin valor, valor opcional y fichero .rdp', () => {
+    expect(resumen('xfreerdp /help')).toEqual(['herramienta:xfreerdp', 'opcion:/help']);
+    expect(resumen('xfreerdp /?')).toEqual(['herramienta:xfreerdp', 'opcion:/?']);
+    expect(resumen('xfreerdp /v:host /p')).toEqual(['herramienta:xfreerdp', 'opcion:/v:', 'valor:+host', 'opcion:/p']);
+    expect(resumen('xfreerdp conexion.rdp /p:secreto')).toEqual([
+      'herramienta:xfreerdp',
+      'argumento:conexion.rdp',
+      'opcion:/p:',
+      'valor:+secreto',
+    ]);
+  });
 });
 
 describe('analizarComando: errores', () => {
@@ -155,6 +183,12 @@ describe('analizarComando: errores', () => {
     ['find . -exec cat {}', 'exec-sin-terminar'],
     ['sudo bash', 'herramienta-desconocida'],
     ["grep 'abc", 'comilla-sin-cerrar'],
+    ['xfreerdp /z:1', 'opcion-desconocida'],
+    ['xfreerdp +inventada', 'opcion-desconocida'],
+    ['xfreerdp -- /v:x', 'opcion-desconocida'],
+    ['xfreerdp /v 10.10.10.10', 'falta-valor'],
+    ['xfreerdp /v:', 'falta-valor'],
+    ['xfreerdp /help:x', 'valor-no-admitido'],
   ])('%s → %s', (comando, esperado) => {
     expect(motivo(() => analizarComando(comando))).toBe(esperado);
   });

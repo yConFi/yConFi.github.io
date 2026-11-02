@@ -64,6 +64,7 @@ porque Ricardo la aprueba, apúntala aquí:
 - Acceso anónimo
 - SMB
 - Redis
+- RDP
 
 ### Estructura
 
