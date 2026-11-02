@@ -22,6 +22,13 @@ interface Props {
 }
 
 const { titulo, pasos } = Astro.props;
+
+/**
+ * Parte el texto después de ".", "_" y "/" para que las palabras largas
+ * (db.flag.find(), sensitive_information) se corten por ahí y no a mitad de palabra.
+ * No corta tras un punto seguido de una cifra, para no partir versiones (3.6.8).
+ */
+const trozos = (texto: string) => texto.split(/(?<=[_/]|\.(?!\d))/);
 ---
 
 <figure class="ruta">
@@ -33,8 +40,8 @@ const { titulo, pasos } = Astro.props;
           <span class="numero" aria-hidden="true">
             {String(i + 1).padStart(2, '0')}
           </span>
-          <strong class="titulo">{p.titulo}</strong>
-          <span class="detalle">{p.detalle}</span>
+          <strong class="titulo">{trozos(p.titulo).map((t, j) => (j ? [<wbr />, t] : t))}</strong>
+          <span class="detalle">{trozos(p.detalle).map((t, j) => (j ? [<wbr />, t] : t))}</span>
         </li>
       ))
     }
@@ -75,6 +82,8 @@ const { titulo, pasos } = Astro.props;
     border: 1px solid var(--borde);
     border-radius: var(--radio);
     background: var(--bg);
+    /* Sin esto, una palabra larga ensancha la casilla por encima de su columna. */
+    min-width: 0;
   }
 
   .paso.meta {
@@ -116,6 +125,7 @@ const { titulo, pasos } = Astro.props;
     font-size: 0.85rem;
     line-height: 1.45;
     color: var(--texto-suave);
+    overflow-wrap: anywhere;
   }
 
   @media (min-width: 48rem) {

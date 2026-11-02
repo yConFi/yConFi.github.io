@@ -86,5 +86,11 @@ export function filtrosSerie(serie?: { nombre: string; tier: number }): string[]
   return serie ? [serie.nombre, nombreSerie(serie)] : [];
 }
 
-const formatoFecha = new Intl.DateTimeFormat('es-ES', { dateStyle: 'long', timeZone: 'UTC' });
+// Formato dd/mm/aa (p. ej. 02/11/26).
+const formatoFecha = new Intl.DateTimeFormat('es-ES', {
+  day: '2-digit',
+  month: '2-digit',
+  year: '2-digit',
+  timeZone: 'UTC',
+});
 export const formatearFecha = (fecha: Date) => formatoFecha.format(fecha);
