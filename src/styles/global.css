@@ -92,11 +92,11 @@
   --texto-suave: light-dark(#55616d, #9daab6);
   --texto-tenue: light-dark(#66727d, #7b8794);
 
-  /* ---- Acento principal: el verde de yConFi ---- */
-  --acento: light-dark(#0f7a52, #3ecf8e);
-  --acento-texto: light-dark(#0b5e40, #5fe0a6);
-  --acento-bg: light-dark(#d7f5e7, #10261c);
-  --acento-sobre: light-dark(#ffffff, #05170e);
+  /* ---- Acento principal: el morado de yConFi (#7A0ABF; en oscuro, el mismo tono más claro) ---- */
+  --acento: light-dark(#7a0abf, #c36ef7);
+  --acento-texto: light-dark(#5d0891, #d394f9);
+  --acento-bg: light-dark(#f3e3fd, #22112c);
+  --acento-sobre: light-dark(#ffffff, #14071d);
 
   /* ---- Acento de apoyo: ámbar para avisos, valores y pistas ---- */
   --acento2: light-dark(#9a6400, #f5b544);
@@ -125,8 +125,8 @@
   --dif-insana: light-dark(#9b1c13, #fb8585);
 
   /* ---- Partes de un comando ---- */
-  --tok-herramienta: light-dark(#0f7a52, #7fe3b4);
-  --tok-subcomando: light-dark(#0b5e40, #b9f2d6);
+  --tok-herramienta: light-dark(#7a0abf, #cf8bf9);
+  --tok-subcomando: light-dark(#5d0891, #e7c5fc);
   --tok-opcion: light-dark(#0550ae, #8ecbf0);
   --tok-valor: light-dark(#9a6400, #f5b544);
   --tok-argumento: light-dark(#121820, #e8eef4);
