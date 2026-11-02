@@ -1,0 +1,182 @@
+---
+titulo: "Explosion"
+plataforma: HackTheBox
+dificultad: Muy fácil
+so: Windows
+fecha: 2026-11-02
+tecnicas:
+  - Escaneo de puertos
+  - RDP
+  - Acceso sin contraseña
+resumen: "Máquina Windows con RDP en el puerto 3389 que deja entrar en el escritorio como Administrator con la contraseña en blanco."
+serie:
+  nombre: Starting Point
+  tier: 0
+borrador: false
+---
+
+Máquina del Tier 0 de Starting Point. Las preguntas guiadas (tasks) de HackTheBox aparecen plegadas en la
+sección donde se responden: intenta contestarlas antes de abrirlas.
+
+<Ruta
+  titulo="Camino seguido en Explosion, de la conexión al escritorio de Administrator"
+  pasos={[
+    { titulo: 'ping', detalle: 'La máquina responde' },
+    { titulo: 'nmap -p 3389', detalle: '3389/tcp abierto: ms-wbt-server (RDP)' },
+    { titulo: 'xfreerdp', detalle: 'Administrator con la contraseña en blanco' },
+    { titulo: 'Escritorio', detalle: 'La flag, en el escritorio de Administrator', meta: true },
+  ]}
+/>
+
+> La IP `10.129.92.49` es la que tenía la máquina en mi sesión; a ti te saldrá otra.
+
+## Reconocimiento
+
+Las primeras tareas son de vocabulario: cómo se llama el protocolo de esta máquina y las dos formas de
+manejar un equipo a distancia, por texto o con ventanas.
+
+<Pista titulo="Tarea 1 · ¿Qué significa el acrónimo de tres letras RDP?">
+  **Remote Desktop Protocol** (protocolo de escritorio remoto).
+</Pista>
+
+<Pista titulo="Tarea 2 · ¿Qué acrónimo de tres letras se refiere a interactuar con el equipo a través de una interfaz de línea de comandos?">
+  **CLI** (*Command Line Interface*, interfaz de línea de comandos).
+</Pista>
+
+<Pista titulo="Tarea 3 · ¿Y para las interacciones mediante una interfaz gráfica de usuario?">
+  **GUI** (*Graphical User Interface*, interfaz gráfica de usuario).
+</Pista>
+
+<Pista titulo="Tarea 4 · ¿Cómo se llama una herramienta antigua de acceso remoto que no cifraba por defecto y escucha en el puerto TCP 23?">
+  **Telnet** (respuesta en HTB: `telnet`).
+</Pista>
+
+Lo primero es comprobar que llega la conexión con la máquina:
+
+<Cmd c="ping 10.129.92.49" notas={{ "10.129.92.49": "IP de la máquina objetivo." }} />
+
+Lo detengo con `Ctrl+C` y muestra el resumen:
+
+```text
+64 bytes from 10.129.92.49: icmp_seq=1 ttl=127 time=7.55 ms
+64 bytes from 10.129.92.49: icmp_seq=2 ttl=127 time=7.30 ms
+...
+^C
+--- 10.129.92.49 ping statistics ---
+12 packets transmitted, 12 received, 0% packet loss, time 11017ms
+```
+
+La máquina responde a todo: 12 paquetes enviados y 12 recibidos.
+
+## Enumeración
+
+Escaneo solo el puerto por el que pregunta la tarea 5, el 3389:
+
+<Cmd
+  c="nmap -p 3389 10.129.92.49"
+  notas={{ "3389": "Solo se escanea el puerto 3389.", "10.129.92.49": "IP de la máquina objetivo." }}
+/>
+
+```text
+PORT     STATE SERVICE
+3389/tcp open  ms-wbt-server
+```
+
+El **3389/tcp** está abierto. Como no he usado `-sV`, nmap no ha preguntado al servicio qué es: el nombre
+sale de su fichero `nmap-services`, que asocia el 3389/tcp a `ms-wbt-server` y lo describe como *Microsoft
+Remote Display Protocol*. Es decir, **RDP**: la máquina deja conectarse a su escritorio a distancia.
+
+<Pista titulo="Tarea 5 · ¿Cómo se llama el servicio que corre en el puerto 3389 TCP?">
+  **ms-wbt-server**.
+</Pista>
+
+## Acceso inicial
+
+### Cliente de RDP
+
+Para conectarse por RDP desde Pwnbox está `xfreerdp`, el cliente del proyecto FreeRDP. Antes de usarlo miro
+su ayuda:
+
+<Cmd c="xfreerdp /help" />
+
+```text
+Usage: xfreerdp [file] [options] [/v:<server>[:port]]
+
+Syntax:
+    /flag (enables flag)
+    /option:<value> (specifies option with value)
+    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')
+...
+    /p: <password>                    Password
+...
+    /u: [[<domain>\]<user>|<user>[@<domain>]]
+                                      Username
+...
+    /v: <server>[:port]               Server hostname
+```
+
+Las opciones de `xfreerdp` no son las habituales con guion: empiezan por `/` y el valor va pegado detrás de
+dos puntos, como en `/v:servidor`. La IP de la máquina se indica con **`/v:`**, el usuario con `/u:` y la
+contraseña con `/p:`.
+
+<Pista titulo="Tarea 6 · ¿Qué opción se usa para indicar la IP del equipo objetivo con xfreerdp?">
+  **/v:**.
+</Pista>
+
+### Administrator sin contraseña
+
+Me conecto con el usuario `Administrator`, la cuenta de administrador de Windows, sin indicar contraseña:
+
+<Cmd
+  c="xfreerdp /v:10.129.92.49 /u:Administrator /cert:ignore"
+  notas={{
+    "10.129.92.49": "IP de la máquina objetivo.",
+    "Administrator": "Cuenta de administrador de Windows.",
+    "ignore": "No comprueba el certificado del servidor, así que no pregunta si confiar en él.",
+  }}
+/>
+
+Como no lleva `/p:`, pide el dominio y la contraseña. Dejo los dos en blanco y pulso `Enter`:
+
+```text
+Domain:
+Password:
+[06:40:05:740] [37419:0000922c] [INFO][com.freerdp.core.nla] - [nla_client_setup_identity]: No credentials provided - using NULL identity
+[06:40:31:786] [37419:0000922c] [ERROR][com.winpr.sspi.Kerberos] - [kerberos_AcquireCredentialsHandleA]: krb5glue_get_init_creds (Cannot contact any KDC for realm 'ATHENA.MIT.EDU' [-1765328228])
+[06:40:57:820] [37419:0000922c] [ERROR][com.winpr.sspi.Kerberos] - [kerberos_AcquireCredentialsHandleA]: krb5glue_get_init_creds (Cannot contact any KDC for realm 'ATHENA.MIT.EDU' [-1765328228])
+...
+[06:40:58:081] [37419:0000922c] [INFO][com.freerdp.gdi] - [gdi_init_ex]: Local framebuffer format  PIXEL_FORMAT_BGRX32
+```
+
+Salen dos errores de Kerberos y la conexión tarda casi un minuto, pero sigue adelante y se abre una ventana
+con el **escritorio de Administrator**, sin haber escrito ninguna contraseña.
+
+`/cert:ignore` evita la pregunta de si confiar en el certificado del servidor. En un laboratorio ahorra ese
+paso, pero la documentación de FreeRDP avisa de usarlo con cuidado: sin comprobar el certificado no se sabe
+si al otro lado está de verdad el servidor que se espera.
+
+<Pista titulo="Tarea 7 · ¿Con qué usuario se obtiene el escritorio remoto usando la contraseña en blanco?">
+  **Administrator**.
+</Pista>
+
+La flag está en el escritorio que aparece al entrar. No se publica: la tienes que conseguir tú.
+
+<Pista titulo="Flag · Envía la flag que está en el escritorio del administrador">
+  Está en el escritorio del usuario Administrator, que es lo que aparece en la ventana de `xfreerdp` al
+  conectarse.
+</Pista>
+
+## Escalada de privilegios
+
+No hace falta: el acceso inicial ya es con **Administrator**, la cuenta de administrador de Windows, y la
+flag está en su propio escritorio.
+
+## Lecciones aprendidas
+
+- **Qué fallé:** nada; la máquina salió a la primera siguiendo los pasos.
+- **Lo que enseña la máquina:** como en Meow, el fallo no está en el software sino en la configuración: la
+  cuenta de administrador de Windows sin contraseña y con RDP abierto a la red da el control total del
+  escritorio sin explotar nada.
+- **Qué haré la próxima vez:** al encontrar RDP abierto, probar primero cuentas comunes como Administrator
+  con la contraseña en blanco, y leer la ayuda de `xfreerdp` antes de conectarme, porque sus opciones no
+  siguen el estilo de guiones.

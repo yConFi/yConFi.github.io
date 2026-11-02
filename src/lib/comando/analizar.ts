@@ -161,11 +161,11 @@ function analizarTokens(tokens: Token[], ayudas: Ayudas, notasExtra: Record<stri
     const v = token.valor;
 
     // ---------- Opciones ----------
-    if (!ctx.opcionesCerradas && v.startsWith('-') && v !== '-') {
+    if (!ctx.opcionesCerradas && esOpcion(h, v)) {
       if (ctx.esperaSubcomando && h.opciones.length === 0) {
         throw error('falta-subcomando', `${h.nombre} necesita un subcomando antes de "${v}".`, v);
       }
-      if (v === '--') {
+      if (v === '--' && h.estilo !== 'freerdp') {
         segmentos.push({
           texto: token.texto,
           clase: 'opcion',
@@ -188,15 +188,25 @@ function analizarTokens(tokens: Token[], ayudas: Ayudas, notasExtra: Record<stri
           i = analizarExec(tokens, i, opcion.ejecutaComandoHasta, segmentos, ayudas, token.texto);
           continue;
         }
-        if (opcion.valor && !opcion.valor.soloConIgual) consumirValor(flag, opcion, h);
+        if (opcion.valor && !opcion.valor.soloConIgual) {
+          if (h.estilo === 'freerdp') {
+            // En FreeRDP el valor nunca va en el token siguiente.
+            throw error('falta-valor', `La opción "${flag}" de ${h.nombre} necesita un valor tras ":" (${flag}:valor).`, flag);
+          }
+          consumirValor(flag, opcion, h);
+        }
       } else if (opcion) {
-        // Valor pegado: "--min-rate=5000", "-T4", "-p-", "-t=50" (Go).
-        const conIgual = v.charAt(flag.length) === '=';
+        // Valor pegado: "--min-rate=5000", "-T4", "-p-", "-t=50" (Go), "/v:10.10.10.10" (FreeRDP).
+        const separador = h.estilo === 'freerdp' ? ':' : '=';
+        const conSeparador = v.charAt(flag.length) === separador;
         if (!opcion.valor) {
           throw error('valor-no-admitido', `La opción "${flag}" de ${h.nombre} no lleva valor.`, v);
         }
-        const corte = flag.length + (conIgual ? 1 : 0);
+        const corte = flag.length + (conSeparador ? 1 : 0);
         const valorTexto = token.texto.slice(corte);
+        if (h.estilo === 'freerdp' && valorTexto === '') {
+          throw error('falta-valor', `La opción "${flag}" de ${h.nombre} tiene ":" pero ningún valor detrás.`, v);
+        }
         segmentos.push(segmentoOpcion(token.texto.slice(0, corte), flag, opcion, h, false));
         segmentos.push(segmentoValor(valorTexto, flag, opcion, ayudas.nota({ ...token, texto: valorTexto, valor: v.slice(corte) }), true));
       } else if (h.estilo === 'posix' && h.combinables && !v.startsWith('--') && v.length > 2) {
@@ -280,6 +290,12 @@ function analizarTokens(tokens: Token[], ayudas: Ayudas, notasExtra: Record<stri
   return segmentos;
 }
 
+/** El token es una opción según el estilo de la herramienta. */
+function esOpcion(h: Herramienta, v: string): boolean {
+  if (h.estilo === 'freerdp') return /^[/+-]./.test(v);
+  return v.startsWith('-') && v !== '-';
+}
+
 /** Opciones visibles en el contexto: primero las del subcomando, luego las generales. */
 function buscarOpcion(ctx: Contexto, flag: string): Opcion | undefined {
   const listas = [ctx.subcomando?.opciones ?? [], ctx.herramienta.opciones];
@@ -304,6 +320,13 @@ function resolverOpcion(ctx: Contexto, token: Token): [string, Opcion | undefine
     const alternativa = nombre.startsWith('--') ? nombre.slice(1) : `-${nombre}`;
     const opcion = buscarOpcion(ctx, nombre) ?? buscarOpcion(ctx, alternativa);
     return [nombre, opcion];
+  }
+
+  if (h.estilo === 'freerdp') {
+    // "/opcion:valor": el nombre llega hasta los primeros dos puntos.
+    const dosPuntos = v.indexOf(':');
+    const nombre = v.startsWith('/') && dosPuntos !== -1 ? v.slice(0, dosPuntos) : v;
+    return [nombre, buscarOpcion(ctx, nombre)];
   }
 
   const exacta = buscarOpcion(ctx, v);

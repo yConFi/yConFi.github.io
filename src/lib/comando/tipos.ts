@@ -9,8 +9,10 @@
  * - `go`: paquete `flag` de Go (ffuf) o urfave/cli (gobuster). `-x` y `--x` son
  *   equivalentes, el valor va separado o con `=`, y no hay agrupación ni valor pegado.
  * - `exacto`: cada opción se escribe tal cual, con su valor separado (find).
+ * - `freerdp`: FreeRDP (xfreerdp). Las opciones empiezan por `/`, `+` o `-`, y
+ *   el valor va siempre pegado tras dos puntos (`/v:10.10.10.10`), nunca separado.
  */
-export type EstiloOpciones = 'posix' | 'go' | 'exacto';
+export type EstiloOpciones = 'posix' | 'go' | 'exacto' | 'freerdp';
 
 export type Categoria =
   | 'Escaneo de red'
@@ -27,7 +29,10 @@ export interface ValorOpcion {
   nombre: string;
   /** Qué se espera como valor. Se muestra si no hay una nota más concreta. */
   descripcion: string;
-  /** El valor solo puede ir con `=` y es opcional (p. ej. `grep --color[=WHEN]`). */
+  /**
+   * El valor es opcional y solo puede ir pegado con su separador: `=` en general
+   * (`grep --color[=WHEN]`) o `:` en estilo `freerdp` (`/p[:contraseña]`).
+   */
   soloConIgual?: boolean;
 }
 

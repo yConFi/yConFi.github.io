@@ -256,6 +256,7 @@ El campo **`estilo`** indica cómo lee las opciones el programa, porque no todos
 | `posix`   | nmap, curl, grep, ls…  | `--larga=valor`, valor pegado (`-p80`) y, con `combinables: true`, agrupadas (`-la`).    |
 | `go`      | gobuster, ffuf         | `-x` y `--x` son lo mismo; valor separado o con `=`; nada de agrupar ni pegar.           |
 | `exacto`  | find                   | Cada opción se escribe tal cual, con su valor separado.                                   |
+| `freerdp` | xfreerdp               | Opciones con `/`, `+` o `-`; el valor va pegado tras dos puntos (`/v:10.10.10.10`).      |
 
 Otros campos útiles: `subcomandos` (p. ej. `gobuster dir`), `ejecutaComando: true` (el primer argumento
 es otro comando, como en `sudo`), `opcionesHastaArgumento` (las opciones terminan tras N argumentos),
