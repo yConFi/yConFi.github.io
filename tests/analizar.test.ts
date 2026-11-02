@@ -160,11 +160,22 @@ describe('analizarComando: casos válidos', () => {
       'valor:+secreto',
     ]);
   });
+
+  it('herramienta ejecutada por su ruta: se busca por la última parte y se explica la ruta', () => {
+    expect(resumen('./nmap 10.10.10.10')).toEqual(['herramienta:./nmap', 'argumento:10.10.10.10']);
+    const local = analizarComando('./nmap')[0];
+    expect(local.explicacion).toContain('no lo busca en el PATH');
+    expect(local.explicacion).toContain('./ es el directorio actual');
+    const absoluta = analizarComando('/usr/bin/nmap')[0];
+    expect(absoluta.explicacion).toContain('no lo busca en el PATH');
+    expect(absoluta.explicacion).not.toContain('directorio actual');
+  });
 });
 
 describe('analizarComando: errores', () => {
   it.each<[string, MotivoError]>([
     ['nmapp 10.10.10.10', 'herramienta-desconocida'],
+    ['./nmapp 10.10.10.10', 'herramienta-desconocida'],
     ['nmap -Z 10.10.10.10', 'opcion-desconocida'],
     ['nmap -sCV 10.10.10.10', 'opcion-desconocida'],
     ['gobuster -u http://x', 'falta-subcomando'],

