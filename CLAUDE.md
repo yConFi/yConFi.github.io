@@ -120,8 +120,9 @@ Si no puedes comprobar algo, no lo escribas y díselo a Ricardo.
 
 ## Git y publicación
 
-- Trabaja en la rama que indique la sesión. Si su PR anterior ya se fusionó, empieza la rama de nuevo desde
-  `main`.
+- **Lo primero de cada conversación, antes de escribir nada:** actualiza `main` (`git fetch origin`) y mira
+  si la PR de la rama actual ya se fusionó. Si se fusionó, crea la rama de la máquina desde `origin/main`
+  (`git switch -c claude/<máquina> --no-track origin/main`). Si no, sigue en la rama de la sesión.
 - Commits claros en castellano.
 - Abre la PR a `main` y fusiónala (squash, con título acabado en `(#N)`) solo cuando Ricardo lo pida.
 - Al fusionar, GitHub Actions pasa los tests, compila y publica en <https://yconfi.github.io>. Comprueba
