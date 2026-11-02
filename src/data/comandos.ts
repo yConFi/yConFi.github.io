@@ -1286,6 +1286,85 @@ const redisCli: Herramienta = {
   ],
 };
 
+// ============================================================
+// mongosh (MongoDB Shell) — https://www.mongodb.com/docs/mongodb-shell/
+// ============================================================
+const mongosh: Herramienta = {
+  nombre: 'mongosh',
+  descripcion:
+    'MongoDB Shell, el cliente de línea de comandos de MongoDB. Abre una sesión interactiva (prompt base>) donde se escriben órdenes como show dbs, use, show collections o db.<colección>.find().',
+  categoria: 'Conexiones',
+  docs: 'https://www.mongodb.com/docs/mongodb-shell/connect/',
+  variantes:
+    'Explicaciones según la documentación de mongosh en mongodb.com (consultada el 02/11/2026). La documentación actual dice que se conecta a MongoDB 7.0 o superior.',
+  estilo: 'posix',
+  combinables: false,
+  argumentos:
+    'Cadena de conexión con el servidor al que se conecta, p. ej. mongodb://host:puerto. Sin argumento ni --host, se conecta a localhost en el puerto 27017.',
+  opciones: [
+    {
+      nombres: ['--host'],
+      descripcion: 'Servidor al que se conecta, por nombre o dirección IP, en lugar de usar una cadena de conexión.',
+      valor: { nombre: 'host', descripcion: 'Nombre o dirección IP del servidor MongoDB.' },
+    },
+    {
+      nombres: ['--port'],
+      descripcion: 'Puerto del servidor. Si no se indica, el 27017.',
+      valor: { nombre: 'puerto', descripcion: 'Número de puerto.' },
+    },
+    { nombres: ['--nodb'], descripcion: 'Abre el shell sin conectarse a ningún servidor.' },
+    { nombres: ['--version'], descripcion: 'Muestra la versión de mongosh (del cliente, no del servidor) y termina.' },
+    { nombres: ['-h', '--help'], descripcion: 'Muestra la ayuda con las opciones y termina.' },
+  ],
+};
+
+// ============================================================
+// tar (GNU tar) — https://www.gnu.org/software/tar/manual/
+// ============================================================
+const tar: Herramienta = {
+  nombre: 'tar',
+  descripcion: 'Crea, lista y extrae archivos .tar, también comprimidos (.tar.gz, .tgz…).',
+  categoria: 'Ficheros y búsqueda',
+  docs: 'https://www.gnu.org/software/tar/manual/html_node/Option-Summary.html',
+  variantes:
+    'Explicaciones según GNU tar 1.35. Admite también el estilo antiguo, sin guion: "tar xvf fichero" equivale a "tar -xvf fichero". Al leer un archivo comprimido, GNU tar reconoce el formato solo, sin -z.',
+  estilo: 'posix',
+  combinables: true,
+  argumentos: 'Ficheros que se añaden al crear, o que se extraen o listan del archivo. Sin argumentos, todos.',
+  opciones: [
+    { nombres: ['-x', '--extract', '--get'], descripcion: 'Extrae los ficheros del archivo.' },
+    { nombres: ['-c', '--create'], descripcion: 'Crea un archivo nuevo.' },
+    { nombres: ['-t', '--list'], descripcion: 'Lista el contenido del archivo sin extraerlo.' },
+    {
+      nombres: ['-v', '--verbose'],
+      descripcion: 'Muestra el nombre de cada fichero que procesa.',
+    },
+    {
+      nombres: ['-f', '--file'],
+      descripcion: 'Archivo con el que trabaja tar.',
+      valor: { nombre: 'archivo', descripcion: 'Fichero .tar (o comprimido) que se crea, lista o extrae.' },
+    },
+    { nombres: ['-z', '--gzip'], descripcion: 'Comprime o descomprime con gzip.' },
+  ],
+};
+
+// ============================================================
+// cd (orden interna de Bash) — https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html
+// ============================================================
+const cd: Herramienta = {
+  nombre: 'cd',
+  descripcion: 'Orden interna del shell: cambia el directorio de trabajo.',
+  categoria: 'Ficheros y búsqueda',
+  docs: 'https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html',
+  estilo: 'posix',
+  combinables: false,
+  argumentos: 'Directorio al que se cambia. Sin argumento, el directorio personal ($HOME); con "-", el anterior.',
+  opciones: [
+    { nombres: ['-L'], descripcion: 'Sigue los enlaces simbólicos (es lo que hace por defecto).' },
+    { nombres: ['-P'], descripcion: 'Usa la estructura física de directorios, sin seguir los enlaces simbólicos.' },
+  ],
+};
+
 export const HERRAMIENTAS: Herramienta[] = [
   nmap,
   gobuster,
@@ -1299,12 +1378,15 @@ export const HERRAMIENTAS: Herramienta[] = [
   ftp,
   smbclient,
   redisCli,
+  mongosh,
   ssh,
   sudo,
   find,
   grep,
   ls,
   cat,
+  tar,
+  cd,
   id,
   whoami,
   python3,

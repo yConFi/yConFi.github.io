@@ -15,6 +15,23 @@ const EXPLICACION_FIN_OPCIONES =
   'Marca el final de las opciones: lo que sigue se trata como argumentos aunque empiece por "-".';
 const EXPLICACION_LLAVES_FIND = 'find lo sustituye por la ruta de cada fichero encontrado.';
 
+/**
+ * Busca la herramienta por su nombre. Si el comando la ejecuta por su ruta
+ * (`./mongosh`, `/usr/bin/nmap`), la busca por la última parte y devuelve una
+ * explicación de la ruta: con una barra en el nombre, Bash no busca en el PATH
+ * (manual de Bash, "Command Search and Execution").
+ */
+function buscarHerramienta(valor: string): { herramienta?: Herramienta; ruta?: string } {
+  const barra = valor.lastIndexOf('/');
+  if (barra === -1) return { herramienta: POR_NOMBRE.get(valor) };
+  const herramienta = POR_NOMBRE.get(valor.slice(barra + 1));
+  const directorio = valor.slice(0, barra + 1);
+  const ruta =
+    `Se ejecuta por su ruta: como el nombre contiene una barra, Bash no lo busca en el PATH y ejecuta ese fichero.` +
+    (directorio === './' ? ' ./ es el directorio actual.' : '');
+  return { herramienta, ruta };
+}
+
 export interface OpcionesAnalisis {
   /** Explicaciones concretas para argumentos y valores, por su texto. */
   notas?: Record<string, string>;
@@ -134,7 +151,7 @@ function analizarTokens(tokens: Token[], ayudas: Ayudas, notasExtra: Record<stri
 
     // ---------- Inicio de un comando: la herramienta ----------
     if (!ctx) {
-      const h = POR_NOMBRE.get(token.valor);
+      const { herramienta: h, ruta } = buscarHerramienta(token.valor);
       if (!h) {
         throw error('herramienta-desconocida', `Herramienta "${token.valor}" no está en el diccionario.`, token.valor);
       }
@@ -142,7 +159,7 @@ function analizarTokens(tokens: Token[], ayudas: Ayudas, notasExtra: Record<stri
         texto: token.texto,
         clase: 'herramienta',
         etiqueta: 'herramienta',
-        explicacion: h.descripcion,
+        explicacion: ruta ? `${h.descripcion} ${ruta}` : h.descripcion,
         ...(h.variantes ? { aviso: h.variantes } : {}),
         docs: h.docs,
         pegadoAlAnterior: false,
