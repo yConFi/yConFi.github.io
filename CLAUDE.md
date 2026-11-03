@@ -68,6 +68,7 @@ porque Ricardo la aprueba, apúntala aquí:
 - RDP
 - Fuerza bruta de directorios
 - Credenciales por defecto
+- Rsync
 
 ### Estructura
 
