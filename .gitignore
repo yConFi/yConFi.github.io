@@ -21,3 +21,7 @@ Thumbs.db
 
 # herramientas locales
 .claude/
+
+# cloudflare: estado local de wrangler (bases de datos de `wrangler dev`,
+# bundles temporales y la cuenta en caché). Nada de esto se publica.
+worker/.wrangler/

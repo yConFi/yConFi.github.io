@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Avatar from '../components/Avatar.astro';
 import TarjetaWalkthrough from '../components/TarjetaWalkthrough.astro';
 import TarjetaProyecto from '../components/TarjetaProyecto.astro';
+import BotonUtil from '../components/BotonUtil.astro';
 import { obtenerProyectos, obtenerWalkthroughs } from '../lib/coleccion';
 import { TOTAL_HERRAMIENTAS, TOTAL_OPCIONES } from '../lib/diccionario';
 import { ENLACES } from '../data/site';
@@ -123,7 +124,7 @@ const contadores = [
     )
   }
 
-  <section class="banda banda-final" aria-labelledby="titulo-sobre-mi">
+  <section class="banda" aria-labelledby="titulo-sobre-mi">
     <div class="contenido sobre-mi">
       <div class="lectura">
         <h2 id="titulo-sobre-mi">Sobre mí</h2>
@@ -146,6 +147,12 @@ const contadores = [
           <li><a href="/logros/">Logros y plataformas</a></li>
         </ul>
       </aside>
+    </div>
+  </section>
+
+  <section class="banda banda-final" aria-labelledby="titulo-util">
+    <div class="contenido">
+      <BotonUtil />
     </div>
   </section>
 </BaseLayout>

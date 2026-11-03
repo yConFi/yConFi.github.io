@@ -1,0 +1,248 @@
+---
+// Botón de "me ha servido" para toda la web, con contador real.
+//
+// El número lo sirve el Worker de `worker/` (un Durable Object, ver su README).
+// Aquí no hay ninguna cifra escrita a mano: el bloque empieza oculto y solo
+// aparece cuando el endpoint ha contestado. Si el endpoint no está configurado
+// o no responde, no se muestra nada. Mejor sin botón que con un número falso.
+//
+// Que una misma persona no vote dos veces se resuelve en su navegador con
+// localStorage: aguanta recargar, cerrar y volver meses después. No aguanta
+// incógnito, borrar los datos del sitio ni cambiar de dispositivo, y se acepta:
+// la alternativa es identificar a cada visitante.
+import { CONTADOR_UTIL } from '../data/site';
+
+// Un valor distinto "reabre" el voto a todo el mundo, por si hay que reiniciar.
+const CLAVE = 'util-votado-v1';
+---
+
+{
+  CONTADOR_UTIL.endpoint && (
+    <div class="tarjeta util" data-util data-endpoint={CONTADOR_UTIL.endpoint} data-clave={CLAVE} hidden>
+      <div class="texto">
+        <h2 id="titulo-util">¿Te ha servido?</h2>
+        <p>
+          Es anónimo de verdad: no se guarda tu nombre, ni tu correo, ni tu IP, ni nada tuyo. Solo un número. Me sirve
+          para saber si lo que publico le ayuda a alguien.
+        </p>
+      </div>
+
+      <div class="accion">
+        <button type="button" class="boton boton-principal" data-util-boton>
+          <svg class="icono si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3Z" />
+            <path d="M7 11l4.2-7.5a1.6 1.6 0 0 1 2.9 1.2L13.2 9h5.2a1.9 1.9 0 0 1 1.9 2.3l-1.2 6A2 2 0 0 1 17.1 19H7" />
+          </svg>
+          <svg class="icono ya" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m5 13 4 4L19 7" />
+          </svg>
+          <span class="si">Me ha servido</span>
+          <span class="ya">¡Gracias!</span>
+        </button>
+
+        <p class="cuenta" aria-live="polite">
+          <strong class="numero" data-util-numero />
+          <span data-util-frase />
+        </p>
+
+        <p class="fallo" role="alert" data-util-fallo hidden />
+      </div>
+    </div>
+  )
+}
+
+<script>
+  const bloque = document.querySelector<HTMLElement>('[data-util]');
+  const boton = bloque?.querySelector<HTMLButtonElement>('[data-util-boton]');
+  const numero = bloque?.querySelector<HTMLElement>('[data-util-numero]');
+  const frase = bloque?.querySelector<HTMLElement>('[data-util-frase]');
+  const fallo = bloque?.querySelector<HTMLElement>('[data-util-fallo]');
+
+  if (bloque && boton && numero && frase && fallo) {
+    const endpoint = bloque.dataset.endpoint ?? '';
+    const clave = bloque.dataset.clave ?? 'util-votado-v1';
+
+    // Si el navegador no deja leer el almacenamiento (incógnito en algunos
+    // casos, datos bloqueados), se da por no votado: el botón sigue usable.
+    const yaVotado = () => {
+      try {
+        return localStorage.getItem(clave) === '1';
+      } catch {
+        return false;
+      }
+    };
+
+    const pintar = (total: number, votado: boolean) => {
+      numero.textContent = String(total);
+      frase.textContent =
+        total === 0
+          ? 'nadie lo ha votado todavía'
+          : total === 1
+            ? 'persona lo ha encontrado útil'
+            : 'personas lo han encontrado útil';
+
+      bloque.classList.toggle('votado', votado);
+      boton.disabled = votado;
+    };
+
+    const leerTotal = async (respuesta: Response) => {
+      const datos: unknown = await respuesta.json();
+      const total = (datos as { total?: unknown }).total;
+      if (typeof total !== 'number' || !Number.isFinite(total)) throw new Error('respuesta inesperada');
+      return total;
+    };
+
+    // Arranque: se pide el total y solo entonces se enseña el bloque. Si falla,
+    // se queda oculto y la página no muestra ningún contador.
+    (async () => {
+      try {
+        const respuesta = await fetch(endpoint, { method: 'GET' });
+        if (!respuesta.ok) throw new Error(String(respuesta.status));
+        pintar(await leerTotal(respuesta), yaVotado());
+        bloque.hidden = false;
+      } catch {
+        /* sin contador no hay bloque: se deja oculto */
+      }
+    })();
+
+    boton.addEventListener('click', async () => {
+      // Se desactiva ya para que un doble clic no mande dos peticiones.
+      boton.disabled = true;
+      fallo.hidden = true;
+
+      try {
+        const respuesta = await fetch(endpoint, { method: 'POST' });
+
+        if (respuesta.status === 429) {
+          // Tope por minuto del Worker: el voto no se ha guardado.
+          throw new Error('demasiados');
+        }
+        if (!respuesta.ok) throw new Error(String(respuesta.status));
+
+        const total = await leerTotal(respuesta);
+        try {
+          localStorage.setItem(clave, '1');
+        } catch {
+          /* sin almacenamiento el voto cuenta, pero no se recuerda */
+        }
+        pintar(total, true);
+      } catch (error) {
+        boton.disabled = false;
+        fallo.textContent =
+          error instanceof Error && error.message === 'demasiados'
+            ? 'Ahora mismo hay mucho movimiento. Prueba dentro de un minuto.'
+            : 'No se ha podido guardar tu voto. Inténtalo más tarde.';
+        fallo.hidden = false;
+      }
+    });
+  }
+</script>
+
+<style>
+  .util {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.5rem 2.5rem;
+  }
+
+  .util[hidden] {
+    display: none;
+  }
+
+  .texto {
+    flex: 999 1 20rem;
+    min-width: 0;
+  }
+
+  .texto h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.15rem;
+  }
+
+  .texto p {
+    margin: 0;
+    max-width: 44ch;
+    font-size: 0.95rem;
+    color: var(--texto-suave);
+  }
+
+  .accion {
+    flex: 1 1 13rem;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  .accion .boton {
+    /* El resto de botones de la web viven en una fila y toman su altura del
+       texto; aquí se fija para que no cambie al pasar a "¡Gracias!". */
+    min-height: 2.75rem;
+  }
+
+  .icono {
+    width: 1.05rem;
+    height: 1.05rem;
+    flex-shrink: 0;
+  }
+
+  .cuenta {
+    /* En columna a propósito: así se lee igual que los contadores de la banda
+       de cifras y no cambia de forma según el ancho que le quede al bloque. */
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--texto-suave);
+  }
+
+  .numero {
+    font-family: var(--fuente-mono);
+    font-size: 1.35rem;
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--acento-texto);
+  }
+
+  .fallo {
+    margin: 0;
+    max-width: 24rem;
+    font-size: 0.85rem;
+    color: var(--peligro);
+  }
+
+  .fallo[hidden] {
+    display: none;
+  }
+
+  /* ---------- Estado "ya votado" ---------- */
+  /* Qué mitad del botón se ve lo decide el CSS a partir de la clase del
+     bloque, igual que en el botón de tema, para que no haya parpadeo. */
+  .ya {
+    display: none;
+  }
+
+  .votado .si {
+    display: none;
+  }
+
+  .votado .ya {
+    display: inline-flex;
+  }
+
+  .votado span.ya {
+    display: inline;
+  }
+
+  .votado .boton[disabled] {
+    /* Ya cumplió su función: deja de pedir el clic, pero se queda legible. */
+    border-color: var(--borde);
+    background: var(--bg-elev-2);
+    color: var(--texto-suave);
+    cursor: default;
+    filter: none;
+  }
+</style>

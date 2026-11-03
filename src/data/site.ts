@@ -14,6 +14,17 @@ export const ENLACES = {
   linkedin: 'https://www.linkedin.com/in/ricardo-hidalgo-bejarano-810155344',
 } as const;
 
+/**
+ * Contador de "me ha servido" de la portada. El endpoint es el Worker de
+ * Cloudflare de `worker/` (ver su README para desplegarlo).
+ *
+ * Mientras `endpoint` esté vacío el botón NO se muestra. Es a propósito: más
+ * vale que no haya botón a que haya un número que no sea real.
+ */
+export const CONTADOR_UTIL = {
+  endpoint: 'https://contador-util.yconfi.workers.dev',
+} as const;
+
 export interface PerfilPlataforma {
   nombre: string;
   url: string;

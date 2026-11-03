@@ -1,0 +1,23 @@
+{
+  // Configuración del Worker del contador. Se despliega aparte de la web:
+  // la web sigue siendo estática en GitHub Pages y solo llama a este endpoint.
+  //
+  // El bloque "migrations" con "new_sqlite_classes" es el que documenta
+  // https://developers.cloudflare.com/durable-objects/best-practices/access-durable-objects-storage/
+  // El backend SQLite es obligatorio: en el plan gratuito de Workers es el
+  // único disponible ("Workers Free plan: Only Durable Objects with SQLite
+  // storage backend are available").
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "contador-util",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-03",
+
+  "durable_objects": {
+    "bindings": [{ "name": "CONTADOR", "class_name": "ContadorUtil" }]
+  },
+
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ContadorUtil"] }],
+
+  // Registros en el panel de Cloudflare, para poder mirar si algo falla.
+  "observability": { "enabled": true }
+}
