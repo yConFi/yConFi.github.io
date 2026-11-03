@@ -1365,6 +1365,30 @@ const cd: Herramienta = {
   ],
 };
 
+// ============================================================
+// rsync — https://man7.org/linux/man-pages/man1/rsync.1.html
+// ============================================================
+const rsync: Herramienta = {
+  nombre: 'rsync',
+  descripcion:
+    'Copia ficheros entre directorios locales o con otro host. Con dos puntos dobles tras el host (host::módulo) habla directamente con un servidor rsync (demonio), que comparte carpetas llamadas módulos.',
+  categoria: 'Conexiones',
+  docs: 'https://man7.org/linux/man-pages/man1/rsync.1.html',
+  variantes:
+    'Explicaciones según la página man oficial de rsync. En la Pwnbox la versión era la 3.4.1.',
+  estilo: 'posix',
+  combinables: true,
+  argumentos:
+    'Origen y, opcionalmente, destino. Con un servidor rsync, el origen se escribe HOST::MÓDULO/RUTA; sin módulo (HOST::) lista los módulos que el servidor deja ver. Con un solo origen y sin destino, lista los ficheros en lugar de copiarlos.',
+  opciones: [
+    {
+      nombres: ['--list-only'],
+      descripcion:
+        'Lista los ficheros del origen en lugar de transferirlos, aunque se indique un destino. Se aplica sola si hay un único origen y ningún destino.',
+    },
+  ],
+};
+
 export const HERRAMIENTAS: Herramienta[] = [
   nmap,
   gobuster,
@@ -1377,6 +1401,7 @@ export const HERRAMIENTAS: Herramienta[] = [
   xfreerdp,
   ftp,
   smbclient,
+  rsync,
   redisCli,
   mongosh,
   ssh,

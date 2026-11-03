@@ -1,0 +1,214 @@
+---
+titulo: "Synced"
+plataforma: HackTheBox
+dificultad: Muy fácil
+so: Linux
+fecha: 2026-11-03
+tecnicas:
+  - Escaneo de puertos
+  - Rsync
+  - Acceso anónimo
+resumen: "Máquina Linux con un servidor rsync en el puerto 873 que comparte un módulo público sin pedir credenciales, con la flag dentro."
+serie:
+  nombre: Starting Point
+  tier: 0
+borrador: false
+---
+
+Máquina del Tier 0 de Starting Point. Las preguntas guiadas (tasks) de HackTheBox aparecen plegadas en la
+sección donde se responden: intenta contestarlas antes de abrirlas.
+
+<Ruta
+  titulo="Camino seguido en Synced, de la conexión a la flag"
+  pasos={[
+    { titulo: 'ping', detalle: 'La máquina responde' },
+    { titulo: 'nmap -sT -p-', detalle: 'Solo 873/tcp abierto: rsync' },
+    { titulo: 'rsync --list-only', detalle: 'Módulo public sin credenciales' },
+    { titulo: 'rsync', detalle: 'Descarga flag.txt del módulo', meta: true },
+  ]}
+/>
+
+> La IP `10.129.228.37` es la que tenía la máquina en mi sesión; a ti te saldrá otra.
+
+## Reconocimiento
+
+Lo primero es comprobar que llega la conexión con la máquina:
+
+<Cmd c="ping 10.129.228.37" notas={{ "10.129.228.37": "IP de la máquina objetivo." }} />
+
+Lo detengo con `Ctrl+C` y muestra el resumen:
+
+```text
+64 bytes from 10.129.228.37: icmp_seq=1 ttl=63 time=7.42 ms
+64 bytes from 10.129.228.37: icmp_seq=2 ttl=63 time=7.99 ms
+...
+^C
+--- 10.129.228.37 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 4005ms
+```
+
+La máquina responde a todo: 5 paquetes enviados y 5 recibidos.
+
+## Enumeración
+
+### Puertos abiertos
+
+Escaneo los 1000 puertos más comunes con un escaneo TCP connect (`-sT`), que no necesita `sudo`:
+
+<Cmd c="nmap -sT 10.129.228.37" notas={{ "10.129.228.37": "IP de la máquina objetivo." }} />
+
+```text
+Not shown: 999 closed tcp ports (conn-refused)
+PORT    STATE SERVICE
+873/tcp open  rsync
+```
+
+Solo hay un puerto abierto, el **873/tcp**, con **rsync**: un servicio para copiar y sincronizar ficheros.
+
+<Pista titulo="Tarea 1 · ¿Cuál es el puerto por defecto de rsync?">
+  **873**.
+</Pista>
+
+Para asegurarme de que no hay nada más fuera de esos 1000, repito el escaneo con los 65535 puertos:
+
+<Cmd c="nmap -sT -p- 10.129.228.37" notas={{ "10.129.228.37": "IP de la máquina objetivo." }} />
+
+```text
+Not shown: 65534 closed tcp ports (conn-refused)
+PORT    STATE SERVICE
+873/tcp open  rsync
+```
+
+Sigue siendo el único.
+
+<Pista titulo="Tarea 2 · ¿Cuántos puertos TCP están abiertos en el host remoto?">
+  **1**.
+</Pista>
+
+### Versión de rsync
+
+Ahora pregunto al servicio qué es exactamente, escaneando solo ese puerto con la detección de versiones:
+
+<Cmd
+  c="nmap -sV -p 873 10.129.228.37"
+  notas={{ "873": "Solo se escanea el puerto 873, el de rsync.", "10.129.228.37": "IP de la máquina objetivo." }}
+/>
+
+```text
+PORT    STATE SERVICE VERSION
+873/tcp open  rsync   (protocol version 31)
+```
+
+nmap no da la versión del programa, pero sí la del **protocolo** de rsync que usa el servidor: la **31**.
+
+<Pista titulo="Tarea 3 · ¿Qué versión del protocolo usa rsync en la máquina remota?">
+  **31**.
+</Pista>
+
+## Acceso inicial
+
+### Listar los módulos
+
+Para hablar con un servidor rsync se usa el propio comando `rsync`.
+
+<Pista titulo="Tarea 4 · ¿Cuál es el nombre de comando más habitual en Linux para interactuar con rsync?">
+  **rsync**.
+</Pista>
+
+Busco en la página man (`man rsync`) cómo listar en lugar de copiar, y encuentro la opción `--list-only`.
+
+<Pista titulo="Tarea 6 · ¿Qué opción de rsync sirve solo para listar los recursos compartidos y los ficheros? (sin los guiones del principio)">
+  **--list-only** (respuesta en HTB: `list-only`, sin los guiones).
+</Pista>
+
+Mi primer intento fue pasarle solo la IP:
+
+<Cmd c="rsync --list-only 10.129.228.37" notas={{ "10.129.228.37": "IP de la máquina objetivo, sin :: (por eso falla)." }} />
+
+```text
+rsync: [sender] link_stat "/home/yconfi/10.129.228.37" failed: No such file or directory (2)
+```
+
+Sin los dos puntos dobles, rsync entiende `10.129.228.37` como un fichero local y lo busca en mi directorio
+personal. Para hablar con el servidor rsync hay que escribir `host::módulo`, y si se deja el módulo vacío,
+lista los módulos que comparte el servidor:
+
+<Cmd
+  c="rsync --list-only 10.129.228.37::"
+  notas={{ "10.129.228.37::": "IP de la máquina objetivo seguida de ::, sin módulo: lista los módulos del servidor rsync." }}
+/>
+
+```text
+public         	Anonymous Share
+```
+
+Hay un módulo, **public**, descrito como *Anonymous Share*. No he pasado usuario ni contraseña y el servidor
+ha respondido igual: el acceso anónimo no necesita credenciales.
+
+<Pista titulo="Tarea 5 · ¿Qué credenciales hay que pasar a rsync para usar la autenticación anónima? anonymous:anonymous, anonymous, None, rsync:rsync">
+  **None** (ninguna).
+</Pista>
+
+### Listar y descargar la flag
+
+Miro qué hay dentro del módulo `public`:
+
+<Cmd
+  c="rsync --list-only 10.129.228.37::public"
+  notas={{ "10.129.228.37::public": "Módulo public del servidor rsync de la máquina objetivo." }}
+/>
+
+```text
+drwxr-xr-x          4,096 2022/10/24 18:02:23 .
+-rw-r--r--             33 2022/10/24 17:32:03 flag.txt
+```
+
+Ahí está **flag.txt**. Para descargarlo le añadí un destino, pero dejé puesto `--list-only`:
+
+<Cmd
+  c="rsync --list-only 10.129.228.37::public/flag.txt flag.txt"
+  notas={{
+    "10.129.228.37::public/flag.txt": "Fichero flag.txt dentro del módulo public.",
+    "flag.txt": "Destino local: un fichero flag.txt en el directorio actual.",
+  }}
+/>
+
+```text
+-rw-r--r--             33 2022/10/24 17:32:03 flag.txt
+```
+
+Solo lo lista: `--list-only` lista el origen en lugar de copiarlo **aunque haya destino**, así que no se
+descarga nada (un `cat flag.txt` después da `No such file or directory`). Quitando la opción, rsync sí lo
+copia:
+
+<Cmd
+  c="rsync 10.129.228.37::public/flag.txt flag.txt"
+  notas={{
+    "10.129.228.37::public/flag.txt": "Fichero flag.txt dentro del módulo public.",
+    "flag.txt": "Destino local: un fichero flag.txt en el directorio actual.",
+  }}
+/>
+
+Y ya puedo leerla:
+
+<Cmd c="cat flag.txt" notas={{ "flag.txt": "Fichero con la flag, descargado del módulo public." }} />
+
+La flag no se publica: la tienes que conseguir tú.
+
+<Pista titulo="Flag · Envía la flag que está en el recurso compartido">
+  Está en `flag.txt`, dentro del módulo `public` del servidor rsync. Hay que descargarlo sin `--list-only`.
+</Pista>
+
+## Escalada de privilegios
+
+No hace falta: la flag está en un módulo de rsync abierto a cualquiera, sin llegar a tener una shell en la
+máquina.
+
+## Lecciones aprendidas
+
+- **Qué fallé:** dos cosas con rsync. Primero le pasé la IP sin `::` y la tomó como un fichero local. Luego
+  intenté descargar la flag con `--list-only` puesto, y esa opción solo lista, aunque haya destino.
+- **Lo que enseña la máquina:** un servidor rsync con un módulo anónimo deja leer sus ficheros a cualquiera
+  que llegue al puerto 873, sin usuario ni contraseña.
+- **Qué haré la próxima vez:** ante un servidor rsync, listar primero los módulos con `rsync host::` y, para
+  descargar, quitar `--list-only` y leer bien en la página man qué hace cada opción antes de usarla.
