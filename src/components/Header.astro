@@ -1,20 +1,30 @@
 ---
-import { esSeccionActiva, NAVEGACION } from '../data/site';
 import ThemeToggle from './ThemeToggle.astro';
+import SelectorIdioma from './SelectorIdioma.astro';
+import { esSeccionActiva, navegacion, ruta as rutaDe, textos, type Idioma } from '../i18n';
 
+interface Props {
+  idioma: Idioma;
+  /** La misma página en cada idioma, para el selector. La calcula BaseLayout. */
+  alternativas: Map<Idioma, string>;
+}
+
+const { idioma, alternativas } = Astro.props;
+const t = textos(idioma);
+const enlaces = navegacion(idioma, t.nav);
 const ruta = Astro.url.pathname;
 ---
 
 <header class="cabecera">
   <div class="contenedor">
-    <a href="/" class="logo" aria-label="Inicio">
+    <a href={rutaDe('inicio', idioma)} class="logo" aria-label={t.general.irAlInicio}>
       <span class="prompt-logo" aria-hidden="true">~/</span>yconfi<span class="cursor" aria-hidden="true">_</span>
     </a>
 
-    <nav aria-label="Principal">
+    <nav aria-label={t.general.navPrincipal}>
       <ul>
         {
-          NAVEGACION.map((enlace) => (
+          enlaces.map((enlace) => (
             <li>
               <a href={enlace.href} aria-current={esSeccionActiva(enlace, ruta) ? 'page' : undefined}>
                 {enlace.texto}
@@ -25,7 +35,10 @@ const ruta = Astro.url.pathname;
       </ul>
     </nav>
 
-    <ThemeToggle />
+    <div class="controles">
+      <SelectorIdioma idioma={idioma} alternativas={alternativas} />
+      <ThemeToggle idioma={idioma} />
+    </div>
   </div>
 </header>
 
@@ -68,6 +81,13 @@ const ruta = Astro.url.pathname;
     50% {
       opacity: 0;
     }
+  }
+
+  .controles {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
   }
 
   nav {

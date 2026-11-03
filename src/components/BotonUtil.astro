@@ -11,20 +11,38 @@
 // incógnito, borrar los datos del sitio ni cambiar de dispositivo, y se acepta:
 // la alternativa es identificar a cada visitante.
 import { CONTADOR_UTIL } from '../data/site';
+import { textos, type Idioma } from '../i18n';
+
+interface Props {
+  idioma: Idioma;
+}
+
+const { idioma } = Astro.props;
+const t = textos(idioma);
 
 // Un valor distinto "reabre" el voto a todo el mundo, por si hay que reiniciar.
+// El contador es el MISMO para los dos idiomas: cuenta personas, no visitas a
+// una versión de la página.
 const CLAVE = 'util-votado-v1';
 ---
 
 {
   CONTADOR_UTIL.endpoint && (
-    <div class="tarjeta util" data-util data-endpoint={CONTADOR_UTIL.endpoint} data-clave={CLAVE} hidden>
+    <div
+      class="tarjeta util"
+      data-util
+      data-endpoint={CONTADOR_UTIL.endpoint}
+      data-clave={CLAVE}
+      data-txt-nadie={t.util.nadie}
+      data-txt-una={t.util.una}
+      data-txt-varias={t.util.varias}
+      data-txt-muchos={t.util.falloMuchos}
+      data-txt-fallo={t.util.falloGenerico}
+      hidden
+    >
       <div class="texto">
-        <h2 id="titulo-util">¿Te ha servido?</h2>
-        <p>
-          Es anónimo de verdad: no se guarda tu nombre, ni tu correo, ni tu IP, ni nada tuyo. Solo un número. Me sirve
-          para saber si lo que publico le ayuda a alguien.
-        </p>
+        <h2 id="titulo-util">{t.util.titulo}</h2>
+        <p>{t.util.texto}</p>
       </div>
 
       <div class="accion">
@@ -36,8 +54,8 @@ const CLAVE = 'util-votado-v1';
           <svg class="icono ya" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="m5 13 4 4L19 7" />
           </svg>
-          <span class="si">Me ha servido</span>
-          <span class="ya">¡Gracias!</span>
+          <span class="si">{t.util.boton}</span>
+          <span class="ya">{t.util.gracias}</span>
         </button>
 
         <p class="cuenta" aria-live="polite">
@@ -61,6 +79,13 @@ const CLAVE = 'util-votado-v1';
   if (bloque && boton && numero && frase && fallo) {
     const endpoint = bloque.dataset.endpoint ?? '';
     const clave = bloque.dataset.clave ?? 'util-votado-v1';
+    const txt = {
+      nadie: bloque.dataset.txtNadie ?? '',
+      una: bloque.dataset.txtUna ?? '',
+      varias: bloque.dataset.txtVarias ?? '',
+      muchos: bloque.dataset.txtMuchos ?? '',
+      fallo: bloque.dataset.txtFallo ?? '',
+    };
 
     // Si el navegador no deja leer el almacenamiento (incógnito en algunos
     // casos, datos bloqueados), se da por no votado: el botón sigue usable.
@@ -74,12 +99,7 @@ const CLAVE = 'util-votado-v1';
 
     const pintar = (total: number, votado: boolean) => {
       numero.textContent = String(total);
-      frase.textContent =
-        total === 0
-          ? 'nadie lo ha votado todavía'
-          : total === 1
-            ? 'persona lo ha encontrado útil'
-            : 'personas lo han encontrado útil';
+      frase.textContent = total === 0 ? txt.nadie : total === 1 ? txt.una : txt.varias;
 
       bloque.classList.toggle('votado', votado);
       boton.disabled = votado;
@@ -129,9 +149,7 @@ const CLAVE = 'util-votado-v1';
       } catch (error) {
         boton.disabled = false;
         fallo.textContent =
-          error instanceof Error && error.message === 'demasiados'
-            ? 'Ahora mismo hay mucho movimiento. Prueba dentro de un minuto.'
-            : 'No se ha podido guardar tu voto. Inténtalo más tarde.';
+          error instanceof Error && error.message === 'demasiados' ? txt.muchos : txt.fallo;
         fallo.hidden = false;
       }
     });

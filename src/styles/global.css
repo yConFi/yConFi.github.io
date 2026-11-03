@@ -446,6 +446,22 @@ a.etiqueta:hover {
   display: none;
 }
 
+/*
+  Aviso de idioma: lo ponen las páginas en inglés cuyo texto sigue en castellano.
+  Es informativo, no un error, así que va con el acento y no con el color de peligro.
+*/
+.aviso-idioma {
+  margin: 0 0 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--borde);
+  border-left: 3px solid var(--acento);
+  border-radius: var(--radio);
+  background: var(--bg-elev);
+  font-family: var(--fuente-mono);
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
 /* TODO visibles: imposibles de pasar por alto en la web */
 .todo {
   background: var(--acento2-bg);

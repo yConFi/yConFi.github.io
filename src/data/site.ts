@@ -3,11 +3,10 @@
 
 export const SITE = {
   titulo: 'yConFi',
-  descripcion:
-    'Portfolio de ciberseguridad y walkthroughs paso a paso de máquinas y retos retirados, con cada parte de cada comando explicada.',
-  idioma: 'es',
   autor: 'Ricardo Hidalgo Bejarano',
 } as const;
+// La descripción del sitio y el idioma de cada página ya no están aquí: dependen
+// del idioma, así que viven en src/i18n/ (textos/<idioma>.ts y idiomas.ts).
 
 export const ENLACES = {
   github: 'https://github.com/yConFi',
@@ -37,25 +36,3 @@ export const PERFILES: readonly PerfilPlataforma[] = [
   // TODO: añadir `rango` cuando Ricardo lo indique, p. ej. { nombre: '…', actualizado: 'AAAA-MM-DD' }.
   { nombre: 'HackTheBox', url: 'https://profile.hackthebox.com/profile/019ddedf-fe2d-70cf-93a9-c866d6fdb45c' },
 ];
-
-export interface EnlaceNavegacion {
-  href: string;
-  texto: string;
-  /** Otras rutas que pertenecen a esta sección (se marca como activa también en ellas). */
-  incluye?: readonly string[];
-}
-
-export const NAVEGACION: readonly EnlaceNavegacion[] = [
-  { href: '/', texto: 'Inicio' },
-  // Las técnicas son otra forma de recorrer los walkthroughs, no una sección aparte.
-  { href: '/walkthroughs/', texto: 'Walkthroughs', incluye: ['/tecnicas/'] },
-  { href: '/proyectos/', texto: 'Proyectos' },
-  { href: '/logros/', texto: 'Logros' },
-  { href: '/diccionario/', texto: 'Diccionario' },
-];
-
-/** true si `ruta` pertenece a la sección. "Inicio" solo está activo en "/"; el resto también en sus subpáginas. */
-export function esSeccionActiva(enlace: EnlaceNavegacion, ruta: string): boolean {
-  if (enlace.href === '/') return ruta === '/';
-  return [enlace.href, ...(enlace.incluye ?? [])].some((base) => ruta.startsWith(base));
-}

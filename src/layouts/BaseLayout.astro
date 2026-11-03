@@ -3,8 +3,12 @@ import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE } from '../data/site';
+import { LANG, OG_LOCALE, rutaEquivalente, textos, type Idioma } from '../i18n';
+import { IDIOMAS } from '../i18n/idiomas';
 
 interface Props {
+  /** Idioma de la página. Lo pasa la ruta, nunca se adivina. */
+  idioma: Idioma;
   /** Título de la página (sin el nombre del sitio). */
   titulo?: string;
   /** Descripción para buscadores. Si falta, se usa la del sitio. */
@@ -13,31 +17,59 @@ interface Props {
   noindex?: boolean;
   /** true en las páginas que maquetan su propio ancho (la portada). */
   anchoCompleto?: boolean;
+  /**
+   * La misma página en cada idioma, para `hreflang` y para el selector.
+   *
+   * Las secciones fijas no hace falta que lo pasen: se saca de la tabla de rutas.
+   * Las páginas con parámetro (un walkthrough, una técnica, un proyecto) sí, porque
+   * el slug puede cambiar de idioma y solo ellas saben cuál es el suyo.
+   */
+  equivalentes?: Partial<Record<Idioma, string>>;
 }
 
-const { titulo, descripcion = SITE.descripcion, noindex = false, anchoCompleto = false } = Astro.props;
+const { idioma, titulo, descripcion, noindex = false, anchoCompleto = false, equivalentes } = Astro.props;
 
+const t = textos(idioma);
+const descripcionFinal = descripcion ?? t.general.descripcionSitio;
 const tituloCompleto = titulo ? `${titulo} · ${SITE.titulo}` : SITE.titulo;
+
 // Solo hay URL canónica si `site` está configurado en astro.config.mjs.
-const canonica = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+const absoluta = (ruta: string) => (Astro.site ? new URL(ruta, Astro.site).href : undefined);
+const canonica = absoluta(Astro.url.pathname);
+
+// Enlaces entre idiomas: lo que pase la página y, si no, la tabla de rutas.
+const alternativas = new Map<Idioma, string>();
+for (const otro of IDIOMAS) {
+  const ruta = equivalentes?.[otro] ?? rutaEquivalente(Astro.url.pathname, otro);
+  if (ruta) alternativas.set(otro, ruta);
+}
 ---
 
 <!doctype html>
-<html lang={SITE.idioma}>
+<html lang={LANG[idioma]}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{tituloCompleto}</title>
-    <meta name="description" content={descripcion} />
+    <meta name="description" content={descripcionFinal} />
     <meta name="author" content={SITE.autor} />
     <meta name="generator" content={Astro.generator} />
     {noindex && <meta name="robots" content="noindex" />}
     {canonica && <link rel="canonical" href={canonica} />}
 
+    {/* Una página por idioma: cada una se declara a sí misma y a su pareja. */}
+    {
+      !noindex &&
+        [...alternativas].map(([otro, ruta]) => {
+          const href = absoluta(ruta);
+          return href && <link rel="alternate" hreflang={LANG[otro]} href={href} />;
+        })
+    }
+
     <meta property="og:type" content="website" />
     <meta property="og:title" content={tituloCompleto} />
-    <meta property="og:description" content={descripcion} />
-    <meta property="og:locale" content="es_ES" />
+    <meta property="og:description" content={descripcionFinal} />
+    <meta property="og:locale" content={OG_LOCALE[idioma]} />
     {canonica && <meta property="og:url" content={canonica} />}
 
     <!-- El avatar, recortado a la cara: es lo que mejor se lee a 16-18 px en la pestaña. -->
@@ -62,12 +94,12 @@ const canonica = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : und
     </script>
   </head>
   <body>
-    <a class="skip-link" href="#contenido">Saltar al contenido</a>
-    <Header />
+    <a class="skip-link" href="#contenido">{t.general.saltarContenido}</a>
+    <Header idioma={idioma} alternativas={alternativas} />
     <main id="contenido" tabindex="-1" class:list={{ ancho: anchoCompleto }}>
       <slot />
     </main>
-    <Footer />
+    <Footer idioma={idioma} />
   </body>
 </html>
 

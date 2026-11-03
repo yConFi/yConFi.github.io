@@ -3,15 +3,18 @@
 // Para cambiarlo basta con sustituir la imagen de src/assets/avatar/.
 import { Image } from 'astro:assets';
 import avatar from '../assets/avatar/ricardo.webp';
+import { textos, type Idioma } from '../i18n';
 
 interface Props {
+  idioma: Idioma;
   /** Lado del círculo. Por defecto 5.5rem. */
   tamano?: string;
   /** Lado en píxeles que se le pide a Astro al optimizar (el doble, para pantallas densas). */
   ancho?: number;
 }
 
-const { tamano = '5.5rem', ancho = 256 } = Astro.props;
+const { idioma, tamano = '5.5rem', ancho = 256 } = Astro.props;
+const t = textos(idioma);
 ---
 
 <Image
@@ -20,7 +23,7 @@ const { tamano = '5.5rem', ancho = 256 } = Astro.props;
   src={avatar}
   width={ancho}
   height={ancho}
-  alt="Avatar ilustrado de Ricardo Hidalgo"
+  alt={t.general.avatarAlt}
   loading="eager"
 />
 

@@ -5,12 +5,9 @@ import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
-// Para añadir una plataforma, dificultad o sistema, amplía estas listas.
-export const PLATAFORMAS = ['HackTheBox', 'TryHackMe'] as const;
-export const DIFICULTADES = ['Muy fácil', 'Fácil', 'Media', 'Difícil', 'Insana'] as const;
-export const SISTEMAS = ['Linux', 'Windows', 'FreeBSD', 'OpenBSD', 'Android', 'Otro'] as const;
-/** Series o rutas guiadas dentro de una plataforma (p. ej. Starting Point de HackTheBox). */
-export const SERIES = ['Starting Point'] as const;
+// Las listas de valores están en src/data/valores.ts, para que los tests puedan
+// usarlas sin arrastrar `astro:content`.
+import { DIFICULTADES, ESTADOS_PROYECTO, PLATAFORMAS, SERIES, SISTEMAS } from './data/valores';
 
 const walkthroughs = defineCollection({
   loader: glob({ pattern: '**/*.mdx', base: './src/content/walkthroughs' }),
@@ -33,8 +30,6 @@ const walkthroughs = defineCollection({
     borrador: z.boolean(),
   }),
 });
-
-export const ESTADOS_PROYECTO = ['En producción', 'En desarrollo', 'Terminado', 'Archivado'] as const;
 
 const proyectos = defineCollection({
   loader: glob({ pattern: '**/*.mdx', base: './src/content/proyectos' }),

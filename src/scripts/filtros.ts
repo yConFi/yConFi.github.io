@@ -14,6 +14,17 @@ export function iniciarFiltros(): void {
   const form = document.querySelector<HTMLFormElement>('[data-filtros]');
   if (!form) return;
 
+  // Los textos del contador los pone la página en el formulario: este script es
+  // el mismo para los dos idiomas. No se importan de src/i18n/ para no meter
+  // todos los textos de la web en el JavaScript que descarga el visitante.
+  const txt = {
+    total: form.dataset.txtTotal ?? '{n}',
+    totalUna: form.dataset.txtTotalUna ?? '{n}',
+    parcial: form.dataset.txtParcial ?? '{visibles}/{total}',
+  };
+  const rellena = (plantilla: string, valores: Record<string, number>) =>
+    plantilla.replace(/\{(\w+)\}/g, (_, clave: string) => String(valores[clave] ?? ''));
+
   const tarjetas = [...document.querySelectorAll<HTMLElement>('[data-walkthrough]')];
   const contador = document.querySelector<HTMLElement>('[data-contador]');
   const sinResultados = document.querySelector<HTMLElement>('[data-sin-resultados]');
@@ -62,8 +73,10 @@ export function iniciarFiltros(): void {
 
     if (contador) {
       const total = tarjetas.length;
-      const palabra = total === 1 ? 'máquina' : 'máquinas';
-      contador.textContent = visibles === total ? `${total} ${palabra}` : `${visibles} de ${total} ${palabra}`;
+      contador.textContent =
+        visibles === total
+          ? rellena(total === 1 ? txt.totalUna : txt.total, { n: total })
+          : rellena(txt.parcial, { visibles, total });
     }
     if (sinResultados) sinResultados.hidden = visibles > 0;
 

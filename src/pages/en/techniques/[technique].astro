@@ -1,0 +1,15 @@
+---
+// Igual que /tecnicas/[tecnica], pero con los slugs en inglés (/en/techniques/port-scanning/).
+import Tecnica from '../../../components/paginas/Tecnica.astro';
+import { obtenerWalkthroughs } from '../../../lib/coleccion';
+import { agruparPorTecnica } from '../../../lib/walkthroughs';
+
+export async function getStaticPaths() {
+  const tecnicas = agruparPorTecnica(await obtenerWalkthroughs(), 'en');
+  return tecnicas.map((tecnica) => ({ params: { technique: tecnica.slug }, props: { tecnica } }));
+}
+
+const { tecnica } = Astro.props;
+---
+
+<Tecnica tecnica={tecnica} idioma="en" />

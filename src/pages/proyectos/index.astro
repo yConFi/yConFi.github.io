@@ -1,35 +1,6 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import TarjetaProyecto from '../../components/TarjetaProyecto.astro';
-import { obtenerProyectos } from '../../lib/coleccion';
-
-const proyectos = await obtenerProyectos();
+// Esta ruta solo elige el idioma: la página está en ../../components/paginas/Proyectos.astro.
+import Proyectos from '../../components/paginas/Proyectos.astro';
 ---
 
-<BaseLayout titulo="Proyectos" descripcion="Proyectos que he construido y cómo los hice.">
-  <div class="cabecera-pagina">
-    <h1>Proyectos</h1>
-    <p>Cosas que he construido para resolver problemas reales, y cómo las hice.</p>
-  </div>
-
-  {
-    proyectos.length === 0 ? (
-      <p class="vacio">Todavía no hay proyectos publicados.</p>
-    ) : (
-      <div class="rejilla">
-        {proyectos.map((p) => (
-          <TarjetaProyecto proyecto={p} />
-        ))}
-      </div>
-    )
-  }
-</BaseLayout>
-
-<style>
-  .rejilla {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
-    gap: 1rem;
-    align-items: stretch;
-  }
-</style>
+<Proyectos idioma="es" />

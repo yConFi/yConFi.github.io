@@ -1,0 +1,68 @@
+---
+// Selector de idioma: un enlace al mismo contenido en el otro idioma.
+//
+// Es un enlace de verdad (no un <select> con JavaScript) para que funcione sin
+// JS, se pueda abrir en otra pestaña y los buscadores lo sigan. Si la página no
+// tiene equivalente en el otro idioma no se muestra nada, en lugar de llevar al
+// inicio: mejor no ofrecerlo que prometer una página que no existe.
+import { LANG, NOMBRE_IDIOMA, idiomaAlterno, rellenar, textos, type Idioma } from '../i18n';
+
+interface Props {
+  idioma: Idioma;
+  alternativas: Map<Idioma, string>;
+}
+
+const { idioma, alternativas } = Astro.props;
+const t = textos(idioma);
+const otro = idiomaAlterno(idioma);
+const href = alternativas.get(otro);
+---
+
+{
+  href && (
+    <a
+      class="selector-idioma"
+      href={href}
+      lang={LANG[otro]}
+      hreflang={LANG[otro]}
+      aria-label={rellenar(t.idioma.cambiarPlantilla, { idioma: NOMBRE_IDIOMA[otro] })}
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M3.5 9h17M3.5 15h17" />
+        <path d="M12 3a14 14 0 0 0 0 18a14 14 0 0 0 0-18Z" />
+      </svg>
+      <span aria-hidden="true">{otro.toUpperCase()}</span>
+    </a>
+  )
+}
+
+<style>
+  .selector-idioma {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    height: 2.75rem;
+    padding: 0 0.7rem;
+    flex-shrink: 0;
+    background: var(--bg-elev);
+    color: var(--texto-suave);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+  }
+
+  .selector-idioma:hover {
+    border-color: var(--acento);
+    color: var(--texto);
+  }
+
+  svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+</style>

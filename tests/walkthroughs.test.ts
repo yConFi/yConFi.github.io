@@ -3,9 +3,11 @@ import {
   agruparPorTecnica,
   comprobarSecciones,
   filtrosSerie,
+  formatearFecha,
   nombreSerie,
   SECCIONES,
   slugTecnica,
+  tecnicaEnIdioma,
   type Walkthrough,
 } from '../src/lib/walkthroughs';
 
@@ -55,6 +57,45 @@ describe('agruparPorTecnica', () => {
 
   it('falla si la misma técnica está escrita de dos formas', () => {
     expect(() => agruparPorTecnica([wt('a', ['SQLi']), wt('b', ['sqli'])])).toThrow(/misma técnica escrita distinto/);
+  });
+
+  it('en inglés traduce el nombre, el slug y el orden, pero agrupa por lo canónico', () => {
+    const a = wt('a', ['Inyección SQL', 'Escaneo de puertos']);
+    const b = wt('b', ['Escaneo de puertos']);
+    const grupos = agruparPorTecnica([a, b], 'en');
+    expect(grupos.map((g) => [g.canonico, g.nombre, g.slug, g.walkthroughs.map((w) => w.id)])).toEqual([
+      ['Escaneo de puertos', 'Port scanning', 'port-scanning', ['a', 'b']],
+      ['Inyección SQL', 'SQL injection', 'sql-injection', ['a']],
+    ]);
+  });
+
+  it('falla al compilar si una técnica no está traducida', () => {
+    expect(() => agruparPorTecnica([wt('a', ['Técnica sin traducir'])], 'en')).toThrow(
+      /Falta la traducción al en de la técnica/,
+    );
+  });
+});
+
+describe('tecnicaEnIdioma', () => {
+  it('da el nombre y el slug del idioma pedido', () => {
+    expect(tecnicaEnIdioma('Escaneo de puertos', 'es')).toEqual({
+      nombre: 'Escaneo de puertos',
+      slug: 'escaneo-de-puertos',
+    });
+    expect(tecnicaEnIdioma('Escaneo de puertos', 'en')).toEqual({ nombre: 'Port scanning', slug: 'port-scanning' });
+  });
+});
+
+describe('formatearFecha', () => {
+  const fecha = new Date('2026-11-02T00:00:00Z');
+
+  it('en castellano usa dd/mm/aa', () => {
+    expect(formatearFecha(fecha)).toBe('02/11/26');
+    expect(formatearFecha(fecha, 'es')).toBe('02/11/26');
+  });
+
+  it('en inglés usa el mes abreviado, para que no se lea como mm/dd', () => {
+    expect(formatearFecha(fecha, 'en')).toBe('02 Nov 2026');
   });
 });
 

@@ -3,6 +3,7 @@
 // El acceso a la colección está en ./coleccion.ts.
 
 import type { CollectionEntry } from 'astro:content';
+import { etiquetaTecnica, IDIOMA_POR_DEFECTO, type Idioma } from '../i18n';
 
 export type Walkthrough = CollectionEntry<'walkthroughs'>;
 
@@ -17,34 +18,51 @@ export function slugTecnica(tecnica: string): string {
 }
 
 export interface Tecnica {
-  slug: string;
+  /**
+   * Nombre en castellano, tal cual está en el frontmatter. Es la clave canónica:
+   * la que se compara, la que va en los `data-*` y la que se traduce.
+   */
+  canonico: string;
+  /** Nombre visible en el idioma pedido. */
   nombre: string;
+  /** Slug del nombre visible, así que cambia con el idioma (port-scanning / escaneo-de-puertos). */
+  slug: string;
   walkthroughs: Walkthrough[];
 }
 
 /**
- * Agrupa por técnica. Falla si la misma técnica está escrita de dos formas
- * distintas ("SQLi" y "sqli"), para que el índice no se duplique.
+ * Agrupa por técnica en el idioma pedido. Falla si la misma técnica está escrita
+ * de dos formas distintas ("SQLi" y "sqli"), para que el índice no se duplique.
+ *
+ * El agrupado y la comprobación son siempre sobre el nombre canónico (castellano);
+ * el idioma solo cambia lo que se ve y el orden alfabético.
  */
-export function agruparPorTecnica(lista: Walkthrough[]): Tecnica[] {
+export function agruparPorTecnica(lista: Walkthrough[], idioma: Idioma = IDIOMA_POR_DEFECTO): Tecnica[] {
   const mapa = new Map<string, Tecnica>();
   for (const w of lista) {
-    for (const nombre of w.data.tecnicas) {
-      const slug = slugTecnica(nombre);
-      const existente = mapa.get(slug);
-      if (existente && existente.nombre !== nombre) {
+    for (const canonico of w.data.tecnicas) {
+      const clave = slugTecnica(canonico);
+      const existente = mapa.get(clave);
+      if (existente && existente.canonico !== canonico) {
         throw new Error(
-          `[técnicas] "${nombre}" (en ${w.id}) y "${existente.nombre}" (en ${existente.walkthroughs[0]!.id}) son la misma técnica escrita distinto. Usa la misma forma en todos los walkthroughs.`,
+          `[técnicas] "${canonico}" (en ${w.id}) y "${existente.canonico}" (en ${existente.walkthroughs[0]!.id}) son la misma técnica escrita distinto. Usa la misma forma en todos los walkthroughs.`,
         );
       }
       if (existente) {
         if (!existente.walkthroughs.includes(w)) existente.walkthroughs.push(w);
       } else {
-        mapa.set(slug, { slug, nombre, walkthroughs: [w] });
+        const nombre = etiquetaTecnica(canonico, idioma);
+        mapa.set(clave, { canonico, nombre, slug: slugTecnica(nombre), walkthroughs: [w] });
       }
     }
   }
-  return [...mapa.values()].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+  return [...mapa.values()].sort((a, b) => a.nombre.localeCompare(b.nombre, idioma));
+}
+
+/** Una técnica suelta en el idioma pedido, para las etiquetas de las tarjetas. */
+export function tecnicaEnIdioma(canonico: string, idioma: Idioma): { nombre: string; slug: string } {
+  const nombre = etiquetaTecnica(canonico, idioma);
+  return { nombre, slug: slugTecnica(nombre) };
 }
 
 /** Secciones obligatorias (títulos de nivel 2), en este orden. */
@@ -86,11 +104,15 @@ export function filtrosSerie(serie?: { nombre: string; tier: number }): string[]
   return serie ? [serie.nombre, nombreSerie(serie)] : [];
 }
 
-// Formato dd/mm/aa (p. ej. 02/11/26).
-const formatoFecha = new Intl.DateTimeFormat('es-ES', {
-  day: '2-digit',
-  month: '2-digit',
-  year: '2-digit',
-  timeZone: 'UTC',
-});
-export const formatearFecha = (fecha: Date) => formatoFecha.format(fecha);
+/**
+ * Formato de fecha por idioma:
+ * - castellano: dd/mm/aa (02/11/26), como lo tenía la web.
+ * - inglés: dd mmm aaaa (02 Nov 2026). dd/mm/aa no vale: media angloesfera lo
+ *   leería como mm/dd/aa y el 02/11 pasaría a ser el 11 de febrero.
+ */
+const FORMATOS: Record<Idioma, Intl.DateTimeFormat> = {
+  es: new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'UTC' }),
+  en: new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }),
+};
+
+export const formatearFecha = (fecha: Date, idioma: Idioma = IDIOMA_POR_DEFECTO) => FORMATOS[idioma].format(fecha);

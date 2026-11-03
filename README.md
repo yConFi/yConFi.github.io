@@ -33,17 +33,57 @@ src/
 │  ├─ walkthroughs/         # un .mdx por máquina (plantilla.mdx = plantilla, siempre borrador)
 │  ├─ proyectos/            # un .mdx por proyecto
 │  └─ certificaciones/      # un .yml por certificación (plantilla.yml = plantilla, siempre borrador)
-├─ content.config.ts        # esquema del frontmatter (plataformas, dificultades, sistemas…)
+├─ content.config.ts        # esquema del frontmatter (usa las listas de data/valores.ts)
 ├─ data/
 │  ├─ comandos.ts           # diccionario de herramientas, opciones y operadores
-│  └─ site.ts               # nombre, descripción, enlaces y perfiles de plataformas
+│  ├─ valores.ts            # plataformas, dificultades, sistemas, series y estados
+│  └─ site.ts               # nombre, enlaces y perfiles de plataformas
+├─ i18n/                    # idiomas, rutas, etiquetas y textos de la interfaz
+│  └─ textos/               # es.ts (original) y en.ts (misma forma)
 ├─ components/              # Cmd, Pista, Ruta, Avatar, tarjetas, cabecera, pie…
+│  └─ paginas/              # el contenido de cada página, una sola vez para los dos idiomas
 ├─ lib/comando/             # tokenizador, analizador y validación de <Cmd>
 ├─ lib/diccionario.ts       # cuentas del diccionario (se usan en /diccionario/ y en la portada)
-├─ pages/                   # rutas de la web
+├─ pages/                   # rutas: las de la raíz en castellano y las de en/ en inglés
 └─ styles/global.css        # tokens de color, tipografía y estilos base
 tests/                      # tests con Vitest
 ```
+
+---
+
+## Idiomas
+
+La web está en castellano y en inglés. El castellano va en la raíz (`/walkthroughs/`) y el inglés con
+prefijo y los segmentos traducidos (`/en/walkthroughs/`, `/en/techniques/`). Ninguna URL en castellano
+cambió al añadir el inglés.
+
+**Una página, dos idiomas.** El contenido de cada página está una sola vez, en
+`src/components/paginas/`, y recibe `idioma`. Lo de `src/pages/` son envoltorios de tres líneas que
+solo eligen el idioma. Si añades una página, añade su componente y sus dos envoltorios.
+
+**Dónde va cada cosa:**
+
+| Qué | Dónde |
+| --- | --- |
+| Textos de la interfaz | `src/i18n/textos/es.ts` y `en.ts` |
+| Rutas de cada sección | `src/i18n/rutas.ts` |
+| Dificultades, sistemas, estados, categorías y técnicas | `src/i18n/etiquetas.ts` |
+| Idiomas, `lang`, `og:locale` | `src/i18n/idiomas.ts` |
+
+**Reglas:**
+
+- `es.ts` es el original: define qué claves hay. `en.ts` tiene que tener **exactamente las mismas**
+  (`tests/i18n.test.ts` falla si no).
+- Las claves que acaban en `Html` se pintan con `set:html`; las que acaban en `Plantilla` llevan huecos
+  `{asi}` y se rellenan con `rellenar()`, que falla si sobra o falta alguno.
+- Lo **canónico es el castellano**: es lo que se escribe en el frontmatter, lo que viaja en los `data-*`
+  y en la URL de los filtros, y la clave de las tablas de traducción. Solo se traduce lo que se ve.
+- Si falta una traducción de una etiqueta, **`npm run build` falla** a propósito: vale más que no
+  compile a publicar media página en el otro idioma.
+- Los scripts del navegador (`cmd.ts`, `filtros.ts`) son comunes a los dos idiomas: reciben sus textos
+  en `data-*` desde la página, no importan `src/i18n/`.
+- El contenido (walkthroughs, proyectos y las explicaciones del diccionario) **todavía está solo en
+  castellano**: las páginas en inglés lo avisan con `.aviso-idioma` en lugar de disimularlo.
 
 ---
 
