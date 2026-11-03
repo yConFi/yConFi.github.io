@@ -1,66 +1,16 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import TarjetaWalkthrough from '../../components/TarjetaWalkthrough.astro';
+// Esta ruta solo elige el idioma: la página está en src/components/paginas/Tecnica.astro.
+// Los slugs son los del castellano (/tecnicas/escaneo-de-puertos/).
+import Tecnica from '../../components/paginas/Tecnica.astro';
 import { obtenerWalkthroughs } from '../../lib/coleccion';
-import { agruparPorTecnica, type Tecnica } from '../../lib/walkthroughs';
+import { agruparPorTecnica } from '../../lib/walkthroughs';
 
 export async function getStaticPaths() {
-  const tecnicas = agruparPorTecnica(await obtenerWalkthroughs());
+  const tecnicas = agruparPorTecnica(await obtenerWalkthroughs(), 'es');
   return tecnicas.map((tecnica) => ({ params: { tecnica: tecnica.slug }, props: { tecnica } }));
 }
 
-interface Props {
-  tecnica: Tecnica;
-}
-
 const { tecnica } = Astro.props;
-const n = tecnica.walkthroughs.length;
 ---
 
-<BaseLayout
-  titulo={`Técnica: ${tecnica.nombre}`}
-  descripcion={`Walkthroughs en los que se usa la técnica ${tecnica.nombre}.`}
->
-  <p class="migas"><a href="/tecnicas/">técnicas</a> <span aria-hidden="true">/</span> {tecnica.slug}</p>
-
-  <div class="cabecera-pagina">
-    <h1><span class="almohadilla" aria-hidden="true">#</span>{tecnica.nombre}</h1>
-    <p>{n} {n === 1 ? 'máquina usa' : 'máquinas usan'} esta técnica.</p>
-  </div>
-
-  <div class="rejilla">
-    {tecnica.walkthroughs.map((w) => <TarjetaWalkthrough walkthrough={w} />)}
-  </div>
-</BaseLayout>
-
-<style>
-  .migas {
-    margin: 0 0 1rem;
-    font-family: var(--fuente-mono);
-    font-size: 0.8rem;
-    color: var(--texto-suave);
-  }
-
-  .migas a {
-    text-decoration: none;
-  }
-
-  .migas a:hover {
-    text-decoration: underline;
-  }
-
-  h1 {
-    overflow-wrap: anywhere;
-  }
-
-  .almohadilla {
-    color: var(--acento-texto);
-  }
-
-  .rejilla {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
-    gap: 1rem;
-    align-items: stretch;
-  }
-</style>
+<Tecnica tecnica={tecnica} idioma="es" />

@@ -1,0 +1,14 @@
+---
+// Esta ruta solo elige el idioma: la página está en src/components/paginas/Walkthrough.astro.
+import Walkthrough from '../../../components/paginas/Walkthrough.astro';
+import { obtenerWalkthroughs } from '../../../lib/coleccion';
+
+export async function getStaticPaths() {
+  const lista = await obtenerWalkthroughs();
+  return lista.map((walkthrough) => ({ params: { id: walkthrough.id }, props: { walkthrough } }));
+}
+
+const { walkthrough } = Astro.props;
+---
+
+<Walkthrough walkthrough={walkthrough} idioma="en" />

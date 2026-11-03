@@ -55,7 +55,8 @@ borrador: true               # false solo cuando Ricardo confirme que se puede p
 
 Escribe cada técnica **siempre igual** en todos los walkthroughs (la compilación falla si una misma técnica
 aparece escrita de dos formas). Antes de inventar una nueva, reutiliza una de estas. Si añades una nueva
-porque Ricardo la aprueba, apúntala aquí:
+porque Ricardo la aprueba, apúntala aquí **y añade su nombre en inglés** en `src/i18n/etiquetas.ts`: sin
+esa traducción, `npm run build` falla al generar las páginas en inglés.
 
 - Escaneo de puertos
 - Telnet
@@ -115,12 +116,24 @@ En este entorno la mayoría de webs están bloqueadas, pero apt funciona. Para l
 
 Si no puedes comprobar algo, no lo escribas y díselo a Ricardo.
 
+## Idiomas
+
+La web está en castellano (en la raíz) y en inglés (en `/en/`). El README lo explica entero; para un
+walkthrough solo hay que saber esto:
+
+- El walkthrough se escribe **en castellano**, como siempre. La versión en inglés de su texto todavía no
+  existe: la página en `/en/walkthroughs/<máquina>/` se genera igual, con el texto en castellano y un
+  aviso. No hay que hacer nada para eso.
+- Si usas una técnica nueva, añádela a la lista de arriba **y** a `src/i18n/etiquetas.ts` con su nombre
+  en inglés. Si no, la compilación falla.
+- Si tocas algún texto de la interfaz, va en `src/i18n/textos/es.ts` y en `en.ts`, con las mismas claves.
+
 ## Comprobaciones antes de entregar
 
 1. `npm ci` (si no está `node_modules`), `npm test` y `npm run build`, sin errores.
 2. Los borradores no se compilan con `build`: revísalos con `npx astro dev`.
-3. Abre la página en Chromium (Playwright con `executablePath: '/opt/pw-browsers/chromium'`) y comprueba
-   que se ve bien en tema oscuro y claro, en escritorio y en móvil (390 px), sin scroll horizontal.
+3. Abre la página en el navegador y comprueba que se ve bien en tema oscuro y claro, en escritorio y en
+   móvil (390 px), sin scroll horizontal. Mira la versión en castellano y la de `/en/`.
 4. Busca el valor de la flag en `src/` y `dist/`: no debe aparecer.
 
 ## Git y publicación

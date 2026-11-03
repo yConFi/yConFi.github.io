@@ -4,6 +4,7 @@
 //
 // La validación principal ocurre al compilar el MDX (src/lib/comando/validar-mdx.ts).
 // Aquí se vuelve a analizar para renderizar y como segunda red de seguridad.
+import { idiomaDeRuta, textos } from '../i18n';
 import { analizarComando } from '../lib/comando/analizar';
 import { ErrorComando, formatearError } from '../lib/comando/errores';
 import type { Segmento } from '../lib/comando/tipos';
@@ -16,6 +17,9 @@ interface Props {
 }
 
 const { c, notas } = Astro.props;
+
+// Igual que en <Pista>: dentro del MDX el idioma solo se puede deducir de la ruta.
+const t = textos(idiomaDeRuta(Astro.url.pathname));
 
 let segmentos: Segmento[];
 try {
@@ -42,12 +46,19 @@ const codigo = segmentos
   .join('');
 ---
 
-<figure class="cmd" data-cmd>
+<figure
+  class="cmd"
+  data-cmd
+  data-txt-copiar={t.cmd.copiar}
+  data-txt-copiado={t.cmd.copiado}
+  data-txt-anuncio={t.cmd.copiadoAnuncio}
+  data-txt-fallo={t.cmd.falloCopiar}
+>
   <div class="cmd-barra">
     <span class="cmd-shell" aria-hidden="true">bash</span>
-    <span class="cmd-ayuda" aria-hidden="true">toca cada parte para saber qué hace</span>
+    <span class="cmd-ayuda" aria-hidden="true">{t.cmd.ayuda}</span>
     <button type="button" class="cmd-copiar" data-copiar={c}>
-      <span data-copiar-texto>Copiar</span><span class="visually-hidden"> comando</span>
+      <span data-copiar-texto>{t.cmd.copiar}</span><span class="visually-hidden">{t.cmd.copiarOculto}</span>
     </button>
   </div>
 
@@ -69,14 +80,14 @@ const codigo = segmentos
               ))}
             </ul>
           )}
-          {s.aviso && <span class="tt-aviso">Ojo: {s.aviso}</span>}
+          {s.aviso && <span class="tt-aviso">{t.general.ojo} {s.aviso}</span>}
         </div>
       ))
     }
   </div>
 
   <details class="cmd-desglose">
-    <summary>Desglose del comando</summary>
+    <summary>{t.cmd.desglose}</summary>
     <dl>
       {
         segmentos.map((s) => (
@@ -96,10 +107,10 @@ const codigo = segmentos
                   ))}
                 </ul>
               )}
-              {s.aviso && <p class="tt-aviso">Ojo: {s.aviso}</p>}
+              {s.aviso && <p class="tt-aviso">{t.general.ojo} {s.aviso}</p>}
               {s.docs && (
                 <a href={s.docs} rel="noopener">
-                  Documentación oficial
+                  {t.general.documentacionOficial}
                 </a>
               )}
             </dd>

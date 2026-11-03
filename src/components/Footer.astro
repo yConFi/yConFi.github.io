@@ -1,13 +1,20 @@
 ---
 import { ENLACES, SITE } from '../data/site';
+import { textos, type Idioma } from '../i18n';
 
+interface Props {
+  idioma: Idioma;
+}
+
+const { idioma } = Astro.props;
+const t = textos(idioma);
 const anio = new Date().getFullYear();
 ---
 
 <footer class="pie">
   <div class="contenedor">
     <p>© {anio} {SITE.autor}</p>
-    <ul aria-label="Redes">
+    <ul aria-label={t.general.redes}>
       <li><a href={ENLACES.github} rel="me noopener">GitHub</a></li>
       <li><a href={ENLACES.linkedin} rel="me noopener">LinkedIn</a></li>
     </ul>

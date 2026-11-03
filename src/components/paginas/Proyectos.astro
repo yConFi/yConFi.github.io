@@ -1,0 +1,44 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TarjetaProyecto from '../TarjetaProyecto.astro';
+import { IDIOMA_POR_DEFECTO, textos, type Idioma } from '../../i18n';
+import { obtenerProyectos } from '../../lib/coleccion';
+
+interface Props {
+  idioma: Idioma;
+}
+
+const { idioma } = Astro.props;
+const t = textos(idioma);
+const proyectos = await obtenerProyectos();
+---
+
+<BaseLayout idioma={idioma} titulo={t.proyectos.titulo} descripcion={t.proyectos.descripcion}>
+  <div class="cabecera-pagina">
+    <h1>{t.proyectos.titulo}</h1>
+    <p>{t.proyectos.intro}</p>
+  </div>
+
+  {idioma !== IDIOMA_POR_DEFECTO && <p class="aviso-idioma" role="note">{t.aviso.resumenesEnOtroIdioma}</p>}
+
+  {
+    proyectos.length === 0 ? (
+      <p class="vacio">{t.proyectos.vacio}</p>
+    ) : (
+      <div class="rejilla">
+        {proyectos.map((p) => (
+          <TarjetaProyecto proyecto={p} idioma={idioma} />
+        ))}
+      </div>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .rejilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    gap: 1rem;
+    align-items: stretch;
+  }
+</style>

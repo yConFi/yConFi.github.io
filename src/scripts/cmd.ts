@@ -68,20 +68,27 @@ function colocar(token: HTMLElement): void {
 }
 
 async function copiar(boton: HTMLButtonElement): Promise<void> {
-  const figura = boton.closest('[data-cmd]');
+  const figura = boton.closest<HTMLElement>('[data-cmd]');
   const texto = boton.querySelector('[data-copiar-texto]');
   const estado = figura?.querySelector('[data-copiar-estado]');
+  // Los textos los pone <Cmd> en la figura: este script es el mismo para los dos idiomas.
+  const txt = {
+    copiar: figura?.dataset.txtCopiar ?? 'Copiar',
+    copiado: figura?.dataset.txtCopiado ?? 'Copiado',
+    anuncio: figura?.dataset.txtAnuncio ?? '',
+    fallo: figura?.dataset.txtFallo ?? 'No se pudo copiar',
+  };
   let mensaje: string;
   try {
     await navigator.clipboard.writeText(boton.dataset.copiar ?? '');
-    mensaje = 'Copiado';
+    mensaje = txt.copiado;
   } catch {
-    mensaje = 'No se pudo copiar';
+    mensaje = txt.fallo;
   }
   if (texto) texto.textContent = mensaje;
-  if (estado) estado.textContent = mensaje === 'Copiado' ? 'Comando copiado al portapapeles' : mensaje;
+  if (estado) estado.textContent = mensaje === txt.copiado ? txt.anuncio : mensaje;
   window.setTimeout(() => {
-    if (texto) texto.textContent = 'Copiar';
+    if (texto) texto.textContent = txt.copiar;
     if (estado) estado.textContent = '';
   }, 2000);
 }

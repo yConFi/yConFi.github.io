@@ -1,0 +1,81 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { rellenar, ruta, rutaHija, textos, type Idioma } from '../../i18n';
+import { obtenerWalkthroughs } from '../../lib/coleccion';
+import { agruparPorTecnica } from '../../lib/walkthroughs';
+
+interface Props {
+  idioma: Idioma;
+}
+
+const { idioma } = Astro.props;
+const t = textos(idioma);
+const tecnicas = agruparPorTecnica(await obtenerWalkthroughs(), idioma);
+---
+
+<BaseLayout idioma={idioma} titulo={t.tecnicas.titulo} descripcion={t.tecnicas.descripcion}>
+  <div class="cabecera-pagina">
+    <h1>{t.tecnicas.titulo}</h1>
+    <p set:html={rellenar(t.tecnicas.introHtmlPlantilla, { href: ruta('walkthroughs', idioma) })} />
+  </div>
+
+  {
+    tecnicas.length === 0 ? (
+      <p class="vacio">{t.tecnicas.vacio}</p>
+    ) : (
+      <ul class="tecnicas">
+        {tecnicas.map((tecnica) => (
+          <li>
+            <a href={rutaHija('tecnicas', idioma, tecnica.slug)}>
+              <span class="nombre">#{tecnica.nombre}</span>
+              <span class="total">{tecnica.walkthroughs.length}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .tecnicas {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .tecnicas a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 2.5rem;
+    padding: 0.4rem 0.5rem 0.4rem 0.9rem;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-pill);
+    background: var(--bg-elev);
+    font-family: var(--fuente-mono);
+    font-size: 0.9rem;
+    color: var(--texto);
+    text-decoration: none;
+  }
+
+  .tecnicas a:hover {
+    border-color: var(--acento);
+    color: var(--acento-texto);
+  }
+
+  .total {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.6rem;
+    height: 1.6rem;
+    padding: 0 0.4rem;
+    border-radius: var(--radio-pill);
+    background: var(--bg-elev-2);
+    font-size: 0.78rem;
+    color: var(--texto-suave);
+  }
+</style>

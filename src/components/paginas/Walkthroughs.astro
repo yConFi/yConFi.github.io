@@ -1,0 +1,331 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TarjetaWalkthrough from '../TarjetaWalkthrough.astro';
+import { DIFICULTADES, PLATAFORMAS, SERIES, SISTEMAS } from '../../data/valores';
+import {
+  IDIOMA_POR_DEFECTO,
+  etiquetaDificultad,
+  etiquetaSistema,
+  rellenar,
+  ruta,
+  textos,
+  type Idioma,
+} from '../../i18n';
+import { obtenerWalkthroughs } from '../../lib/coleccion';
+import { agruparPorTecnica, nombreSerie, slugTecnica } from '../../lib/walkthroughs';
+
+interface Props {
+  idioma: Idioma;
+}
+
+const { idioma } = Astro.props;
+const t = textos(idioma);
+const lista = await obtenerWalkthroughs();
+const tecnicas = agruparPorTecnica(lista, idioma);
+
+// En los filtros, el `value` va SIEMPRE en castellano (es lo que comparan las
+// tarjetas y lo que viaja en la URL, igual en los dos idiomas) y solo se traduce
+// el texto que se ve. Así un enlace ya filtrado sirve para las dos versiones.
+
+// Solo se ofrece un filtro si de verdad separa la lista en dos o más montones:
+// con una sola plataforma o una sola dificultad, el desplegable sobra.
+const usados = <T extends string>(valores: readonly T[], campo: 'plataforma' | 'dificultad' | 'so') => {
+  const presentes = valores.filter((v) => lista.some((w) => w.data[campo] === v));
+  return presentes.length > 1 ? presentes : [];
+};
+const plataformas = usados(PLATAFORMAS, 'plataforma');
+const dificultades = usados(DIFICULTADES, 'dificultad');
+const sistemas = usados(SISTEMAS, 'so');
+
+// Botones de serie: la serie entera y, debajo, cada tier usado en orden.
+const series = SERIES.flatMap((nombre) => {
+  const tiers = [...new Set(lista.flatMap((w) => (w.data.serie?.nombre === nombre ? [w.data.serie.tier] : [])))];
+  if (tiers.length === 0) return [];
+  tiers.sort((a, b) => a - b);
+  const cuantos = (valor: string) => lista.filter((w) => w.data.serie && nombreSerie(w.data.serie).startsWith(valor)).length;
+  return [
+    { valor: nombre, texto: nombre, total: cuantos(nombre) },
+    ...tiers.map((tier) => ({
+      valor: nombreSerie({ nombre, tier }),
+      texto: `Tier ${tier}`,
+      total: lista.filter((w) => w.data.serie?.nombre === nombre && w.data.serie.tier === tier).length,
+    })),
+  ];
+});
+---
+
+<BaseLayout idioma={idioma} titulo={t.walkthroughs.titulo} descripcion={t.walkthroughs.descripcion}>
+  {
+    lista.length === 0 ? (
+      <>
+        <div class="cabecera-pagina">
+          <h1>{t.walkthroughs.titulo}</h1>
+        </div>
+        <p class="vacio">{t.walkthroughs.vacio}</p>
+      </>
+    ) : (
+      <>
+        <div class="encabezado">
+          <div class="cabecera-pagina">
+            <h1>{t.walkthroughs.titulo}</h1>
+            <p>
+              <Fragment set:html={t.walkthroughs.introHtml} />
+              {tecnicas.length > 0 && (
+                <>
+                  {' '}
+                  <Fragment
+                    set:html={rellenar(t.walkthroughs.todasLasTecnicasHtmlPlantilla, {
+                      href: ruta('tecnicas', idioma),
+                      ruta: ruta('tecnicas', idioma).replace(/\/$/, ''),
+                    })}
+                  />
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* Las tarjetas llevan el resumen en castellano: se avisa una vez, arriba. */}
+        {idioma !== IDIOMA_POR_DEFECTO && <p class="aviso-idioma" role="note">{t.aviso.resumenesEnOtroIdioma}</p>}
+
+        <form
+          class="filtros"
+          data-filtros
+          hidden
+          aria-label={t.walkthroughs.filtrosAria}
+          data-txt-total={t.walkthroughs.totalPlantilla}
+          data-txt-total-una={t.walkthroughs.totalUnaPlantilla}
+          data-txt-parcial={t.walkthroughs.parcialPlantilla}
+        >
+          <div class="buscador">
+            <label for="q">{t.walkthroughs.buscar}</label>
+            <input
+              id="q"
+              name="q"
+              type="search"
+              class="campo"
+              placeholder={t.walkthroughs.buscarPlaceholder}
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="fila-filtros">
+            {series.length > 0 && (
+              <fieldset class="chips">
+                <legend class="visually-hidden">{t.walkthroughs.serie}</legend>
+                <label class="chip">
+                  <input type="radio" name="serie" value="" checked />
+                  <span>{rellenar(t.walkthroughs.todasPlantilla, { n: lista.length })}</span>
+                </label>
+                {series.map((s) => (
+                  <label class="chip">
+                    <input type="radio" name="serie" value={s.valor} />
+                    <span>
+                      {s.texto} · {s.total}
+                    </span>
+                  </label>
+                ))}
+              </fieldset>
+            )}
+
+            <div class="listas">
+              {sistemas.length > 0 && (
+                <label class="desplegable">
+                  <span class="visually-hidden">{t.walkthroughs.sistema}</span>
+                  <select name="so">
+                    <option value="">{t.walkthroughs.sistemaTodos}</option>
+                    {sistemas.map((s) => (
+                      <option value={s}>{etiquetaSistema(s, idioma)}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {dificultades.length > 0 && (
+                <label class="desplegable">
+                  <span class="visually-hidden">{t.walkthroughs.dificultad}</span>
+                  <select name="dificultad">
+                    <option value="">{t.walkthroughs.dificultadTodas}</option>
+                    {dificultades.map((d) => (
+                      <option value={d}>{etiquetaDificultad(d, idioma)}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {plataformas.length > 0 && (
+                <label class="desplegable">
+                  <span class="visually-hidden">{t.walkthroughs.plataforma}</span>
+                  <select name="plataforma">
+                    <option value="">{t.walkthroughs.plataformaTodas}</option>
+                    {plataformas.map((p) => (
+                      <option value={p}>{p}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {tecnicas.length > 0 && (
+                <label class="desplegable">
+                  <span class="visually-hidden">{t.walkthroughs.tecnica}</span>
+                  <select name="tecnica">
+                    <option value="">{t.walkthroughs.tecnicaTodas}</option>
+                    {/* El `value` es el slug canónico, que es el que llevan las tarjetas en `data-tecnicas`. */}
+                    {tecnicas.map((tecnica) => (
+                      <option value={slugTecnica(tecnica.canonico)}>{tecnica.nombre}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <button type="reset" class="quitar">{t.walkthroughs.quitarFiltros}</button>
+            </div>
+          </div>
+        </form>
+
+        <p class="contador" data-contador aria-live="polite">
+          {
+            rellenar(
+              lista.length === 1 ? t.walkthroughs.totalUnaPlantilla : t.walkthroughs.totalPlantilla,
+              { n: lista.length },
+            )
+          }
+        </p>
+
+        <div class="rejilla" data-lista>
+          {lista.map((w) => (
+            <TarjetaWalkthrough walkthrough={w} idioma={idioma} />
+          ))}
+        </div>
+
+        <p class="vacio" data-sin-resultados hidden>{t.walkthroughs.sinResultados}</p>
+      </>
+    )
+  }
+</BaseLayout>
+
+<script>
+  import { iniciarFiltros } from '../../scripts/filtros';
+  iniciarFiltros();
+</script>
+
+<style>
+  .encabezado {
+    margin-bottom: 1.5rem;
+  }
+
+  .filtros {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--borde);
+  }
+
+  .filtros[hidden] {
+    display: none;
+  }
+
+  .buscador {
+    display: grid;
+    gap: 0.35rem;
+    max-width: 26rem;
+  }
+
+  .buscador label {
+    font-family: var(--fuente-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+  }
+
+  .fila-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+  }
+
+  /* Botones de serie: radios de verdad, para que el teclado funcione solo. */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .chip input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
+  .chip span {
+    display: inline-block;
+    min-height: 2.5rem;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-pill);
+    background: var(--bg-elev);
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+    cursor: pointer;
+  }
+
+  .chip span:hover {
+    border-color: var(--acento);
+    color: var(--texto);
+  }
+
+  .chip input:checked + span {
+    border-color: var(--acento);
+    background: var(--acento-bg);
+    color: var(--acento-texto);
+  }
+
+  .chip input:focus-visible + span {
+    outline: 3px solid var(--foco);
+    outline-offset: 2px;
+  }
+
+  .listas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+
+  select,
+  .quitar {
+    min-height: 2.5rem;
+    padding: 0 0.7rem;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-pill);
+    background: var(--bg-elev);
+    color: var(--texto-suave);
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+
+  select:hover,
+  .quitar:hover {
+    border-color: var(--acento);
+    color: var(--texto);
+  }
+
+  .contador {
+    margin: 0 0 1rem;
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+  }
+
+  .rejilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+    gap: 1rem;
+    align-items: stretch;
+  }
+</style>

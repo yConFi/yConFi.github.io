@@ -1,23 +1,41 @@
 ---
+// Página de error, en los dos idiomas a la vez.
+//
+// No hay una versión por idioma a propósito: GitHub Pages sirve SIEMPRE el
+// /404.html de la raíz, también para /en/lo-que-sea, así que una página en
+// /en/404/ no se usaría nunca. Como no se sabe qué idioma quería el visitante,
+// se le dan las dos salidas.
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { IDIOMA_POR_DEFECTO, LANG, idiomaAlterno, rellenar, ruta, textos } from '../i18n';
+
+const otro = idiomaAlterno(IDIOMA_POR_DEFECTO);
+const t = textos(IDIOMA_POR_DEFECTO);
+const tOtro = textos(otro);
+
+/** Los enlaces de salida de un idioma, ya rellenados. */
+const salidas = (idioma: typeof IDIOMA_POR_DEFECTO | typeof otro, plantilla: string) =>
+  rellenar(plantilla, {
+    walkthroughs: ruta('walkthroughs', idioma),
+    diccionario: ruta('diccionario', idioma),
+    inicio: ruta('inicio', idioma),
+  });
 ---
 
-<BaseLayout titulo="Página no encontrada" noindex>
+<BaseLayout idioma={IDIOMA_POR_DEFECTO} titulo={t.error404.titulo} noindex>
   <section class="lectura">
     <div class="cabecera-pagina">
-      <h1>Esta página no existe</h1>
+      <h1>{t.error404.h1}</h1>
+      <p class="otro-idioma" lang={LANG[otro]}>{tOtro.error404.h1}</p>
     </div>
 
     <div class="terminal">
       <div class="barra">bash</div>
       <pre><code><span class="prompt">$</span> cd {Astro.url.pathname}
-bash: cd: {Astro.url.pathname}: No such file or directory</code></pre>
+{rellenar(t.error404.errorPlantilla, { ruta: Astro.url.pathname })}</code></pre>
     </div>
 
-    <p>
-      Quizá buscabas los <a href="/walkthroughs/">walkthroughs</a>, el <a href="/diccionario/">diccionario</a> o el
-      <a href="/">inicio</a>.
-    </p>
+    <p set:html={salidas(IDIOMA_POR_DEFECTO, t.error404.quizaHtmlPlantilla)} />
+    <p class="otro-idioma" lang={LANG[otro]} set:html={salidas(otro, tOtro.error404.quizaHtmlPlantilla)} />
   </section>
 </BaseLayout>
 
@@ -50,5 +68,10 @@ bash: cd: {Astro.url.pathname}: No such file or directory</code></pre>
 
   .prompt {
     color: var(--acento);
+  }
+
+  /* La versión en el otro idioma, un paso por detrás de la principal. */
+  .otro-idioma {
+    color: var(--texto-suave);
   }
 </style>

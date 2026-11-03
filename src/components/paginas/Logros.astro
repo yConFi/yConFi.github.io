@@ -1,0 +1,135 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { PERFILES } from '../../data/site';
+import { rellenar, ruta, textos, type Idioma } from '../../i18n';
+import { obtenerCertificaciones } from '../../lib/coleccion';
+import { formatearFecha } from '../../lib/walkthroughs';
+
+interface Props {
+  idioma: Idioma;
+}
+
+const { idioma } = Astro.props;
+const t = textos(idioma);
+const certificaciones = await obtenerCertificaciones();
+const iso = (fecha: Date) => fecha.toISOString().slice(0, 10);
+---
+
+<BaseLayout idioma={idioma} titulo={t.logros.titulo} descripcion={t.logros.descripcion}>
+  <div class="cabecera-pagina">
+    <h1>{t.logros.titulo}</h1>
+    <p>{t.logros.intro}</p>
+  </div>
+
+  <section aria-labelledby="titulo-certificaciones">
+    <h2 id="titulo-certificaciones">{t.logros.certificaciones}</h2>
+    {
+      certificaciones.length === 0 ? (
+        <p
+          class="vacio"
+          set:html={rellenar(t.logros.sinCertificacionesHtmlPlantilla, { href: ruta('walkthroughs', idioma) })}
+        />
+      ) : (
+        <ul class="rejilla">
+          {certificaciones.map(({ data }) => (
+            <li class="tarjeta">
+              <h3 class="titulo">
+                {data.titulo}
+                {data.borrador && <span class="borrador">{t.general.borrador}</span>}
+              </h3>
+              <p class="meta">
+                {data.emisor} · <time datetime={iso(data.fecha)}>{formatearFecha(data.fecha, idioma)}</time>
+              </p>
+              {data.credencial && (
+                <p class="enlace">
+                  <a href={data.credencial}>{t.logros.verificar}</a>
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+
+  <section aria-labelledby="titulo-plataformas">
+    <h2 id="titulo-plataformas">{t.logros.plataformas}</h2>
+    <ul class="rejilla">
+      {
+        PERFILES.map((p) => (
+          <li class="tarjeta">
+            <h3 class="titulo">{p.nombre}</h3>
+            {p.rango && (
+              <p class="meta">
+                {t.logros.rango} <strong>{p.rango.nombre}</strong> · {t.logros.actualizadoEl}{' '}
+                <time datetime={p.rango.actualizado}>{formatearFecha(new Date(p.rango.actualizado), idioma)}</time>
+              </p>
+            )}
+            <p class="enlace">
+              <a href={p.url} rel="me">
+                {rellenar(t.logros.verPerfilPlantilla, { plataforma: p.nombre })}
+              </a>
+            </p>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</BaseLayout>
+
+<style>
+  section + section {
+    margin-top: 2.5rem;
+  }
+
+  section h2 {
+    margin-top: 0;
+  }
+
+  .rejilla {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    gap: 1rem;
+  }
+
+  .titulo {
+    margin: 0;
+    font-size: 1.15rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .borrador {
+    font-family: var(--fuente-mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.1rem 0.45rem;
+    border-radius: var(--radio-pill);
+    border: 1px solid var(--peligro);
+    color: var(--peligro);
+  }
+
+  .meta {
+    margin: 0.4rem 0 0;
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+  }
+
+  .enlace {
+    margin: 0.75rem 0 0;
+    font-family: var(--fuente-mono);
+    font-size: 0.85rem;
+  }
+
+  .enlace a {
+    display: inline-block;
+    padding: 0.2rem 0;
+  }
+</style>

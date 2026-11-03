@@ -27,10 +27,31 @@ export default defineConfig({
   // GitHub Pages, repositorio yConFi/yConFi.github.io: se publica en la raíz, sin `base`.
   // Si cambias a un dominio propio, cambia solo esta línea.
   site: 'https://yconfi.github.io',
+  /**
+   * Castellano en la raíz (/walkthroughs/) e inglés con prefijo (/en/walkthroughs/):
+   * con `prefixDefaultLocale: false` ninguna URL ya publicada cambia.
+   *
+   * No se usa `i18n.fallback`: las páginas en inglés que todavía no tienen texto
+   * traducido se generan igual, con el texto en castellano y un aviso, así que no
+   * hay ninguna ruta que falte y no hace falta redirigir nada (ver src/i18n/).
+   *
+   * Las rutas de cada idioma están en src/i18n/rutas.ts, no aquí: los segmentos
+   * también se traducen (/en/projects/ y no /en/proyectos/).
+   */
+  i18n: {
+    locales: ['es', 'en'],
+    defaultLocale: 'es',
+    routing: { prefixDefaultLocale: false },
+  },
   markdown: {
     // Sätteri es el procesador por defecto de Astro 7; MDX hereda esta configuración.
     // validarCmd hace fallar la compilación si un <Cmd> usa algo que no está en el diccionario.
     processor: satteri({ mdastPlugins: [validarCmd] }),
   },
+  // El sitemap va SIN la opción `i18n`: empareja los idiomas sustituyendo el
+  // segmento del idioma en la URL, y aquí los segmentos están traducidos
+  // (/tecnicas/ ↔ /en/techniques/), así que no sabría emparejarlos. Las
+  // etiquetas `hreflang` las pone BaseLayout en el <head> de cada página, que
+  // para los buscadores vale igual.
   integrations: [mdx(), sitemap(), borradores()],
 });

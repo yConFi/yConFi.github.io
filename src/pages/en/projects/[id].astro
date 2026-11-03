@@ -1,0 +1,14 @@
+---
+// Esta ruta solo elige el idioma: la página está en src/components/paginas/Proyecto.astro.
+import Proyecto from '../../../components/paginas/Proyecto.astro';
+import { obtenerProyectos } from '../../../lib/coleccion';
+
+export async function getStaticPaths() {
+  const proyectos = await obtenerProyectos();
+  return proyectos.map((proyecto) => ({ params: { id: proyecto.id }, props: { proyecto } }));
+}
+
+const { proyecto } = Astro.props;
+---
+
+<Proyecto proyecto={proyecto} idioma="en" />

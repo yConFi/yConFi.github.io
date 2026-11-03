@@ -1,23 +1,56 @@
 ---
-import { filtrosSerie, formatearFecha, nombreSerie, slugTecnica, type Walkthrough } from '../lib/walkthroughs';
+import {
+  etiquetaDificultad,
+  etiquetaSistema,
+  rutaHija,
+  textos,
+  type Idioma,
+} from '../i18n';
+import {
+  filtrosSerie,
+  formatearFecha,
+  nombreSerie,
+  slugTecnica,
+  tecnicaEnIdioma,
+  type Walkthrough,
+} from '../lib/walkthroughs';
 
 interface Props {
   walkthrough: Walkthrough;
+  idioma: Idioma;
   /** Nivel del título, para mantener la jerarquía de la página. */
   nivel?: 'h2' | 'h3';
 }
 
-const { walkthrough: w, nivel: Titulo = 'h2' } = Astro.props;
+const { walkthrough: w, idioma, nivel: Titulo = 'h2' } = Astro.props;
 const { data } = w;
-const slugs = data.tecnicas.map(slugTecnica);
+const t = textos(idioma);
+
+// Los `data-*` SIEMPRE van en castellano: son los valores con los que compara
+// src/scripts/filtros.ts y nunca se ven. Lo que se traduce es solo lo visible.
+const slugsCanonicos = data.tecnicas.map(slugTecnica);
+const tecnicas = data.tecnicas.map((canonico) => tecnicaEnIdioma(canonico, idioma));
+const dificultad = etiquetaDificultad(data.dificultad, idioma);
+const sistema = etiquetaSistema(data.so, idioma);
 
 // Origen: de dónde sale la máquina. La serie, si la hay, se parte en nombre y tier
 // para que al cambiar de línea no empiece por el punto separador.
 const origen = [data.plataforma, data.serie?.nombre, data.serie && `Tier ${data.serie.tier}`].filter(
   (p): p is string => Boolean(p),
 );
-// Texto sobre el que busca el buscador del índice.
-const texto = [data.titulo, ...origen, data.so, data.dificultad, data.resumen, ...data.tecnicas].join(' ');
+// Texto sobre el que busca el buscador del índice. Lleva las palabras en los dos
+// idiomas, para que "port scanning" encuentre la máquina igual que "escaneo de puertos".
+const texto = [
+  data.titulo,
+  ...origen,
+  data.so,
+  sistema,
+  data.dificultad,
+  dificultad,
+  data.resumen,
+  ...data.tecnicas,
+  ...tecnicas.map((x) => x.nombre),
+].join(' ');
 ---
 
 <article
@@ -27,15 +60,15 @@ const texto = [data.titulo, ...origen, data.so, data.dificultad, data.resumen, .
   data-dificultad={data.dificultad}
   data-so={data.so}
   data-serie={filtrosSerie(data.serie).join('|')}
-  data-tecnicas={slugs.join('|')}
+  data-tecnicas={slugsCanonicos.join('|')}
   data-texto={texto}
 >
   <div class="encabezado">
     <Titulo class="titulo">
-      <a href={`/walkthroughs/${w.id}/`}>{data.titulo}</a>
-      {data.borrador && <span class="borrador">borrador</span>}
+      <a href={rutaHija('walkthroughs', idioma, w.id)}>{data.titulo}</a>
+      {data.borrador && <span class="borrador">{t.general.borrador}</span>}
     </Titulo>
-    <span class={`dificultad dificultad-${slugTecnica(data.dificultad)}`}>{data.dificultad}</span>
+    <span class={`dificultad dificultad-${slugTecnica(data.dificultad)}`}>{dificultad}</span>
   </div>
 
   <ul class="origen">
@@ -45,14 +78,14 @@ const texto = [data.titulo, ...origen, data.so, data.dificultad, data.resumen, .
   <p class="resumen">{data.resumen}</p>
 
   <div class="pie">
-    <span class="so">{data.so}</span>
-    <time class="fecha" datetime={data.fecha.toISOString().slice(0, 10)}>{formatearFecha(data.fecha)}</time>
-    <ul class="tecnicas" aria-label="Técnicas">
+    <span class="so">{sistema}</span>
+    <time class="fecha" datetime={data.fecha.toISOString().slice(0, 10)}>{formatearFecha(data.fecha, idioma)}</time>
+    <ul class="tecnicas" aria-label={t.general.tecnicasAria}>
       {
-        data.tecnicas.map((t, i) => (
+        tecnicas.map((tecnica) => (
           <li>
-            <a class="etiqueta" href={`/tecnicas/${slugs[i]}/`}>
-              #{t}
+            <a class="etiqueta" href={rutaHija('tecnicas', idioma, tecnica.slug)}>
+              #{tecnica.nombre}
             </a>
           </li>
         ))

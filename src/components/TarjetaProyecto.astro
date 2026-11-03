@@ -1,30 +1,34 @@
 ---
+import { etiquetaEstado, rutaHija, textos, type Idioma } from '../i18n';
 import type { Proyecto } from '../lib/coleccion';
 
 interface Props {
   proyecto: Proyecto;
+  idioma: Idioma;
   nivel?: 'h2' | 'h3';
 }
 
-const { proyecto: p, nivel: Titulo = 'h2' } = Astro.props;
-// "En producción" y "Terminado" son estados buenos; el resto se quedan en gris.
+const { proyecto: p, idioma, nivel: Titulo = 'h2' } = Astro.props;
+const t = textos(idioma);
+// El estado se compara en castellano (es el valor del frontmatter) y se muestra traducido.
 const activo = p.data.estado === 'En producción';
+const estado = etiquetaEstado(p.data.estado, idioma);
 ---
 
 <article class="tarjeta">
   <div class="encabezado">
     <Titulo class="titulo">
-      <a href={`/proyectos/${p.id}/`}>{p.data.titulo}</a>
-      {p.data.borrador && <span class="borrador">borrador</span>}
+      <a href={rutaHija('proyectos', idioma, p.id)}>{p.data.titulo}</a>
+      {p.data.borrador && <span class="borrador">{t.general.borrador}</span>}
     </Titulo>
     <p class:list={['estado', { activo }]}>
-      <span class="punto" aria-hidden="true"></span>{p.data.estado}
+      <span class="punto" aria-hidden="true"></span>{estado}
     </p>
   </div>
 
   <p class="resumen">{p.data.resumen}</p>
 
-  <ul class="tecnologias" aria-label="Tecnologías">
+  <ul class="tecnologias" aria-label={t.general.tecnologiasAria}>
     {p.data.tecnologias.map((t) => <li class="etiqueta">{t}</li>)}
   </ul>
 </article>

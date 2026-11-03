@@ -4,11 +4,16 @@
 // Uso en MDX:
 //   <Pista>Mira qué versión del servicio está expuesta.</Pista>
 //   <Pista titulo="Tarea 1 · ¿Qué puerto TCP está abierto?">El 23, según nmap.</Pista>
+// El idioma se deduce de la ruta (/en/... es inglés) porque este componente se
+// usa dentro del MDX y ahí no hay forma de pasarle props desde la página.
+import { idiomaDeRuta, textos } from '../i18n';
+
 interface Props {
   titulo?: string;
 }
 
-const { titulo = 'Pista' } = Astro.props;
+const t = textos(idiomaDeRuta(Astro.url.pathname));
+const { titulo = t.pista.titulo } = Astro.props;
 
 // "Tarea 4 · ¿Qué herramienta…?" se parte en etiqueta ("Tarea 4") y pregunta.
 // Sin "·" (p. ej. "Solución") el título entero es la pregunta.

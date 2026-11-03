@@ -1,0 +1,73 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TarjetaWalkthrough from '../TarjetaWalkthrough.astro';
+import { IDIOMAS, rellenar, ruta, rutaHija, textos, type Idioma } from '../../i18n';
+import { tecnicaEnIdioma, type Tecnica } from '../../lib/walkthroughs';
+
+interface Props {
+  tecnica: Tecnica;
+  idioma: Idioma;
+}
+
+const { tecnica, idioma } = Astro.props;
+const t = textos(idioma);
+const n = tecnica.walkthroughs.length;
+
+// El slug de la técnica cambia con el idioma, así que el equivalente se calcula
+// desde el nombre canónico y no se puede sacar de la tabla de rutas.
+const equivalentes = Object.fromEntries(
+  IDIOMAS.map((otro) => [otro, rutaHija('tecnicas', otro, tecnicaEnIdioma(tecnica.canonico, otro).slug)]),
+) as Record<Idioma, string>;
+---
+
+<BaseLayout
+  idioma={idioma}
+  titulo={rellenar(t.tecnicas.tituloPlantilla, { nombre: tecnica.nombre })}
+  descripcion={rellenar(t.tecnicas.descripcionPlantilla, { nombre: tecnica.nombre })}
+  equivalentes={equivalentes}
+>
+  <p class="migas">
+    <a href={ruta('tecnicas', idioma)}>{t.tecnicas.migas}</a> <span aria-hidden="true">/</span> {tecnica.slug}
+  </p>
+
+  <div class="cabecera-pagina">
+    <h1><span class="almohadilla" aria-hidden="true">#</span>{tecnica.nombre}</h1>
+    <p>{n === 1 ? t.tecnicas.usanUna : rellenar(t.tecnicas.usanPlantilla, { n })}</p>
+  </div>
+
+  <div class="rejilla">
+    {tecnica.walkthroughs.map((w) => <TarjetaWalkthrough walkthrough={w} idioma={idioma} />)}
+  </div>
+</BaseLayout>
+
+<style>
+  .migas {
+    margin: 0 0 1rem;
+    font-family: var(--fuente-mono);
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+  }
+
+  .migas a {
+    text-decoration: none;
+  }
+
+  .migas a:hover {
+    text-decoration: underline;
+  }
+
+  h1 {
+    overflow-wrap: anywhere;
+  }
+
+  .almohadilla {
+    color: var(--acento-texto);
+  }
+
+  .rejilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+    gap: 1rem;
+    align-items: stretch;
+  }
+</style>
