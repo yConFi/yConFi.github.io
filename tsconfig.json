@@ -1,5 +1,7 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist"]
+  // `worker/` es un proyecto aparte (Cloudflare Workers, con sus propios
+  // globales); no lo comprueba el TypeScript de Astro.
+  "exclude": ["dist", "worker"]
 }
