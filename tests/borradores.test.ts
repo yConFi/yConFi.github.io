@@ -2,13 +2,13 @@
 // en ningún sitio: ni su página, ni su texto en ningún archivo generado.
 
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
+import { borrarSalida, salidaTemporal } from './salida-build';
 
-const outDir = mkdtempSync(join(tmpdir(), 'astro-web-'));
-afterAll(() => rmSync(outDir, { recursive: true, force: true }));
+const outDir = salidaTemporal('web');
+afterAll(() => borrarSalida(outDir));
 
 function ficheros(dir: string): string[] {
   return readdirSync(dir).flatMap((n) => {

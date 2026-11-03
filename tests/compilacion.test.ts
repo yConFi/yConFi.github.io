@@ -3,16 +3,15 @@
 // por otro motivo). Lanza compilaciones reales, por eso tarda unos segundos.
 
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
+import { borrarSalida, salidaTemporal } from './salida-build';
 
 const ASTRO = resolve('node_modules/astro/bin/astro.mjs');
 const salidas: string[] = [];
 
 function compilar(fixture: string) {
-  const outDir = mkdtempSync(join(tmpdir(), `astro-${fixture}-`));
+  const outDir = salidaTemporal(fixture);
   salidas.push(outDir);
   const r = spawnSync(process.execPath, [ASTRO, 'build', '--root', `tests/fixtures/${fixture}`, '--outDir', outDir], {
     encoding: 'utf8',
@@ -22,7 +21,7 @@ function compilar(fixture: string) {
 }
 
 afterAll(() => {
-  for (const dir of salidas) rmSync(dir, { recursive: true, force: true });
+  for (const dir of salidas) borrarSalida(dir);
 });
 
 describe('compilación con <Cmd>', () => {
