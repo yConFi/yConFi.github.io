@@ -69,6 +69,7 @@ porque Ricardo la aprueba, apúntala aquí:
 - Fuerza bruta de directorios
 - Credenciales por defecto
 - Rsync
+- Inyección SQL
 
 ### Estructura
 
