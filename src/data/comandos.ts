@@ -1319,6 +1319,47 @@ const mongosh: Herramienta = {
 };
 
 // ============================================================
+// mysql (cliente de MariaDB) — https://mariadb.com/docs/server/clients-and-utilities/mariadb-client/mariadb-command-line-client
+// ============================================================
+const mysql: Herramienta = {
+  nombre: 'mysql',
+  descripcion:
+    'Cliente de línea de comandos de MySQL y MariaDB. Abre una sesión interactiva (prompt MariaDB [base]>) donde se escriben consultas SQL como SHOW DATABASES, USE, SHOW TABLES o SELECT, terminadas en ";".',
+  categoria: 'Conexiones',
+  docs: 'https://mariadb.com/docs/server/clients-and-utilities/mariadb-client/mariadb-command-line-client',
+  variantes:
+    'Explicaciones según la página man de mariadb 10.11.13 (Ubuntu 24.04), la ayuda (--help) del cliente 11.8.6 de la Pwnbox y la documentación de mariadb.com (consultada el 03/11/2026). En MariaDB el programa se llama mariadb y mysql es un enlace a él. Desde MariaDB 11.4 el cliente exige SSL por defecto.',
+  estilo: 'posix',
+  combinables: false,
+  argumentos:
+    'Opcionalmente, el nombre de la base de datos que se usa al entrar. Ojo: el servidor no va como argumento sino con -h; sin -h se conecta a localhost por un socket local.',
+  opciones: [
+    {
+      nombres: ['-h', '--host'],
+      descripcion:
+        'Servidor al que se conecta, por nombre o dirección IP. Si no se indica, o se indica localhost, usa un socket Unix local en lugar de TCP/IP.',
+      valor: { nombre: 'host', descripcion: 'Nombre o dirección IP del servidor.' },
+    },
+    {
+      nombres: ['-u', '--user'],
+      descripcion: 'Usuario de la base de datos con el que se inicia sesión.',
+      valor: { nombre: 'usuario', descripcion: 'Nombre del usuario de MariaDB o MySQL.' },
+    },
+    {
+      nombres: ['--ssl'],
+      descripcion:
+        'Activa SSL (TLS) en la conexión. En el cliente 11.8.6 de la Pwnbox viene activado por defecto; se desactiva con --skip-ssl.',
+    },
+    {
+      nombres: ['--skip-ssl'],
+      descripcion:
+        'Desactiva SSL (TLS) en la conexión. Hace falta con clientes modernos, que exigen SSL por defecto, para conectarse a servidores antiguos que no lo admiten.',
+    },
+    { nombres: ['-?', '--help'], descripcion: 'Muestra la ayuda con todas las opciones y termina.' },
+  ],
+};
+
+// ============================================================
 // tar (GNU tar) — https://www.gnu.org/software/tar/manual/
 // ============================================================
 const tar: Herramienta = {
@@ -1404,6 +1445,7 @@ export const HERRAMIENTAS: Herramienta[] = [
   rsync,
   redisCli,
   mongosh,
+  mysql,
   ssh,
   sudo,
   find,
