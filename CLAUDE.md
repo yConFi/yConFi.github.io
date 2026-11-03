@@ -71,6 +71,8 @@ esa traducción, `npm run build` falla al generar las páginas en inglés.
 - Credenciales por defecto
 - Rsync
 - Inyección SQL
+- MySQL
+- MariaDB
 
 ### Estructura
 
