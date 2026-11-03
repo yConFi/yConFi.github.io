@@ -1,0 +1,201 @@
+---
+titulo: "Appointment"
+plataforma: HackTheBox
+dificultad: Muy fácil
+so: Linux
+fecha: 2026-11-03
+tecnicas:
+  - Escaneo de puertos
+  - Fuerza bruta de directorios
+  - Inyección SQL
+resumen: "Máquina Linux con una web en Apache cuyo formulario de inicio de sesión es vulnerable a inyección SQL: con el usuario admin'# se entra sin contraseña."
+serie:
+  nombre: Starting Point
+  tier: 1
+borrador: false
+---
+
+Máquina del Tier 1 de Starting Point. Las preguntas guiadas (tasks) de HackTheBox aparecen plegadas en la
+sección donde se responden: intenta contestarlas antes de abrirlas.
+
+<Ruta
+  titulo="Camino seguido en Appointment, de la conexión a la flag"
+  pasos={[
+    { titulo: 'ping', detalle: 'La máquina responde' },
+    { titulo: 'nmap -sV -p-', detalle: '80/tcp abierto: Apache 2.4.38' },
+    { titulo: 'gobuster dir', detalle: 'Solo carpetas de la web, nada útil' },
+    { titulo: "admin'#", detalle: 'Inyección SQL en el login: la flag', meta: true },
+  ]}
+/>
+
+> La IP `10.129.96.48` es la que tenía la máquina en mi sesión; a ti te saldrá otra.
+
+## Reconocimiento
+
+Esta máquina gira en torno a SQL, el lenguaje con el que las aplicaciones consultan sus bases de datos, y a
+su vulnerabilidad más conocida.
+
+<Pista titulo="Tarea 1 · ¿Qué significan las siglas SQL?">
+  **Structured Query Language** (lenguaje de consulta estructurado).
+</Pista>
+
+<Pista titulo="Tarea 2 · ¿Cuál es uno de los tipos más comunes de vulnerabilidad en SQL?">
+  **SQL injection** (inyección SQL).
+</Pista>
+
+En HackTheBox no hay tarea 3: la numeración salta de la 2 a la 4.
+
+<Pista titulo="Tarea 4 · ¿Qué clasificación tiene esta vulnerabilidad en el OWASP Top 10 de 2021?">
+  **A03:2021-Injection**.
+</Pista>
+
+Lo primero es comprobar que llega la conexión con la máquina:
+
+<Cmd c="ping 10.129.96.48" notas={{ "10.129.96.48": "IP de la máquina objetivo." }} />
+
+Lo detengo con `Ctrl+C` y muestra el resumen:
+
+```text
+64 bytes from 10.129.96.48: icmp_seq=1 ttl=63 time=7.66 ms
+64 bytes from 10.129.96.48: icmp_seq=2 ttl=63 time=7.85 ms
+...
+^C
+--- 10.129.96.48 ping statistics ---
+7 packets transmitted, 7 received, 0% packet loss, time 6011ms
+```
+
+La máquina responde a todo: 7 paquetes enviados y 7 recibidos.
+
+## Enumeración
+
+### Puertos y versiones
+
+Escaneo todos los puertos con la detección de versiones:
+
+<Cmd
+  c="nmap -sV -p- 80 10.129.96.48"
+  notas={{
+    "80": "Sobra: nmap no lo toma como puerto sino como otro objetivo, por eso dice que ha escaneado 2 direcciones.",
+    "10.129.96.48": "IP de la máquina objetivo.",
+  }}
+/>
+
+```text
+Not shown: 65534 closed tcp ports (conn-refused)
+PORT   STATE SERVICE VERSION
+80/tcp open  http    Apache httpd 2.4.38 ((Debian))
+
+Nmap done: 2 IP addresses (1 host up) scanned in 12.09 seconds
+```
+
+El `80` que escribí detrás de `-p-` no hace nada útil: `-p-` ya indica todos los puertos, y nmap toma ese
+`80` como un segundo objetivo (de ahí las *2 IP addresses*). Aun así, el escaneo de la máquina es correcto:
+de los 65535 puertos solo está abierto el **80/tcp**, con un servidor web **Apache 2.4.38** en Debian.
+
+<Pista titulo="Tarea 5 · ¿Qué servicio y versión indica nmap que corren en el puerto 80 del objetivo?">
+  **Apache httpd 2.4.38 ((Debian))**.
+</Pista>
+
+La web va por HTTP, sin cifrar. Su versión cifrada, HTTPS, usa otro puerto por defecto, que aquí está
+cerrado.
+
+<Pista titulo="Tarea 6 · ¿Cuál es el puerto estándar del protocolo HTTPS?">
+  **443**.
+</Pista>
+
+### Fuerza bruta de directorios
+
+Busco rutas de la web a las que no lleve ningún enlace. En una aplicación web, a una carpeta se le llama
+directorio, y si la ruta pedida no existe, el servidor responde con el código **404** (*Not Found*).
+
+<Pista titulo="Tarea 7 · ¿Cómo se llama una carpeta en la terminología de las aplicaciones web?">
+  **directory** (directorio).
+</Pista>
+
+<Pista titulo="Tarea 8 · ¿Qué código de respuesta HTTP se devuelve en los errores «Not Found»?">
+  **404**.
+</Pista>
+
+Uso Gobuster en su modo de directorios, `dir`, con un diccionario que ya trae la Pwnbox:
+
+<Cmd
+  c="gobuster dir --url http://10.129.96.48/ --wordlist /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt"
+  notas={{
+    "http://10.129.96.48/": "URL de la web de la máquina objetivo.",
+    "/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt": "Diccionario mediano de rutas de DirBuster, incluido en la Pwnbox.",
+  }}
+/>
+
+```text
+[+] Negative Status codes:   404
+...
+/images               (Status: 301) [Size: 313] [--> http://10.129.96.48/images/]
+/css                  (Status: 301) [Size: 310] [--> http://10.129.96.48/css/]
+/js                   (Status: 301) [Size: 309] [--> http://10.129.96.48/js/]
+/vendor               (Status: 301) [Size: 313] [--> http://10.129.96.48/vendor/]
+/fonts                (Status: 301) [Size: 312] [--> http://10.129.96.48/fonts/]
+/server-status        (Status: 403) [Size: 277]
+Progress: 220560 / 220561 (100.00%)
+```
+
+Gobuster descarta los 404 y solo muestra lo que existe. Lo que encuentra son las carpetas normales de una web
+(imágenes, estilos, scripts, librerías y fuentes) y `/server-status`, que da **403**: existe, pero no deja
+verla. Nada que sirva para entrar.
+
+<Pista titulo="Tarea 9 · Gobuster es una herramienta para hacer fuerza bruta de directorios en un servidor web. ¿Qué opción se usa para indicar que buscamos directorios y no subdominios?">
+  **dir**.
+</Pista>
+
+## Acceso inicial
+
+Abro la web en el navegador, `http://10.129.96.48/`, y es un formulario de inicio de sesión. Como Gobuster no
+encontró nada más, pruebo si el formulario es vulnerable a inyección SQL.
+
+Si la aplicación construye la consulta a la base de datos pegando tal cual lo que se escribe en el
+formulario, algo parecido a esto:
+
+```text
+SELECT * FROM users WHERE username='USUARIO' AND password='CONTRASEÑA'
+```
+
+un usuario que cierre la comilla y añada un comentario cambia la consulta. En MySQL, `#` comenta todo lo que
+queda de línea.
+
+<Pista titulo="Tarea 10 · ¿Qué carácter sirve para comentar el resto de una línea en MySQL?">
+  **#**.
+</Pista>
+
+En el usuario escribo `admin'#` y en la contraseña cualquier cosa. La comilla cierra el nombre de usuario y
+el `#` deja fuera la comprobación de la contraseña, así que la consulta queda, en la práctica, como:
+
+```text
+SELECT * FROM users WHERE username='admin'
+```
+
+Entra como **admin** sin conocer su contraseña, y la página que devuelve empieza por *Congratulations* y
+muestra la flag.
+
+<Pista titulo="Tarea 11 · Si lo que escribe el usuario no se trata con cuidado, se puede interpretar como un comentario. Usa un comentario para entrar como admin sin saber la contraseña. ¿Cuál es la primera palabra de la página que se devuelve?">
+  **Congratulations**.
+</Pista>
+
+La flag no se publica: la tienes que conseguir tú.
+
+<Pista titulo="Flag · Envía la flag que aparece en la página web al saltarse el inicio de sesión">
+  Aparece en la página que se abre después de entrar como admin con la inyección SQL en el formulario.
+</Pista>
+
+## Escalada de privilegios
+
+No hace falta: la flag aparece en la propia página web, sin llegar a tener una shell en la máquina.
+
+## Lecciones aprendidas
+
+- **Qué fallé:** perdí tiempo instalando Gobuster: probé con `apt`, con `go install` y compilándolo desde
+  GitHub, cuando ya estaba instalado (la 3.6), y cloné SecLists entero (3,59 GiB) para acabar usando un
+  diccionario que ya traía la Pwnbox. Además, en nmap escribí un `80` que sobraba detrás de `-p-`.
+- **Lo que enseña la máquina:** un formulario que mete lo que escribe el usuario directamente en la consulta
+  SQL permite saltarse el inicio de sesión con solo una comilla y un comentario.
+- **Qué haré la próxima vez:** comprobar primero si una herramienta ya está instalada (con `--help` o
+  `--version`) y qué diccionarios hay en `/usr/share/wordlists/` antes de descargar nada; y, ante un
+  formulario de inicio de sesión, probar una inyección SQL básica como `admin'#`.
