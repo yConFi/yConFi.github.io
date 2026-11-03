@@ -1,0 +1,312 @@
+---
+titulo: "Sequel"
+plataforma: HackTheBox
+dificultad: Muy fácil
+so: Linux
+fecha: 2026-11-03
+tecnicas:
+  - Escaneo de puertos
+  - MySQL
+  - MariaDB
+  - Acceso sin contraseña
+resumen: "Máquina Linux con MariaDB expuesto en el puerto 3306 que deja entrar como root sin contraseña y guarda la flag en una tabla de su base de datos."
+serie:
+  nombre: Starting Point
+  tier: 1
+borrador: false
+---
+
+Máquina del Tier 1 de Starting Point. Las preguntas guiadas (tasks) de HackTheBox aparecen plegadas en la
+sección donde se responden: intenta contestarlas antes de abrirlas.
+
+<Ruta
+  titulo="Camino seguido en Sequel, de la conexión a la flag"
+  pasos={[
+    { titulo: 'ping', detalle: 'La máquina responde' },
+    { titulo: 'nmap -p-', detalle: '3306/tcp abierto: MySQL' },
+    { titulo: 'nmap -sC', detalle: 'Es MariaDB 10.3.27' },
+    { titulo: 'mysql --skip-ssl', detalle: 'root entra sin contraseña' },
+    { titulo: 'select * from config', detalle: 'La flag, en la base de datos htb', meta: true },
+  ]}
+/>
+
+> La IP `10.129.96.217` es la que tenía la máquina en mi sesión; a ti te saldrá otra.
+
+## Reconocimiento
+
+Lo primero es comprobar que llega la conexión con la máquina:
+
+<Cmd c="ping 10.129.96.217" notas={{ "10.129.96.217": "IP de la máquina objetivo." }} />
+
+Lo detengo con `Ctrl+C` y muestra el resumen:
+
+```text
+64 bytes from 10.129.96.217: icmp_seq=1 ttl=63 time=8.14 ms
+64 bytes from 10.129.96.217: icmp_seq=2 ttl=63 time=7.84 ms
+...
+^C
+--- 10.129.96.217 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3005ms
+```
+
+La máquina responde a todo: 4 paquetes enviados y 4 recibidos.
+
+## Enumeración
+
+### Puertos abiertos
+
+Escaneo directamente todos los puertos y pido que solo salgan los abiertos:
+
+<Cmd
+  c="nmap -p- --open --min-rate 5000 10.129.96.217"
+  notas={{
+    "5000": "Al menos 5000 paquetes por segundo, para revisar los 65535 puertos en pocos segundos.",
+    "10.129.96.217": "IP de la máquina objetivo.",
+  }}
+/>
+
+```text
+Not shown: 65524 closed tcp ports (conn-refused), 10 filtered tcp ports (no-response)
+PORT     STATE SERVICE
+3306/tcp open  mysql
+
+Nmap done: 1 IP address (1 host up) scanned in 3.07 seconds
+```
+
+Hay un único puerto abierto, el **3306/tcp**, que nmap identifica como **MySQL**, un sistema de bases de
+datos.
+
+<Pista titulo="Tarea 1 · Durante el escaneo, ¿qué puerto encontramos sirviendo MySQL?">
+  El **3306**.
+</Pista>
+
+### Versión del servidor
+
+Para saber qué hay exactamente detrás, probé primero la detección de versiones solo en ese puerto:
+
+<Cmd
+  c="nmap -sV -p 3306 10.129.96.217"
+  notas={{ "3306": "Solo se escanea el puerto de MySQL.", "10.129.96.217": "IP de la máquina objetivo." }}
+/>
+
+Pasado más de un minuto seguía en *Service scan Timing: About 0.00% done*, así que lo detuve y probé con los
+scripts por defecto de nmap, que incluyen uno que pregunta al servidor MySQL por sus datos:
+
+<Cmd
+  c="nmap -sC -p 3306 10.129.96.217"
+  notas={{ "3306": "Solo se escanea el puerto de MySQL.", "10.129.96.217": "IP de la máquina objetivo." }}
+/>
+
+```text
+PORT     STATE SERVICE
+3306/tcp open  mysql
+| mysql-info:
+|   Protocol: 10
+|   Version: 5.5.5-10.3.27-MariaDB-0+deb10u1
+...
+|_  Auth Plugin Name: mysql_native_password
+
+Nmap done: 1 IP address (1 host up) scanned in 42.66 seconds
+```
+
+El script `mysql-info` da la versión: la parte que importa es **10.3.27-MariaDB**, de Debian 10. No es MySQL de
+Oracle sino **MariaDB**, la versión de MySQL que mantiene la comunidad y que funciona con los mismos clientes.
+
+<Pista titulo="Tarea 2 · ¿Qué versión de MySQL desarrollada por la comunidad está ejecutando el objetivo?">
+  **MariaDB**.
+</Pista>
+
+## Acceso inicial
+
+### El cliente de MySQL
+
+Para conectarse se usa el cliente de línea de comandos `mysql`, que en Pwnbox ya viene instalado. Miro su
+ayuda para ver las opciones:
+
+<Cmd c="mysql --help" />
+
+```text
+mysql from 11.8.6-MariaDB, client 15.2 for debian-linux-gnu (x86_64) using  EditLine wrapper
+...
+  -h, --host=name     Connect to host. Defaults in the following order:
+                      $MARIADB_HOST, $MYSQL_HOST, and then localhost
+...
+  -p, --password[=name]
+                      Password to use when connecting to server. If password is
+                      not given it's asked from the tty.
+...
+  --ssl               Enable SSL for connection (automatically enabled with
+                      other flags).
+                      (Defaults to on; use --skip-ssl to disable.)
+...
+  -u, --user=name     User for login if not current user.
+```
+
+La primera línea ya dice que el cliente de Pwnbox es el de **MariaDB 11.8.6** (en MariaDB, `mysql` es un
+enlace al programa `mariadb`). El usuario se indica con `-u`, y el servidor, con `-h`.
+
+<Pista titulo="Tarea 3 · Con el cliente de línea de comandos de MySQL, ¿qué opción hay que usar para indicar el usuario con el que se inicia sesión?">
+  **-u**.
+</Pista>
+
+### Conectarse a MariaDB
+
+Mi primer intento fue `mysql -u root`, sin indicar el servidor:
+
+```text
+ERROR 2002 (HY000): Can't connect to local server through socket '/run/mysqld/mysqld.sock' (2)
+```
+
+Sin `-h`, el cliente se conecta a `localhost`, y en ese caso usa un socket Unix de la propia Pwnbox, donde no
+hay ningún servidor. Lo repetí con `-p` (para que pidiera contraseña) y con otro usuario, y el error era el
+mismo, porque el problema no era el usuario sino el servidor. Añadiendo `-h` con la IP de la máquina cambió el
+error (`mysql -h 10.129.96.217 -u root`):
+
+```text
+ERROR 2026 (HY000): TLS/SSL error: SSL is required, but the server does not support it
+```
+
+Esta vez sí llega al servidor, pero el cliente se niega a seguir sin cifrado. Según las notas de MariaDB
+11.4, desde esa versión los clientes exigen SSL por defecto, y el de Pwnbox es la 11.8.6; el servidor, en
+cambio, es una 10.3.27 que no lo admite. Como dice la ayuda, el SSL se desactiva con `--skip-ssl`:
+
+<Cmd
+  c="mysql -u root -h 10.129.96.217 --skip-ssl"
+  notas={{
+    "root": "Usuario de MariaDB con el que se inicia sesión: el administrador.",
+    "10.129.96.217": "IP de la máquina objetivo.",
+  }}
+/>
+
+```text
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MariaDB connection id is 65
+Server version: 10.3.27-MariaDB-0+deb10u1 Debian 10
+...
+MariaDB [(none)]>
+```
+
+Entra como **root**, el administrador de la base de datos, **sin pedir contraseña**. El prompt `MariaDB [(none)]>` indica que
+todavía no hay ninguna base de datos seleccionada.
+
+<Pista titulo="Tarea 4 · ¿Qué usuario permite iniciar sesión en esta instancia de MariaDB sin dar contraseña?">
+  **root**.
+</Pista>
+
+El propio mensaje de bienvenida lo recuerda: cada orden termina con `;` (o con `\g`).
+
+<Pista titulo="Tarea 6 · En SQL, ¿con qué símbolo hay que terminar cada consulta?">
+  **;** (punto y coma).
+</Pista>
+
+### Buscar la flag
+
+Listo las bases de datos del servidor:
+
+```text
+MariaDB [(none)]> show databases;
++--------------------+
+| Database           |
++--------------------+
+| htb                |
+| information_schema |
+| mysql              |
+| performance_schema |
++--------------------+
+4 rows in set (0.010 sec)
+```
+
+Tres de ellas son del propio servidor y salen en cualquier instalación:
+
+- `information_schema`: información sobre las demás bases de datos, sus tablas y sus columnas.
+- `mysql`: tablas de sistema con los usuarios, sus permisos y la configuración global.
+- `performance_schema`: datos internos para medir el rendimiento del servidor.
+
+La que no es estándar es `htb`.
+
+<Pista titulo="Tarea 7 · Hay tres bases de datos que son comunes a todas las instancias de MySQL. ¿Cómo se llama la cuarta, la que es propia de este equipo?">
+  **htb**.
+</Pista>
+
+La selecciono con `use` y listo sus tablas:
+
+```text
+MariaDB [(none)]> use htb;
+Database changed
+MariaDB [htb]> show tables;
++---------------+
+| Tables_in_htb |
++---------------+
+| config        |
+| users         |
++---------------+
+2 rows in set (0.009 sec)
+```
+
+El prompt pasa a ser `MariaDB [htb]>`: `use` deja `htb` como base de datos por defecto hasta que se cierre la
+sesión o se use otra.
+
+<Pista titulo="Tarea 8 · ¿Qué orden de MySQL sirve para seleccionar la base de datos con la que trabajar?">
+  **use**.
+</Pista>
+
+Hay dos tablas, `config` y `users`. Saco todo el contenido de `config` con `select`: el `*` significa todas
+las columnas.
+
+```text
+MariaDB [htb]> select * from config;
++----+-----------------------+----------------------------------+
+| id | name                  | value                            |
++----+-----------------------+----------------------------------+
+|  1 | timeout               | 60s                              |
+|  2 | security              | default                          |
+|  3 | auto_logon            | false                            |
+|  4 | max_size              | 2M                               |
+|  5 | flag                  | [flag oculta]                    |
+|  6 | enable_uploads        | false                            |
+|  7 | authentication_method | radius                           |
++----+-----------------------+----------------------------------+
+7 rows in set (0.008 sec)
+```
+
+<Pista titulo="Tarea 5 · En SQL, ¿qué símbolo se usa en la consulta para indicar que queremos mostrar todo lo que hay en una tabla?">
+  **\*** (asterisco).
+</Pista>
+
+La fila 5 tiene `flag` en la columna `name`, y su `value` es la flag.
+
+<Pista titulo="Tarea 10 · ¿Qué tabla tiene una fila con un valor llamado flag en una de sus columnas?">
+  **config**.
+</Pista>
+
+Para ver qué columnas tiene una tabla sin sacar sus datos está `describe` (un atajo de `SHOW COLUMNS FROM`).
+En mi sesión lo usé mal: escribí `describe htb;`, primero sin ninguna base de datos seleccionada (*No database
+selected*) y luego dentro de `htb` (*Table 'htb.htb' doesn't exist*). Las dos veces falló porque `htb` es una
+base de datos, no una tabla; lo correcto habría sido, por ejemplo, `describe config;`.
+
+<Pista titulo="Tarea 9 · ¿Qué orden de MySQL muestra las columnas de una tabla?">
+  **describe**.
+</Pista>
+
+La flag no se publica: la tienes que conseguir tú.
+
+<Pista titulo="Flag · Envía la flag que está en la base de datos">
+  Está en la tabla `config` de la base de datos `htb`: es el `value` de la fila cuyo `name` es `flag`.
+</Pista>
+
+## Escalada de privilegios
+
+No hace falta: la flag se lee directamente de la base de datos de MariaDB, sin llegar a tener una shell en la
+máquina.
+
+## Lecciones aprendidas
+
+- **Qué fallé:** intenté conectarme varias veces sin `-h`, así que el cliente buscaba un servidor en la propia
+  Pwnbox (llegué a probar como usuario `mysql_native_password`, que es el nombre del método de autenticación).
+  Ante el error de SSL instalé con `apt` todos los paquetes `mysql*`, que no hacían falta: bastaba con
+  `--skip-ssl`. Dentro de MariaDB escribí `cd ..` como si estuviera en el terminal y usé `describe` sobre una
+  base de datos en vez de sobre una tabla.
+- **Lo que enseña la máquina:** un servidor de bases de datos expuesto en la red con el usuario root sin
+  contraseña deja leer y modificar todos sus datos a cualquiera que llegue a su puerto.
+- **Qué haré la próxima vez:** indicar siempre el servidor con `-h` al usar un cliente de red y leer bien el
+  mensaje de error antes de instalar nada: en este caso, la ayuda del cliente ya decía cómo desactivar el SSL.
