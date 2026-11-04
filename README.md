@@ -82,8 +82,13 @@ solo eligen el idioma. Si añades una página, añade su componente y sus dos en
   compile a publicar media página en el otro idioma.
 - Los scripts del navegador (`cmd.ts`, `filtros.ts`) son comunes a los dos idiomas: reciben sus textos
   en `data-*` desde la página, no importan `src/i18n/`.
-- El contenido (walkthroughs, proyectos y las explicaciones del diccionario) **todavía está solo en
-  castellano**: las páginas en inglés lo avisan con `.aviso-idioma` en lugar de disimularlo.
+- **El diccionario está entero en los dos idiomas.** Cada texto es `{ es, en }` (tipo `Texto` en
+  `src/lib/comando/tipos.ts`) y `enIdioma()` elige el del idioma de la página. Un texto que sea una
+  cadena a secas se sigue mostrando en castellano y la página en inglés avisa de cuántas entradas
+  faltan, con la cuenta sacada del propio diccionario: así se puede traducir poco a poco sin publicar
+  nunca un número falso.
+- Los walkthroughs y los proyectos **todavía están solo en castellano**: las páginas en inglés lo
+  avisan con `.aviso-idioma` en lugar de disimularlo.
 
 ---
 
@@ -250,6 +255,20 @@ Si un `<Cmd>` usa algo que no está en el diccionario, la compilación se detien
 Todo está en `src/data/comandos.ts`. **Cada explicación debe poder comprobarse** en la página man o en
 la documentación oficial enlazada en `docs`, y si cambia según la variante o la versión, hay que decirlo
 (mira `nc` como ejemplo).
+
+Cada texto va en los dos idiomas:
+
+```ts
+descripcion: {
+  es: 'Escaneo de puertos UDP.',
+  en: 'UDP port scan.',
+},
+```
+
+El inglés **se escribe desde la documentación original**, que ya está en inglés; no se traduce desde el
+castellano, que es la traducción. Si dejas una entrada como cadena a secas (`descripcion: '…'`), la web
+sigue funcionando: se muestra en castellano y la página en inglés lo avisa. `tests/diccionario-idiomas.test.ts`
+falla para que no se te olvide.
 
 ### Una opción en una herramienta existente
 

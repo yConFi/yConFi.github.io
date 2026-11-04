@@ -19,11 +19,12 @@ interface Props {
 const { c, notas } = Astro.props;
 
 // Igual que en <Pista>: dentro del MDX el idioma solo se puede deducir de la ruta.
-const t = textos(idiomaDeRuta(Astro.url.pathname));
+const idioma = idiomaDeRuta(Astro.url.pathname);
+const t = textos(idioma);
 
 let segmentos: Segmento[];
 try {
-  segmentos = analizarComando(c, { notas });
+  segmentos = analizarComando(c, { notas, idioma });
 } catch (e) {
   if (e instanceof ErrorComando) throw new Error(formatearError(e, `página ${Astro.url.pathname}`));
   throw e;

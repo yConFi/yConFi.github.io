@@ -3,17 +3,23 @@
 // comando sin explicar.
 
 import { HERRAMIENTAS, OPERADORES } from '../../data/comandos';
+import { rellenar, textos, type Idioma } from '../../i18n';
+import { IDIOMA_POR_DEFECTO } from '../../i18n/idiomas';
 import { expandirCombinadas } from './combinadas';
 import { ErrorComando, type MotivoError } from './errores';
+import { enIdioma } from './texto';
 import type { Herramienta, Opcion, Segmento, Subcomando } from './tipos';
 import { tokenizar, type Token } from './tokenizar';
 
 const POR_NOMBRE = new Map(HERRAMIENTAS.map((h) => [h.nombre, h]));
 const POR_SIMBOLO = new Map(OPERADORES.map((o) => [o.simbolo, o]));
 
-const EXPLICACION_FIN_OPCIONES =
-  'Marca el final de las opciones: lo que sigue se trata como argumentos aunque empiece por "-".';
-const EXPLICACION_LLAVES_FIND = 'find lo sustituye por la ruta de cada fichero encontrado.';
+/**
+ * Las etiquetas y las frases propias del analizador ("opción · nmap") salen de
+ * src/i18n/; lo que explica cada herramienta sale del diccionario. Los mensajes
+ * de ErrorComando NO se traducen: solo se ven al compilar, nunca en la web.
+ */
+type TextosComando = ReturnType<typeof textos>['comando'];
 
 /**
  * Busca la herramienta por su nombre. Si el comando la ejecuta por su ruta
@@ -21,14 +27,12 @@ const EXPLICACION_LLAVES_FIND = 'find lo sustituye por la ruta de cada fichero e
  * explicación de la ruta: con una barra en el nombre, Bash no busca en el PATH
  * (manual de Bash, "Command Search and Execution").
  */
-function buscarHerramienta(valor: string): { herramienta?: Herramienta; ruta?: string } {
+function buscarHerramienta(valor: string, t: TextosComando): { herramienta?: Herramienta; ruta?: string } {
   const barra = valor.lastIndexOf('/');
   if (barra === -1) return { herramienta: POR_NOMBRE.get(valor) };
   const herramienta = POR_NOMBRE.get(valor.slice(barra + 1));
   const directorio = valor.slice(0, barra + 1);
-  const ruta =
-    `Se ejecuta por su ruta: como el nombre contiene una barra, Bash no lo busca en el PATH y ejecuta ese fichero.` +
-    (directorio === './' ? ' ./ es el directorio actual.' : '');
+  const ruta = t.porSuRuta + (directorio === './' ? ` ${t.directorioActual}` : '');
   return { herramienta, ruta };
 }
 
@@ -37,6 +41,8 @@ export interface OpcionesAnalisis {
   notas?: Record<string, string>;
   /** Falla si una clave de `notas` no coincide con nada. Por defecto, true. */
   comprobarNotas?: boolean;
+  /** Idioma de las explicaciones. Por defecto, castellano. */
+  idioma?: Idioma;
 }
 
 interface Contexto {
@@ -48,6 +54,8 @@ interface Contexto {
 }
 
 export function analizarComando(comando: string, opciones: OpcionesAnalisis = {}): Segmento[] {
+  const idioma = opciones.idioma ?? IDIOMA_POR_DEFECTO;
+  const t = textos(idioma).comando;
   const notas = opciones.notas ?? {};
   const notasUsadas = new Set<string>();
   const tokens = tokenizar(comando);
@@ -66,7 +74,7 @@ export function analizarComando(comando: string, opciones: OpcionesAnalisis = {}
     return undefined;
   };
 
-  const segmentos = analizarTokens(tokens, { error, nota });
+  const segmentos = analizarTokens(tokens, { error, nota, t, idioma });
 
   if (opciones.comprobarNotas !== false) {
     const sinUsar = Object.keys(notas).find((clave) => !notasUsadas.has(clave));
@@ -80,10 +88,12 @@ export function analizarComando(comando: string, opciones: OpcionesAnalisis = {}
 interface Ayudas {
   error: (motivo: MotivoError, detalle: string, token: string) => ErrorComando;
   nota: (token: Token) => string | undefined;
+  t: TextosComando;
+  idioma: Idioma;
 }
 
 function analizarTokens(tokens: Token[], ayudas: Ayudas, notasExtra: Record<string, string> = {}): Segmento[] {
-  const { error } = ayudas;
+  const { error, t, idioma } = ayudas;
   const nota = (t: Token) => ayudas.nota(t) ?? notasExtra[t.valor];
   const segmentos: Segmento[] = [];
   let ctx: Contexto | null = null;
@@ -93,11 +103,11 @@ function analizarTokens(tokens: Token[], ayudas: Ayudas, notasExtra: Record<stri
 
   /** Añade el segmento de valor de una opción tomando el token siguiente. */
   const consumirValor = (flag: string, opcion: Opcion, h: Herramienta) => {
-    const t = siguiente();
-    if (!t || t.tipo !== 'palabra') {
+    const tk = siguiente();
+    if (!tk || tk.tipo !== 'palabra') {
       throw error('falta-valor', `La opción "${flag}" de ${h.nombre} necesita un valor.`, flag);
     }
-    segmentos.push(segmentoValor(t.texto, flag, opcion, nota(t), false));
+    segmentos.push(segmentoValor(tk.texto, flag, opcion, nota(tk), false, t, idioma));
     i++;
   };
 
@@ -113,15 +123,15 @@ function analizarTokens(tokens: Token[], ayudas: Ayudas, notasExtra: Record<stri
       const seg: Segmento = {
         texto: token.texto,
         clase: 'operador',
-        etiqueta: `operador · ${op.nombre}`,
-        explicacion: op.descripcion,
+        etiqueta: `${t.operador} · ${enIdioma(op.nombre, idioma)}`,
+        explicacion: enIdioma(op.descripcion, idioma),
         docs: op.docs,
         pegadoAlAnterior: false,
       };
 
       if (op.tipo === 'separador') {
-        const t = siguiente();
-        if (!ctx || !t || t.tipo !== 'palabra') {
+        const tk = siguiente();
+        if (!ctx || !tk || tk.tipo !== 'palabra') {
           throw error('falta-comando', `Falta un comando alrededor de "${op.simbolo}".`, op.simbolo);
         }
         if (ctx.esperaSubcomando) {
@@ -130,15 +140,15 @@ function analizarTokens(tokens: Token[], ayudas: Ayudas, notasExtra: Record<stri
         segmentos.push(seg);
         ctx = null;
       } else if (op.tipo === 'redireccion') {
-        const t = siguiente();
-        if (!t || t.tipo !== 'palabra') {
+        const tk = siguiente();
+        if (!tk || tk.tipo !== 'palabra') {
           throw error('falta-destino', `Falta el fichero de destino de "${op.simbolo}".`, op.simbolo);
         }
         segmentos.push(seg, {
-          texto: t.texto,
+          texto: tk.texto,
           clase: 'argumento',
-          etiqueta: `destino de ${op.simbolo}`,
-          explicacion: nota(t) ?? 'Fichero en el que se escribe la salida redirigida.',
+          etiqueta: rellenar(t.destinoDePlantilla, { simbolo: op.simbolo }),
+          explicacion: nota(tk) ?? t.destinoRedireccion,
           pegadoAlAnterior: false,
         });
         i++;
@@ -151,16 +161,16 @@ function analizarTokens(tokens: Token[], ayudas: Ayudas, notasExtra: Record<stri
 
     // ---------- Inicio de un comando: la herramienta ----------
     if (!ctx) {
-      const { herramienta: h, ruta } = buscarHerramienta(token.valor);
+      const { herramienta: h, ruta } = buscarHerramienta(token.valor, t);
       if (!h) {
         throw error('herramienta-desconocida', `Herramienta "${token.valor}" no está en el diccionario.`, token.valor);
       }
       segmentos.push({
         texto: token.texto,
         clase: 'herramienta',
-        etiqueta: 'herramienta',
-        explicacion: ruta ? `${h.descripcion} ${ruta}` : h.descripcion,
-        ...(h.variantes ? { aviso: h.variantes } : {}),
+        etiqueta: t.herramienta,
+        explicacion: ruta ? `${enIdioma(h.descripcion, idioma)} ${ruta}` : enIdioma(h.descripcion, idioma),
+        ...(h.variantes ? { aviso: enIdioma(h.variantes, idioma) } : {}),
         docs: h.docs,
         pegadoAlAnterior: false,
       });
@@ -186,8 +196,8 @@ function analizarTokens(tokens: Token[], ayudas: Ayudas, notasExtra: Record<stri
         segmentos.push({
           texto: token.texto,
           clase: 'opcion',
-          etiqueta: `opción · ${h.nombre}`,
-          explicacion: EXPLICACION_FIN_OPCIONES,
+          etiqueta: `${t.opcion} · ${h.nombre}`,
+          explicacion: t.finOpciones,
           pegadoAlAnterior: false,
         });
         ctx.opcionesCerradas = true;
@@ -200,7 +210,7 @@ function analizarTokens(tokens: Token[], ayudas: Ayudas, notasExtra: Record<stri
 
       if (opcion && flag === v) {
         // Coincidencia exacta.
-        segmentos.push(segmentoOpcion(token.texto, flag, opcion, h, false));
+        segmentos.push(segmentoOpcion(token.texto, flag, opcion, h, false, t, idioma));
         if (opcion.ejecutaComandoHasta) {
           i = analizarExec(tokens, i, opcion.ejecutaComandoHasta, segmentos, ayudas, token.texto);
           continue;
@@ -224,8 +234,10 @@ function analizarTokens(tokens: Token[], ayudas: Ayudas, notasExtra: Record<stri
         if (h.estilo === 'freerdp' && valorTexto === '') {
           throw error('falta-valor', `La opción "${flag}" de ${h.nombre} tiene ":" pero ningún valor detrás.`, v);
         }
-        segmentos.push(segmentoOpcion(token.texto.slice(0, corte), flag, opcion, h, false));
-        segmentos.push(segmentoValor(valorTexto, flag, opcion, ayudas.nota({ ...token, texto: valorTexto, valor: v.slice(corte) }), true));
+        segmentos.push(segmentoOpcion(token.texto.slice(0, corte), flag, opcion, h, false, t, idioma));
+        segmentos.push(
+          segmentoValor(valorTexto, flag, opcion, ayudas.nota({ ...token, texto: valorTexto, valor: v.slice(corte) }), true, t, idioma),
+        );
       } else if (h.estilo === 'posix' && h.combinables && !v.startsWith('--') && v.length > 2) {
         const r = expandirCombinadas(v.slice(1), buscar);
         if (!r.ok) {
@@ -235,15 +247,17 @@ function analizarTokens(tokens: Token[], ayudas: Ayudas, notasExtra: Record<stri
         segmentos.push({
           texto: textoGrupo,
           clase: 'opcion',
-          etiqueta: `opciones combinadas · ${h.nombre}`,
-          explicacion: `Equivale a ${r.partes.map((p) => p.flag).join(' ')}.`,
-          partes: r.partes.map((p) => ({ texto: p.flag, explicacion: p.opcion.descripcion })),
+          etiqueta: `${t.opcionesCombinadas} · ${h.nombre}`,
+          explicacion: rellenar(t.equivaleAPlantilla, { flags: r.partes.map((p) => p.flag).join(' ') }),
+          partes: r.partes.map((p) => ({ texto: p.flag, explicacion: enIdioma(p.opcion.descripcion, idioma) })),
           docs: h.docs,
           pegadoAlAnterior: false,
         });
         const ultima = r.partes.at(-1)!;
         if (r.valorPegado !== undefined) {
-          segmentos.push(segmentoValor(r.valorPegado, ultima.flag, ultima.opcion, ayudas.nota({ ...token, texto: r.valorPegado, valor: r.valorPegado }), true));
+          segmentos.push(
+            segmentoValor(r.valorPegado, ultima.flag, ultima.opcion, ayudas.nota({ ...token, texto: r.valorPegado, valor: r.valorPegado }), true, t, idioma),
+          );
         } else if (ultima.opcion.valor && !ultima.opcion.valor.soloConIgual) {
           consumirValor(ultima.flag, ultima.opcion, h);
         }
@@ -265,8 +279,8 @@ function analizarTokens(tokens: Token[], ayudas: Ayudas, notasExtra: Record<stri
       segmentos.push({
         texto: token.texto,
         clase: 'subcomando',
-        etiqueta: `subcomando · ${h.nombre}`,
-        explicacion: sub.descripcion,
+        etiqueta: `${t.subcomando} · ${h.nombre}`,
+        explicacion: enIdioma(sub.descripcion, idioma),
         docs: h.docs,
         pegadoAlAnterior: false,
       });
@@ -290,8 +304,8 @@ function analizarTokens(tokens: Token[], ayudas: Ayudas, notasExtra: Record<stri
     segmentos.push({
       texto: token.texto,
       clase: 'argumento',
-      etiqueta: `argumento · ${h.nombre}`,
-      explicacion: explicacionNota ?? h.argumentos!,
+      etiqueta: `${t.argumento} · ${h.nombre}`,
+      explicacion: explicacionNota ?? enIdioma(h.argumentos!, idioma),
       pegadoAlAnterior: false,
     });
     ctx.posicionales++;
@@ -384,38 +398,52 @@ function analizarExec(
   if (interior.length === 0) {
     throw ayudas.error('falta-comando', `"${textoOpcion}" necesita un comando.`, textoOpcion);
   }
-  segmentos.push(...analizarTokens(interior, ayudas, { '{}': EXPLICACION_LLAVES_FIND }));
+  segmentos.push(...analizarTokens(interior, ayudas, { '{}': ayudas.t.llavesFind }));
   const terminador = tokens[fin]!;
   segmentos.push({
     texto: terminador.texto,
     clase: 'argumento',
-    etiqueta: `fin de ${textoOpcion}`,
-    explicacion:
-      terminador.valor === ';'
-        ? 'Termina el comando de -exec y lo ejecuta una vez por fichero. Se escapa (\\;) para que el shell no lo interprete como separador.'
-        : 'Termina el comando de -exec y lo ejecuta agrupando muchos ficheros en cada ejecución.',
+    etiqueta: rellenar(ayudas.t.finDePlantilla, { opcion: textoOpcion }),
+    explicacion: terminador.valor === ';' ? ayudas.t.execPuntoYComa : ayudas.t.execMas,
     pegadoAlAnterior: false,
   });
   return fin + 1;
 }
 
-function segmentoOpcion(texto: string, _flag: string, opcion: Opcion, h: Herramienta, pegado: boolean): Segmento {
+function segmentoOpcion(
+  texto: string,
+  _flag: string,
+  opcion: Opcion,
+  h: Herramienta,
+  pegado: boolean,
+  t: TextosComando,
+  idioma: Idioma,
+): Segmento {
   return {
     texto,
     clase: 'opcion',
-    etiqueta: `opción · ${h.nombre}`,
-    explicacion: opcion.descripcion,
+    etiqueta: `${t.opcion} · ${h.nombre}`,
+    explicacion: enIdioma(opcion.descripcion, idioma),
     docs: h.docs,
     pegadoAlAnterior: pegado,
   };
 }
 
-function segmentoValor(texto: string, flag: string, opcion: Opcion, nota: string | undefined, pegado: boolean): Segmento {
+function segmentoValor(
+  texto: string,
+  flag: string,
+  opcion: Opcion,
+  nota: string | undefined,
+  pegado: boolean,
+  t: TextosComando,
+  idioma: Idioma,
+): Segmento {
+  const nombre = opcion.valor ? enIdioma(opcion.valor.nombre, idioma) : '';
   return {
     texto,
     clase: 'valor',
-    etiqueta: `valor de ${flag} · ${opcion.valor?.nombre ?? ''}`.trim(),
-    explicacion: nota ?? opcion.valor?.descripcion ?? '',
+    etiqueta: `${rellenar(t.valorDePlantilla, { flag })} · ${nombre}`.trim(),
+    explicacion: nota ?? (opcion.valor ? enIdioma(opcion.valor.descripcion, idioma) : ''),
     pegadoAlAnterior: pegado,
   };
 }

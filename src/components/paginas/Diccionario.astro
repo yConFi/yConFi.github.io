@@ -2,8 +2,9 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { HERRAMIENTAS, OPERADORES } from '../../data/comandos';
 import { IDIOMA_POR_DEFECTO, etiquetaCategoria, rellenar, textos, type Idioma } from '../../i18n';
-import { TOTAL_HERRAMIENTAS, TOTAL_OPCIONES, TOTAL_OPERADORES } from '../../lib/diccionario';
-import type { Categoria, Opcion } from '../../lib/comando/tipos';
+import { COBERTURA, TOTAL_HERRAMIENTAS, TOTAL_OPCIONES, TOTAL_OPERADORES } from '../../lib/diccionario';
+import { enIdioma } from '../../lib/comando/texto';
+import type { Categoria, Opcion, Texto } from '../../lib/comando/tipos';
 import { slugTecnica } from '../../lib/walkthroughs';
 
 interface Props {
@@ -20,7 +21,17 @@ const categorias = [...new Set(HERRAMIENTAS.map((h) => h.categoria))].sort((a, b
 const porCategoria = (c: Categoria) =>
   HERRAMIENTAS.filter((h) => h.categoria === c).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
 
-const textoOpcion = (o: Opcion) => [...o.nombres, o.descripcion, o.valor?.nombre ?? '', o.valor?.descripcion ?? ''].join(' ');
+/** El texto en el idioma de la página. */
+const txt = (t: Texto) => enIdioma(t, idioma);
+
+/**
+ * Texto sobre el que busca el buscador: lleva los DOS idiomas, para que una
+ * entrada ya traducida se encuentre igual buscando "puerto" que "port".
+ */
+const ambos = (t: Texto) => (typeof t === 'string' ? t : `${t.es} ${t.en}`);
+
+const textoOpcion = (o: Opcion) =>
+  [...o.nombres, ambos(o.descripcion), o.valor ? `${ambos(o.valor.nombre)} ${ambos(o.valor.descripcion)}` : ''].join(' ');
 ---
 
 <BaseLayout idioma={idioma} titulo={t.diccionario.titulo} descripcion={t.diccionario.descripcion}>
@@ -35,8 +46,18 @@ const textoOpcion = (o: Opcion) => [...o.nombres, o.descripcion, o.valor?.nombre
     />
   </div>
 
-  {/* Las explicaciones siguen en castellano: se avisa en lugar de dar por bueno lo que no lo es. */}
-  {idioma !== IDIOMA_POR_DEFECTO && <p class="aviso-idioma" role="note">{t.aviso.entradasEnOtroIdioma}</p>}
+  {/*
+    El aviso solo tiene sentido en inglés: en castellano el diccionario está
+    completo. Mientras queden entradas sin traducir se dice cuántas van, y el
+    número sale del propio diccionario.
+  */}
+  {
+    idioma !== IDIOMA_POR_DEFECTO && !COBERTURA.completa && (
+      <p class="aviso-idioma" role="note">
+        {rellenar(t.aviso.diccionarioPlantilla, { traducidas: COBERTURA.traducidos, total: COBERTURA.total })}
+      </p>
+    )
+  }
 
   <search
     class="buscador"
@@ -77,12 +98,17 @@ const textoOpcion = (o: Opcion) => [...o.nombres, o.descripcion, o.valor?.nombre
         <h2 id={`cat-${slugTecnica(categoria)}`}>{etiquetaCategoria(categoria, idioma)}</h2>
 
         {porCategoria(categoria).map((h) => (
-          <article class="herramienta" id={h.nombre} data-herramienta data-texto={`${h.nombre} ${h.descripcion} ${h.categoria}`}>
+          <article
+            class="herramienta"
+            id={h.nombre}
+            data-herramienta
+            data-texto={`${h.nombre} ${ambos(h.descripcion)} ${h.categoria} ${etiquetaCategoria(h.categoria, idioma)}`}
+          >
             <h3>
               <code>{h.nombre}</code>
             </h3>
-            <p>{h.descripcion}</p>
-            {h.variantes && <p class="aviso">{t.general.ojo} {h.variantes}</p>}
+            <p>{txt(h.descripcion)}</p>
+            {h.variantes && <p class="aviso">{t.general.ojo} {txt(h.variantes)}</p>}
             <p class="docs">
               <a href={h.docs} rel="noopener">{t.general.documentacionOficial}</a>
               {h.docsVariantes?.map((d) => (
@@ -94,7 +120,7 @@ const textoOpcion = (o: Opcion) => [...o.nombres, o.descripcion, o.valor?.nombre
             </p>
             {h.argumentos && (
               <p class="argumentos">
-                <span class="etiqueta-campo">{t.diccionario.argumentos}</span> {h.argumentos}
+                <span class="etiqueta-campo">{t.diccionario.argumentos}</span> {txt(h.argumentos)}
               </p>
             )}
 
@@ -104,9 +130,9 @@ const textoOpcion = (o: Opcion) => [...o.nombres, o.descripcion, o.valor?.nombre
                   <div class="opcion" data-opcion data-texto={textoOpcion(o)}>
                     <dt>
                       <code>{o.nombres.join(', ')}</code>
-                      {o.valor && <span class="valor"> &lt;{o.valor.nombre}&gt;</span>}
+                      {o.valor && <span class="valor"> &lt;{txt(o.valor.nombre)}&gt;</span>}
                     </dt>
-                    <dd>{o.descripcion}</dd>
+                    <dd>{txt(o.descripcion)}</dd>
                   </div>
                 ))}
               </dl>
@@ -119,15 +145,15 @@ const textoOpcion = (o: Opcion) => [...o.nombres, o.descripcion, o.valor?.nombre
                     {h.nombre} {s.nombre}
                   </code>
                 </h4>
-                <p>{s.descripcion}</p>
+                <p>{txt(s.descripcion)}</p>
                 <dl class="opciones">
                   {s.opciones.map((o) => (
                     <div class="opcion" data-opcion data-texto={`${s.nombre} ${textoOpcion(o)}`}>
                       <dt>
                         <code>{o.nombres.join(', ')}</code>
-                        {o.valor && <span class="valor"> &lt;{o.valor.nombre}&gt;</span>}
+                        {o.valor && <span class="valor"> &lt;{txt(o.valor.nombre)}&gt;</span>}
                       </dt>
-                      <dd>{o.descripcion}</dd>
+                      <dd>{txt(o.descripcion)}</dd>
                     </div>
                   ))}
                 </dl>
@@ -145,12 +171,12 @@ const textoOpcion = (o: Opcion) => [...o.nombres, o.descripcion, o.valor?.nombre
       <dl class="opciones">
         {
           OPERADORES.map((op) => (
-            <div class="opcion" data-opcion data-texto={`${op.simbolo} ${op.nombre} ${op.descripcion}`}>
+            <div class="opcion" data-opcion data-texto={`${op.simbolo} ${ambos(op.nombre)} ${ambos(op.descripcion)}`}>
               <dt>
-                <code>{op.simbolo}</code> <span class="valor">{op.nombre}</span>
+                <code>{op.simbolo}</code> <span class="valor">{txt(op.nombre)}</span>
               </dt>
               <dd>
-                {op.descripcion} <a href={op.docs} rel="noopener">{t.diccionario.manualBash}</a>
+                {txt(op.descripcion)} <a href={op.docs} rel="noopener">{t.diccionario.manualBash}</a>
               </dd>
             </div>
           ))

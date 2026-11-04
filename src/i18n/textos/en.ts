@@ -188,6 +188,29 @@ export const en: Textos = {
     titulo: 'Hint',
   },
 
+  comando: {
+    herramienta: 'tool',
+    opcion: 'option',
+    opcionesCombinadas: 'combined options',
+    subcomando: 'subcommand',
+    argumento: 'argument',
+    operador: 'operator',
+    valorDePlantilla: 'value of {flag}',
+    destinoDePlantilla: 'target of {simbolo}',
+    finDePlantilla: 'end of {opcion}',
+    equivaleAPlantilla: 'Same as {flags}.',
+    destinoRedireccion: 'File the redirected output is written to.',
+    finOpciones:
+      'Marks the end of the options: anything after it is treated as an argument, even if it starts with "-".',
+    llavesFind: 'find replaces it with the path of each file it finds.',
+    porSuRuta:
+      'Run by its path: because the name contains a slash, Bash does not look it up in PATH and runs that file.',
+    directorioActual: './ is the current directory.',
+    execPuntoYComa:
+      'Ends the -exec command and runs it once per file. It is escaped (\\;) so the shell does not read it as a separator.',
+    execMas: 'Ends the -exec command and runs it with many files grouped into each run.',
+  },
+
   cmd: {
     ayuda: 'tap any part to see what it does',
     copiar: 'Copy',
@@ -209,7 +232,7 @@ export const en: Textos = {
   aviso: {
     contenidoEnOtroIdioma: 'This write-up is only available in Spanish for now. The translation is on its way.',
     resumenesEnOtroIdioma: 'The summaries are still in Spanish. The translation is on its way.',
-    entradasEnOtroIdioma:
-      'The dictionary explanations are still in Spanish. They are being translated one by one.',
+    diccionarioPlantilla:
+      'The explanations are being written from the official documentation: {traducidas} of {total} are done. The rest are shown in Spanish.',
   },
 };
