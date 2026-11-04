@@ -1,0 +1,266 @@
+---
+titulo: "Crocodile"
+plataforma: HackTheBox
+dificultad: Muy fácil
+so: Linux
+fecha: 2026-11-04
+tecnicas:
+  - Escaneo de puertos
+  - FTP
+  - Acceso anónimo
+  - Fuerza bruta de directorios
+resumen: "Máquina Linux con un FTP anónimo que guarda listas de usuarios y contraseñas, y una web Apache con un login.php oculto donde esas credenciales dan acceso al panel de administración."
+serie:
+  nombre: Starting Point
+  tier: 1
+borrador: false
+---
+
+Máquina del Tier 1 de Starting Point. Las preguntas guiadas (tasks) de HackTheBox aparecen plegadas en la
+sección donde se responden: intenta contestarlas antes de abrirlas.
+
+<Ruta
+  titulo="Camino seguido en Crocodile, de la conexión a la flag"
+  pasos={[
+    { titulo: 'ping', detalle: 'La máquina responde' },
+    { titulo: 'nmap -sC -sV', detalle: 'FTP anónimo (21) y Apache (80)' },
+    { titulo: 'ftp anonymous', detalle: 'Listas de usuarios y contraseñas' },
+    { titulo: 'gobuster dir', detalle: 'Aparece /login.php' },
+    { titulo: 'login.php como admin', detalle: 'La flag, en el panel', meta: true },
+  ]}
+/>
+
+> La IP `10.129.99.135` es la que tenía la máquina en mi sesión; a ti te saldrá otra.
+
+## Reconocimiento
+
+Lo primero es comprobar que llega la conexión con la máquina:
+
+<Cmd c="ping 10.129.99.135" notas={{ "10.129.99.135": "IP de la máquina objetivo." }} />
+
+Lo detengo con `Ctrl+C` y muestra el resumen:
+
+```text
+64 bytes from 10.129.99.135: icmp_seq=1 ttl=63 time=7.79 ms
+64 bytes from 10.129.99.135: icmp_seq=2 ttl=63 time=7.65 ms
+...
+^C
+--- 10.129.99.135 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2004ms
+```
+
+La máquina responde a todo: 3 paquetes enviados y 3 recibidos.
+
+## Enumeración
+
+### El servicio FTP
+
+Empecé mirando solo el puerto 21, el de FTP, con detección de versiones:
+
+<Cmd
+  c="nmap -sV -p 21 10.129.99.135"
+  notas={{ "21": "Solo se escanea el puerto de FTP.", "10.129.99.135": "IP de la máquina objetivo." }}
+/>
+
+```text
+PORT   STATE SERVICE VERSION
+21/tcp open  ftp     vsftpd 3.0.3
+Service Info: OS: Unix
+```
+
+En el puerto 21 hay un servidor **vsftpd 3.0.3**.
+
+<Pista titulo="Tarea 2 · ¿Qué versión de servicio se encuentra en el puerto 21?">
+  **vsftpd 3.0.3**.
+</Pista>
+
+### Todos los servicios, con los scripts por defecto
+
+Después escaneé los 1000 puertos más comunes con detección de versiones y con los scripts por defecto de nmap,
+que hacen comprobaciones básicas sobre cada servicio que encuentran. La primera vez me olvidé el guion de
+`-sV` (`nmap -sC sV ...`): nmap tomó `sV` como un nombre de equipo, avisó con *Failed to resolve "sV"* y
+escaneó la IP solo con `-sC`. Repetido bien:
+
+<Cmd c="nmap -sC -sV 10.129.99.135" notas={{ "10.129.99.135": "IP de la máquina objetivo." }} />
+
+```text
+Not shown: 998 closed tcp ports (conn-refused)
+PORT   STATE SERVICE VERSION
+21/tcp open  ftp     vsftpd 3.0.3
+...
+| ftp-anon: Anonymous FTP login allowed (FTP code 230)
+| -rw-r--r--    1 ftp      ftp            33 Jun 08  2021 allowed.userlist
+|_-rw-r--r--    1 ftp      ftp            62 Apr 20  2021 allowed.userlist.passwd
+80/tcp open  http    Apache httpd 2.4.41 ((Ubuntu))
+|_http-server-header: Apache/2.4.41 (Ubuntu)
+|_http-title: Smash - Bootstrap Business Template
+Service Info: OS: Unix
+```
+
+Hay dos puertos abiertos:
+
+- **21/tcp**: el FTP. El script `ftp-anon` dice que admite el acceso **anónimo** (código FTP **230**) y
+  hasta lista los dos ficheros que hay: `allowed.userlist` y `allowed.userlist.passwd`.
+- **80/tcp**: una web servida por **Apache httpd 2.4.41** sobre Ubuntu.
+
+<Pista titulo="Tarea 1 · ¿Qué opción de nmap hace que se usen los scripts por defecto durante el escaneo?">
+  **-sC**.
+</Pista>
+
+<Pista titulo="Tarea 3 · ¿Qué código FTP se devuelve con el mensaje «Anonymous FTP login allowed»?">
+  **230**.
+</Pista>
+
+<Pista titulo="Tarea 7 · ¿Qué versión de Apache HTTP Server se ejecuta en el objetivo?">
+  **Apache httpd 2.4.41**.
+</Pista>
+
+## Acceso inicial
+
+### Entrar por FTP como anónimo
+
+Me conecto al FTP. Cuando pide el nombre, escribo `anonymous`, y entra sin pedir contraseña:
+
+<Cmd c="ftp 10.129.99.135" notas={{ "10.129.99.135": "IP de la máquina objetivo." }} />
+
+```text
+Connected to 10.129.99.135.
+220 (vsFTPd 3.0.3)
+Name (10.129.99.135:root): anonymous
+230 Login successful.
+Remote system type is UNIX.
+Using binary mode to transfer files.
+```
+
+El servidor contesta con el código **230**, el mismo que señalaba nmap.
+
+<Pista titulo="Tarea 4 · Tras conectarse al servidor FTP con el cliente ftp, ¿qué usuario hay que dar para entrar de forma anónima?">
+  **anonymous**.
+</Pista>
+
+En mi primera conexión salí sin hacer nada y probé `ftp -h` para ver las opciones, pero este cliente no la
+tiene (*unknown option*). Dentro de la sesión, en cambio, `help` lista todas las órdenes disponibles.
+
+### Descargar los ficheros
+
+Ya en la sesión, `dir` lista el directorio y `get` descarga un fichero a la carpeta desde la que abrí `ftp`:
+
+```text
+ftp> dir
+-rw-r--r--    1 ftp      ftp            33 Jun 08  2021 allowed.userlist
+-rw-r--r--    1 ftp      ftp            62 Apr 20  2021 allowed.userlist.passwd
+226 Directory send OK.
+ftp> get allowed.userlist
+226 Transfer complete.
+ftp> get allowed.userlist.passwd
+226 Transfer complete.
+ftp> exit
+221 Goodbye.
+```
+
+<Pista titulo="Tarea 5 · Tras conectarse al FTP de forma anónima, ¿qué orden sirve para descargar los ficheros que encontramos?">
+  **get**.
+</Pista>
+
+Leo la lista de usuarios ya en Pwnbox:
+
+<Cmd c="cat allowed.userlist" notas={{ "allowed.userlist": "Fichero descargado del FTP." }} />
+
+```text
+aron
+pwnmeow
+egotisticalsw
+admin
+```
+
+De los cuatro, el que suena a más privilegios es **admin**.
+
+<Pista titulo="Tarea 6 · ¿Cuál es uno de los usuarios de 'allowed.userlist' que suenan a más privilegios?">
+  **admin**.
+</Pista>
+
+El otro fichero, `allowed.userlist.passwd`, tiene cuatro contraseñas, una por línea. No las copio aquí: las
+verás tú al descargarlo.
+
+<Cmd c="cat allowed.userlist.passwd" notas={{ "allowed.userlist.passwd": "Fichero descargado del FTP." }} />
+
+Probé a entrar por FTP con uno de los usuarios (`aron`), pero el servidor lo rechaza antes de pedir la
+contraseña:
+
+```text
+Name (10.129.99.135:root): aron
+530 This FTP server is anonymous only.
+ftp: Login failed
+```
+
+Este FTP solo admite el acceso anónimo, así que las credenciales tienen que servir en otro sitio: la web del
+puerto 80.
+
+### Buscar páginas ocultas en la web
+
+Para encontrar páginas que no estén enlazadas desde la portada, hago fuerza bruta de directorios con
+gobuster. Con `-x php,html`, además de cada palabra del diccionario prueba también esa palabra con las
+extensiones `.php` y `.html`:
+
+<Cmd
+  c="gobuster dir --url http://10.129.99.135/ --wordlist /usr/share/wordlists/dirbuster/directory-list-2.3-small.txt -x php,html"
+  notas={{
+    "http://10.129.99.135/": "Web de la máquina objetivo (puerto 80).",
+    "/usr/share/wordlists/dirbuster/directory-list-2.3-small.txt": "Diccionario de rutas de DirBuster que trae Pwnbox.",
+    "php,html": "Extensiones que se prueban con cada palabra.",
+  }}
+/>
+
+```text
+/.html                (Status: 403) [Size: 278]
+/.php                 (Status: 403) [Size: 278]
+/index.html           (Status: 200) [Size: 58565]
+/login.php            (Status: 200) [Size: 1577]
+/assets               (Status: 301) [Size: 315] [--> http://10.129.99.135/assets/]
+/css                  (Status: 301) [Size: 312] [--> http://10.129.99.135/css/]
+/js                   (Status: 301) [Size: 311] [--> http://10.129.99.135/js/]
+/logout.php           (Status: 302) [Size: 0] [--> login.php]
+/config.php           (Status: 200) [Size: 0]
+/fonts                (Status: 301) [Size: 314] [--> http://10.129.99.135/fonts/]
+/dashboard            (Status: 301) [Size: 318] [--> http://10.129.99.135/dashboard/]
+Progress: 84114 / 262995 (31.98%)^C
+```
+
+Lo detuve a propósito con `Ctrl+C` hacia el 32 %, porque ya había salido lo que buscaba: **`/login.php`**, una
+página de inicio de sesión. También `logout.php` redirige a ella.
+
+<Pista titulo="Tarea 8 · ¿Qué opción de gobuster sirve para indicar que buscamos tipos de fichero concretos?">
+  **-x**.
+</Pista>
+
+<Pista titulo="Tarea 9 · ¿Qué fichero PHP encontramos con la fuerza bruta de directorios que permite autenticarse en el servicio web?">
+  **login.php**.
+</Pista>
+
+### Entrar en el panel
+
+Abro `http://10.129.99.135/login.php` en el navegador y aparece un formulario de usuario y contraseña. Entré
+a la primera con el usuario **admin** y la contraseña que ocupa su mismo puesto en
+`allowed.userlist.passwd`. Detrás está un panel de administración (*Server Manager*), y la flag aparece en su
+parte superior.
+
+La flag no se publica: la tienes que conseguir tú.
+
+<Pista titulo="Flag · Envía la flag que está en la página web">
+  Aparece arriba del panel de administración al que se llega iniciando sesión en `login.php` como `admin`.
+</Pista>
+
+## Escalada de privilegios
+
+No hace falta: la flag está en el panel web al que se entra como admin, sin llegar a tener una shell en la
+máquina.
+
+## Lecciones aprendidas
+
+- **Qué fallé:** escribí `nmap -sC sV` sin el guion, y nmap hizo el escaneo sin detectar versiones; probé
+  `ftp -h`, una opción que este cliente no tiene; y quise entrar por FTP como `aron`, cuando el servidor solo
+  admite el acceso anónimo.
+- **Lo que enseña la máquina:** un servicio mal configurado puede dar la llave de otro: el FTP anónimo deja
+  leer ficheros con usuarios y contraseñas, y esas credenciales abren el panel de administración de la web.
+- **Qué haré la próxima vez:** cuando encuentre credenciales, probarlas en todos los servicios abiertos y no
+  solo en el que las tenía; y en las webs, buscar páginas ocultas con gobuster desde el principio.
