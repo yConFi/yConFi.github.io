@@ -129,6 +129,9 @@ walkthrough solo hay que saber esto:
 - Si usas una técnica nueva, añádela a la lista de arriba **y** a `src/i18n/etiquetas.ts` con su nombre
   en inglés. Si no, la compilación falla.
 - Si tocas algún texto de la interfaz, va en `src/i18n/textos/es.ts` y en `en.ts`, con las mismas claves.
+- **El diccionario está entero en castellano e inglés.** Al añadir una herramienta o una opción, escribe
+  los dos: `descripcion: { es: '…', en: '…' }`. El inglés se escribe desde la documentación original (que
+  ya está en inglés), no se traduce desde el castellano. Si falta, `npm test` lo dice.
 
 ## Comprobaciones antes de entregar
 

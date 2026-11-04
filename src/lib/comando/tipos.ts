@@ -1,6 +1,16 @@
 // Tipos del diccionario de comandos y del resultado del análisis.
 
 /**
+ * Texto del diccionario, en uno o en los dos idiomas.
+ *
+ * Mientras una entrada solo esté en castellano es una cadena normal. Al
+ * traducirla pasa a `{ es, en }`. Así se puede ir traduciendo entrada por
+ * entrada sin romper nada: lo que todavía no está traducido se muestra en
+ * castellano y la página lo dice (ver src/lib/comando/texto.ts).
+ */
+export type Texto = string | { es: string; en: string };
+
+/**
  * Cómo interpreta cada herramienta sus opciones. No todas siguen las mismas reglas:
  *
  * - `posix`: estilo getopt. Admite `--larga=valor`, valor pegado a la opción
@@ -26,9 +36,9 @@ export type Categoria =
 
 export interface ValorOpcion {
   /** Nombre corto del valor, p. ej. "puertos" o "fichero". */
-  nombre: string;
+  nombre: Texto;
   /** Qué se espera como valor. Se muestra si no hay una nota más concreta. */
-  descripcion: string;
+  descripcion: Texto;
   /**
    * El valor es opcional y solo puede ir pegado con su separador: `=` en general
    * (`grep --color[=WHEN]`) o `:` en estilo `freerdp` (`/p[:contraseña]`).
@@ -39,7 +49,7 @@ export interface ValorOpcion {
 export interface Opcion {
   /** Todas las formas de escribirla: `['-u', '--url']`. */
   nombres: string[];
-  descripcion: string;
+  descripcion: Texto;
   /** Si existe, la opción lleva un valor. */
   valor?: ValorOpcion;
   /** Lo que viene después ya no son opciones del programa (`python3 -c`, `python3 -m`). */
@@ -50,7 +60,7 @@ export interface Opcion {
 
 export interface Subcomando {
   nombre: string;
-  descripcion: string;
+  descripcion: Texto;
   opciones: Opcion[];
 }
 
@@ -61,14 +71,14 @@ export interface EnlaceDoc {
 
 export interface Herramienta {
   nombre: string;
-  descripcion: string;
+  descripcion: Texto;
   categoria: Categoria;
   /** Documentación oficial (página man o web del proyecto). */
   docs: string;
   /** Documentación de otras variantes (p. ej. netcat). */
   docsVariantes?: EnlaceDoc[];
   /** Diferencias entre versiones o variantes que conviene conocer. */
-  variantes?: string;
+  variantes?: Texto;
   estilo: EstiloOpciones;
   /** Solo `posix`: permite agrupar opciones cortas (`-la`). */
   combinables?: boolean;
@@ -82,7 +92,7 @@ export interface Herramienta {
   /** El primer argumento posicional es otro comando (sudo). */
   ejecutaComando?: boolean;
   /** Explicación genérica de los argumentos posicionales. `null` = no admite. */
-  argumentos: string | null;
+  argumentos: Texto | null;
   opciones: Opcion[];
   subcomandos?: Subcomando[];
 }
@@ -91,8 +101,8 @@ export type TipoOperador = 'separador' | 'redireccion' | 'redireccion-completa';
 
 export interface Operador {
   simbolo: string;
-  nombre: string;
-  descripcion: string;
+  nombre: Texto;
+  descripcion: Texto;
   tipo: TipoOperador;
   docs: string;
 }

@@ -194,6 +194,32 @@ export const es = {
     titulo: 'Pista',
   },
 
+  // Etiquetas y frases que pone el analizador de comandos (src/lib/comando/analizar.ts).
+  // Lo que explica cada herramienta y cada opción NO está aquí: eso es el
+  // diccionario (src/data/comandos.ts), que se traduce entrada por entrada.
+  comando: {
+    herramienta: 'herramienta',
+    opcion: 'opción',
+    opcionesCombinadas: 'opciones combinadas',
+    subcomando: 'subcomando',
+    argumento: 'argumento',
+    operador: 'operador',
+    valorDePlantilla: 'valor de {flag}',
+    destinoDePlantilla: 'destino de {simbolo}',
+    finDePlantilla: 'fin de {opcion}',
+    equivaleAPlantilla: 'Equivale a {flags}.',
+    destinoRedireccion: 'Fichero en el que se escribe la salida redirigida.',
+    finOpciones:
+      'Marca el final de las opciones: lo que sigue se trata como argumentos aunque empiece por "-".',
+    llavesFind: 'find lo sustituye por la ruta de cada fichero encontrado.',
+    porSuRuta:
+      'Se ejecuta por su ruta: como el nombre contiene una barra, Bash no lo busca en el PATH y ejecuta ese fichero.',
+    directorioActual: './ es el directorio actual.',
+    execPuntoYComa:
+      'Termina el comando de -exec y lo ejecuta una vez por fichero. Se escapa (\\;) para que el shell no lo interprete como separador.',
+    execMas: 'Termina el comando de -exec y lo ejecuta agrupando muchos ficheros en cada ejecución.',
+  },
+
   cmd: {
     ayuda: 'toca cada parte para saber qué hace',
     copiar: 'Copiar',
@@ -216,8 +242,9 @@ export const es = {
     // Estos dos solo se ven en las páginas en inglés cuyo texto sigue en castellano.
     contenidoEnOtroIdioma: 'Este texto todavía solo está en castellano. La traducción está en marcha.',
     resumenesEnOtroIdioma: 'Los resúmenes todavía están en castellano. La traducción está en marcha.',
-    entradasEnOtroIdioma:
-      'Las explicaciones del diccionario todavía están en castellano. Se están traduciendo una a una.',
+    // La cuenta la calcula la página desde el propio diccionario: nunca se escribe a mano.
+    diccionarioPlantilla:
+      'Las explicaciones se están escribiendo desde la documentación oficial en inglés: van {traducidas} de {total}. Las que faltan se ven en castellano.',
   },
 } as const;
 
