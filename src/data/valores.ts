@@ -7,7 +7,7 @@
 //
 // Para añadir un valor, amplía la lista y añade su traducción en src/i18n/etiquetas.ts.
 
-export const PLATAFORMAS = ['HackTheBox', 'TryHackMe'] as const;
+export const PLATAFORMAS = ['HackTheBox', 'TryHackMe', 'Máster'] as const;
 export const DIFICULTADES = ['Muy fácil', 'Fácil', 'Media', 'Difícil', 'Insana'] as const;
 export const SISTEMAS = ['Linux', 'Windows', 'FreeBSD', 'OpenBSD', 'Android', 'Otro'] as const;
 /** Series o rutas guiadas dentro de una plataforma (p. ej. Starting Point de HackTheBox). */

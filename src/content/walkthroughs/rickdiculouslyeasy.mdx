@@ -1,0 +1,337 @@
+---
+titulo: "Rickdiculously Easy"
+plataforma: Máster
+dificultad: Fácil
+so: Linux
+fecha: 2026-11-05
+tecnicas:
+  - Escaneo de puertos
+  - FTP
+  - Acceso anónimo
+  - Inyección de comandos
+  - SSH
+resumen: "Máquina Linux con temática de Rick y Morty: hay flags repartidas por un FTP anónimo, varios servicios y la web, se consigue ejecución de comandos a través de un CGI vulnerable y se salta de un usuario a otro hasta llegar a root."
+borrador: false
+---
+
+Máquina propuesta como actividad del máster, no de HackTheBox. El objetivo es reunir todas las flags
+repartidas por el sistema. Las flags aparecen plegadas como pistas que solo dicen **dónde** están, nunca su
+valor: la tienes que conseguir tú.
+
+<Ruta
+  titulo="Camino seguido en Rickdiculously Easy, del escaneo a root"
+  pasos={[
+    { titulo: 'nmap -p-', detalle: 'Siete puertos abiertos' },
+    { titulo: 'FTP y servicios', detalle: 'Flags "regaladas" en FTP, 13337, 60000 y Cockpit' },
+    { titulo: 'Web', detalle: '/passwords y robots.txt destapan un CGI' },
+    { titulo: 'tracertool.cgi', detalle: 'Inyección de comandos: shell como apache' },
+    { titulo: 'Summer → Morty → Rick', detalle: 'Contraseñas escondidas en la web y en ficheros' },
+    { titulo: 'sudo su', detalle: 'Rick tiene sudo: root', meta: true },
+  ]}
+/>
+
+> La IP `10.0.2.15` es la que tenía la máquina en mi entorno (red NAT de VirtualBox, con Kali en
+> `10.0.2.4`); a ti te saldrá otra.
+
+## Reconocimiento
+
+Lo primero es ver qué puertos están abiertos. Escaneo los 65535 puertos (`-p-`) con detección de servicios
+y versiones (`-sV`) y los scripts por defecto (`-sC`), subiendo el ritmo con `--min-rate` para que no tarde:
+
+<Cmd
+  c="nmap -sC -sV -p- --min-rate 1500 10.0.2.15"
+  notas={{ "10.0.2.15": "IP de la máquina objetivo." }}
+/>
+
+La máquina tiene **siete** puertos abiertos, unos cuantos nada habituales:
+
+```text
+PORT      STATE SERVICE  VERSION
+21/tcp    open  ftp      vsftpd 3.0.3
+22/tcp    open  ssh?
+80/tcp    open  http     Apache httpd 2.4.27 ((Fedora))
+9090/tcp  open  http     Cockpit web service
+13337/tcp open  unknown
+22222/tcp open  ssh      OpenSSH 7.5 (protocol 2.0)
+60000/tcp open  unknown
+```
+
+Varias cosas llaman la atención: el FTP (`21`) permite **login anónimo**, el SSH de verdad está en el
+`22222` (el `22` es un señuelo), y los puertos `13337` y `60000` no tienen un servicio conocido. El `9090`
+es Cockpit, un panel de administración web.
+
+## Enumeración
+
+Antes de complicarme, recojo las flags que la máquina deja casi a la vista.
+
+### FTP anónimo (puerto 21)
+
+El escaneo decía que el FTP admite acceso anónimo. Me conecto y, como usuario, escribo `anonymous` con la
+contraseña en blanco:
+
+<Cmd c="ftp 10.0.2.15" notas={{ "10.0.2.15": "IP de la máquina objetivo." }} />
+
+Dentro listo el contenido y hay un `FLAG.txt` que me descargo con `get`:
+
+```text
+Name (10.0.2.15:kali): anonymous
+230 Login successful.
+ftp> ls
+FLAG.txt
+ftp> get FLAG.txt
+ftp> exit
+```
+
+<Pista titulo="Flag · FTP anónimo (10 pts)">
+  Está en el `FLAG.txt` que se descarga del FTP anónimo (puerto 21).
+</Pista>
+
+### Puerto 13337
+
+Para ver qué habla por los puertos raros me conecto con netcat. El `13337` suelta un texto directamente en
+el banner, sin pedir nada:
+
+<Cmd c="nc 10.0.2.15 13337" notas={{ "10.0.2.15": "IP de la máquina objetivo." }} />
+
+<Pista titulo="Flag · Banner del puerto 13337 (10 pts)">
+  El servicio del puerto `13337` imprime la flag en su propio banner nada más conectarte.
+</Pista>
+
+### Puerto 60000
+
+El `60000` se anuncia como una *reverse shell* a medio hacer de Rick. Al conectarme me deja directamente un
+prompt (`#`) desde el que puedo ejecutar algunos comandos:
+
+<Cmd c="nc 10.0.2.15 60000" notas={{ "10.0.2.15": "IP de la máquina objetivo." }} />
+
+```text
+Welcome to Ricks half baked reverse shell...
+# ls
+FLAG.txt
+```
+
+<Pista titulo="Flag · Puerto 60000 (10 pts)">
+  Dentro del prompt que ofrece el puerto `60000` hay un `FLAG.txt` en el directorio en el que caes.
+</Pista>
+
+### Cockpit (puerto 9090)
+
+El `9090` es Cockpit y usa HTTPS con un certificado autofirmado. Abriendo `https://10.0.2.15:9090/` en el
+navegador (y aceptando el certificado), la propia pantalla de inicio de sesión muestra una flag encima del
+formulario.
+
+<Pista titulo="Flag · Pantalla de login de Cockpit (10 pts)">
+  Se ve directamente sobre el formulario de inicio de sesión de Cockpit, en `https://10.0.2.15:9090/`.
+</Pista>
+
+### Web (puerto 80)
+
+En la web ("Morty's Website") reviso primero los sitios habituales. El `robots.txt` apunta a un par de
+rutas interesantes dentro de `/cgi-bin/`:
+
+<Cmd c="curl -s http://10.0.2.15/robots.txt" notas={{ "http://10.0.2.15/robots.txt": "La IP de la máquina va dentro de la URL; a ti te saldrá otra." }} />
+
+```text
+User-agent: *
+Disallow: /cgi-bin/root_shell.cgi
+Disallow: /cgi-bin/tracertool.cgi
+Disallow: /passwords/
+```
+
+El directorio `/passwords/` tiene el listado de ficheros activado, así que puedo ver qué hay dentro:
+
+<Cmd c="curl -s http://10.0.2.15/passwords/" notas={{ "http://10.0.2.15/passwords/": "La IP de la máquina va dentro de la URL; a ti te saldrá otra." }} />
+
+```text
+<a href="FLAG.txt">FLAG.txt</a>
+<a href="passwords.html">passwords.html</a>
+```
+
+<Pista titulo="Flag · Directorio /passwords/ (10 pts)">
+  Es el `FLAG.txt` que aparece listado en `http://10.0.2.15/passwords/`.
+</Pista>
+
+El otro fichero, `passwords.html`, parece una broma (dice que ahí no hay contraseñas), pero en el **código
+fuente** de la página hay un comentario HTML escondido con una contraseña:
+
+<Cmd c="curl -s http://10.0.2.15/passwords/passwords.html" notas={{ "http://10.0.2.15/passwords/passwords.html": "La IP de la máquina va dentro de la URL; a ti te saldrá otra." }} />
+
+```text
+<!-- Yeah so I went ahead and changed Rick's password... winter -->
+```
+
+Me guardo esa contraseña (`winter`): más adelante se verá de quién es.
+
+## Acceso inicial
+
+De las dos rutas que destapaba el `robots.txt`, `root_shell.cgi` está "en construcción" y no hace nada útil,
+pero `tracertool.cgi` sí. Es un script que ejecuta un `traceroute` sobre la IP que le pasas por el parámetro
+`ip`... y lo hace metiendo ese parámetro directamente en la orden, sin filtrarlo. Eso es una **inyección de
+comandos**: si detrás de la IP añado `;` y otro comando, el servidor lo ejecuta también.
+
+Lo pruebo pidiendo que ejecute `id` después del `traceroute`:
+
+<Cmd
+  c="curl -s 'http://10.0.2.15/cgi-bin/tracertool.cgi?ip=127.0.0.1;id'"
+  notas={{
+    "http://10.0.2.15/cgi-bin/tracertool.cgi?ip=127.0.0.1;id": "El script mete el parámetro ip en la orden sin filtrarlo; el ';' cierra el traceroute y ejecuta el comando siguiente (id). La IP es la de la máquina."
+  }}
+/>
+
+```text
+uid=48(apache) gid=48(apache) groups=48(apache)
+```
+
+Ejecuta como el usuario **apache**: ya tengo ejecución de comandos en la máquina. Lo siguiente es ver qué
+usuarios hay, leyendo `/etc/passwd` por la misma vía.
+
+### El `cat` que no enseña el fichero
+
+Aquí me atasqué un rato. Al intentar leer ficheros con `cat` por la inyección, no salía nada: la máquina
+tiene un **alias** gracioso que hace que `cat` dibuje un gatito en ASCII en vez de mostrar el contenido. La
+solución es leer los ficheros con **otra** herramienta que no esté "trucada": `tac`, `less`, `more` o, como
+hago yo, `grep`. Para `/etc/passwd` me quedo solo con las líneas de los usuarios con shell:
+
+<Cmd
+  c="curl -s 'http://10.0.2.15/cgi-bin/tracertool.cgi?ip=127.0.0.1;grep bash /etc/passwd'"
+  notas={{
+    "http://10.0.2.15/cgi-bin/tracertool.cgi?ip=127.0.0.1;grep bash /etc/passwd": "Lee /etc/passwd con grep (en vez de cat, que está trucado) y filtra las cuentas con shell bash. La IP es la de la máquina."
+  }}
+/>
+
+```text
+RickSanchez:x:1000:1000:Rick Sanchez:/home/RickSanchez:/bin/bash
+Morty:x:1001:1001:Morty Smith:/home/Morty:/bin/bash
+Summer:x:1002:1002:Summer Smith:/home/Summer:/bin/bash
+```
+
+Tres usuarios: **RickSanchez**, **Morty** y **Summer**. Y antes encontré la contraseña `winter` en la web.
+
+### SSH como Summer
+
+El usuario de `apache` no puede leer los *homes* de los usuarios, así que necesito entrar como uno de ellos.
+Probando la contraseña `winter`, la que estaba en el comentario HTML, el que entra es **Summer** (ojo: por el
+SSH del puerto `22222`, no el `22`):
+
+<Cmd
+  c="ssh Summer@10.0.2.15 -p 22222"
+  notas={{
+    "Summer@10.0.2.15": "Usuario Summer en la IP de la máquina.",
+    "22222": "Puerto del SSH real; el 22 es un señuelo."
+  }}
+/>
+
+Ya dentro como Summer, en su *home* está su flag. Como `cat` sigue trucado, la leo con `less`.
+
+<Pista titulo="Flag · Usuario Summer (10 pts)">
+  Está en el `FLAG.txt` del *home* de Summer (`/home/Summer/`). Recuerda que `cat` no vale aquí: léela con
+  `less`, `tac` o `grep`.
+</Pista>
+
+## Escalada de privilegios
+
+Desde Summer voy saltando al resto de usuarios hasta llegar a Rick, que es quien puede ser root.
+
+### Morty: la contraseña dentro de una imagen
+
+En el *home* de Morty hay un ZIP protegido (`journal.txt.zip`) y una imagen, `Safe_Password.jpg`. El nombre
+lo dice todo: la contraseña está "dentro" de la imagen. Como `strings` no está instalado, uso `grep` con la
+opción `-a`, que trata el binario como si fuera texto, y busco la palabra "Password":
+
+<Cmd
+  c="grep -a Password /home/Morty/Safe_Password.jpg"
+  notas={{
+    "Password": "Patrón que se busca dentro de la imagen.",
+    "/home/Morty/Safe_Password.jpg": "La imagen del home de Morty; con -a, grep la lee como texto y saca las cadenas legibles."
+  }}
+/>
+
+```text
+Password: Meeseek
+```
+
+Con esa contraseña descomprimo el ZIP (`unzip` pregunta la contraseña y escribo `Meeseek`) y leo el
+`journal.txt` resultante, de nuevo con `less` para esquivar el `cat`:
+
+```text
+$ unzip journal.txt.zip
+Archive:  journal.txt.zip
+[journal.txt.zip] journal.txt password: 
+ extracting: journal.txt
+$ less journal.txt
+```
+
+<Pista titulo="Flag · Usuario Morty (20 pts)">
+  Aparece dentro del `journal.txt` que sale al descomprimir `journal.txt.zip` (contraseña `Meeseek`, sacada
+  de `Safe_Password.jpg`). También da la pista del número que abre la caja fuerte de Rick.
+</Pista>
+
+### Rick: la caja fuerte
+
+En el *home* de Rick hay una carpeta `RICKS_SAFE` con un binario llamado `safe`. Summer no tiene permisos
+para ejecutarlo ahí, así que lo copio a `/tmp`, le doy permisos de ejecución y lo lanzo pasándole como
+argumento el número que salía en el diario de Morty:
+
+```text
+$ cp /home/RickSanchez/RICKS_SAFE/safe /tmp/
+$ chmod +x /tmp/safe
+$ cd /tmp
+$ ./safe <número del diario de Morty>
+```
+
+El binario imprime otra flag y, además, una pista para la contraseña de Rick: una palabra del nombre de su
+antigua banda, **The Flesh Curtains**, con al menos una mayúscula y un número. De ahí sale su contraseña
+(`P7Curtains`).
+
+<Pista titulo="Flag · Caja fuerte de Rick (20 pts)">
+  La imprime el binario `safe` al ejecutarlo con el número correcto (el que da el diario de Morty). No hace
+  falta copiar aquí ni el número ni la flag: ejecuta tú el binario.
+</Pista>
+
+### Root
+
+Entro por SSH como **RickSanchez** con la contraseña que deduje (`P7Curtains`), otra vez por el puerto
+`22222`:
+
+<Cmd
+  c="ssh RickSanchez@10.0.2.15 -p 22222"
+  notas={{
+    "RickSanchez@10.0.2.15": "Usuario RickSanchez en la IP de la máquina.",
+    "22222": "Puerto del SSH real."
+  }}
+/>
+
+Rick tiene permisos de `sudo` para todo (`ALL`), así que convertirme en root es tan simple como pedirlo: con
+`sudo su` cambio al usuario root (me vuelve a pedir la contraseña de Rick). Ya como root, la última flag
+está en `/root/`, y la leo con `less`, no con `cat`.
+
+```text
+$ sudo -l
+    (ALL) ALL
+$ sudo su
+[sudo] password for RickSanchez:
+```
+
+<Pista titulo="Flag · Root (30 pts)">
+  Es el `FLAG.txt` del directorio de root (`/root/`), accesible una vez eres root con `sudo su`.
+</Pista>
+
+## Lecciones aprendidas
+
+- **Qué fallé:** perdí bastante tiempo intentando leer ficheros con `cat` desde la inyección de comandos y
+  desde las shells, y fallaba sin dar un error claro (por el alias que dibuja el gatito). Cuando un comando
+  falla "en silencio", hay que parar y pensar: ¿es un problema de permisos (apache no puede leer los *homes*
+  de los usuarios) o es que el comando está trucado? También probé a montar `/root` con el SUID de `mount`,
+  y no funcionó porque no estaba en `/etc/fstab`.
+- **Lo que enseña la máquina:** las credenciales estaban escondidas "a plena vista" —en un comentario del
+  HTML (`winter`), en el nombre y el contenido de una imagen (`Meeseek`)— y no en un diccionario. Antes de
+  lanzar fuerza bruta a ciegas con Hydra (que tardaba muchísimo), conviene revisar el código fuente de las
+  páginas y los ficheros que ya tienes. Y que el SSH "real" estaba en el `22222`, no en el `22`: siempre hay
+  que mirar todos los puertos, no fiarse del número "de siempre".
+- **Qué haré la próxima vez:** ante un comando que no da salida, comprobar antes de nada permisos y alias
+  (`type cat`, `alias`); y cuando un servicio ejecuta algo con un parámetro que yo controlo (como el `ip` de
+  `tracertool.cgi`), probar la inyección de comandos cuanto antes.
+
+> Ricardo: las tres frases de **Lecciones aprendidas** las he redactado yo a partir de tus notas
+> (el atasco con `cat`, el intento con el SUID de `mount`, lo de revisar el código fuente y lo del puerto
+> `22222`). Revísalas y dime si cambio algo.

@@ -70,6 +70,7 @@ const TECNICAS_EN: Traduccion = {
   'Credenciales por defecto': 'Default credentials',
   'Escaneo de puertos': 'Port scanning',
   'Fuerza bruta de directorios': 'Directory brute forcing',
+  'Inyección de comandos': 'Command injection',
   'Inyección SQL': 'SQL injection',
   FTP: 'FTP',
   MariaDB: 'MariaDB',
@@ -79,6 +80,7 @@ const TECNICAS_EN: Traduccion = {
   Redis: 'Redis',
   Rsync: 'Rsync',
   SMB: 'SMB',
+  SSH: 'SSH',
   Telnet: 'Telnet',
   // Solo la usa src/content/walkthroughs/plantilla.mdx, que es borrador.
   'Ejemplo de técnica': 'Example technique',
