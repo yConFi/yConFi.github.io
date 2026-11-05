@@ -15,7 +15,7 @@ const enlaces = navegacion(idioma, t.nav);
 const ruta = Astro.url.pathname;
 ---
 
-<header class="cabecera">
+<header class="cabecera" id="cabecera">
   <div class="contenedor">
     <a href={rutaDe('inicio', idioma)} class="logo" aria-label={t.general.irAlInicio}>
       <span class="prompt-logo" aria-hidden="true">~/</span>yconfi<span class="cursor" aria-hidden="true">_</span>
@@ -43,9 +43,25 @@ const ruta = Astro.url.pathname;
 </header>
 
 <style>
+  /* La barra acompaña al scroll. Al bajar se esconde para dejar sitio al texto;
+     al subir reaparece, así no hay que volver al principio de la página. */
   .cabecera {
+    position: sticky;
+    top: 0;
+    z-index: 50;
     border-bottom: 1px solid var(--borde);
     background: var(--bg);
+    transition: transform 0.25s ease;
+  }
+
+  .cabecera.oculta {
+    transform: translateY(-100%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cabecera {
+      transition: none;
+    }
   }
 
   .contenedor {
@@ -138,3 +154,40 @@ const ruta = Astro.url.pathname;
     }
   }
 </style>
+
+<script>
+  // Mide la cabecera y la publica como --altura-cabecera para que las anclas
+  // (#reconocimiento, el índice del walkthrough…) no queden tapadas por ella.
+  const cabecera = document.getElementById('cabecera');
+
+  if (cabecera) {
+    const raiz = document.documentElement;
+
+    const medir = () => {
+      raiz.style.setProperty('--altura-cabecera', `${cabecera.offsetHeight}px`);
+    };
+
+    medir();
+    if ('ResizeObserver' in window) new ResizeObserver(medir).observe(cabecera);
+
+    // Se oculta al bajar y vuelve al subir. Nunca mientras el foco está dentro
+    // (navegación con teclado) ni cerca del principio de la página.
+    let anterior = window.scrollY;
+
+    window.addEventListener(
+      'scroll',
+      () => {
+        const actual = window.scrollY;
+        const bajando = actual > anterior;
+        const margen = cabecera.offsetHeight * 2;
+
+        if (!cabecera.contains(document.activeElement)) {
+          cabecera.classList.toggle('oculta', bajando && actual > margen);
+        }
+
+        anterior = actual;
+      },
+      { passive: true },
+    );
+  }
+</script>
