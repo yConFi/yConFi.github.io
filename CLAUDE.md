@@ -73,6 +73,8 @@ esa traducción, `npm run build` falla al generar las páginas en inglés.
 - Inyección SQL
 - MySQL
 - MariaDB
+- Inyección de comandos
+- SSH
 
 ### Estructura
 
