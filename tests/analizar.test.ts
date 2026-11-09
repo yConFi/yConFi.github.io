@@ -177,7 +177,7 @@ describe('analizarComando: errores', () => {
     ['nmapp 10.10.10.10', 'herramienta-desconocida'],
     ['./nmapp 10.10.10.10', 'herramienta-desconocida'],
     ['nmap -Z 10.10.10.10', 'opcion-desconocida'],
-    ['nmap -sCV 10.10.10.10', 'opcion-desconocida'],
+    ['nmap -sZ 10.10.10.10', 'opcion-desconocida'],
     ['gobuster -u http://x', 'falta-subcomando'],
     ['gobuster', 'falta-subcomando'],
     ['gobuster fuzzz -u http://x', 'subcomando-desconocido'],

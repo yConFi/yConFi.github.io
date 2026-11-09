@@ -29,6 +29,7 @@ export type Categoria =
   | 'Enumeración web'
   | 'HTTP'
   | 'Conexiones'
+  | 'Contraseñas'
   | 'Privilegios'
   | 'Ficheros y búsqueda'
   | 'Información del sistema'

@@ -54,6 +54,7 @@ const CATEGORIAS_EN: Traduccion = {
   'Enumeración web': 'Web enumeration',
   HTTP: 'HTTP',
   Conexiones: 'Connections',
+  Contraseñas: 'Passwords',
   Privilegios: 'Privileges',
   'Ficheros y búsqueda': 'Files and search',
   'Información del sistema': 'System information',
@@ -67,11 +68,15 @@ const CATEGORIAS_EN: Traduccion = {
 const TECNICAS_EN: Traduccion = {
   'Acceso anónimo': 'Anonymous access',
   'Acceso sin contraseña': 'Passwordless access',
+  'Captura de hashes NTLM': 'NTLM hash capture',
   'Credenciales por defecto': 'Default credentials',
+  'Crackeo de hashes': 'Password cracking',
   'Escaneo de puertos': 'Port scanning',
   'Fuerza bruta de directorios': 'Directory brute forcing',
   'Inyección de comandos': 'Command injection',
   'Inyección SQL': 'SQL injection',
+  LFI: 'Local File Inclusion (LFI)',
+  RFI: 'Remote File Inclusion (RFI)',
   FTP: 'FTP',
   MariaDB: 'MariaDB',
   MongoDB: 'MongoDB',
@@ -82,6 +87,7 @@ const TECNICAS_EN: Traduccion = {
   SMB: 'SMB',
   SSH: 'SSH',
   Telnet: 'Telnet',
+  WinRM: 'WinRM',
   // Solo la usa src/content/walkthroughs/plantilla.mdx, que es borrador.
   'Ejemplo de técnica': 'Example technique',
 };

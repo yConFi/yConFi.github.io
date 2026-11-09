@@ -55,6 +55,13 @@ const nmap: Herramienta = {
         en: 'Probes open ports to work out which service and which version is behind them.',
       },
     },
+    {
+      nombres: ['-sCV', '-sVC'],
+      descripcion: {
+        es: 'Combina en un solo token la detección de versiones (-sV) y los scripts NSE por defecto (-sC). nmap lee cada letra que sigue a "-s", así que el orden da igual.',
+        en: 'Bundles version detection (-sV) and the default NSE scripts (-sC) into a single token. nmap reads each letter after "-s", so the order does not matter.',
+      },
+    },
     { nombres: ['-O'], descripcion: { es: 'Intenta detectar el sistema operativo del objetivo.', en: 'Tries to detect the target\'s operating system.' } },
     {
       nombres: ['-A'],
@@ -2085,6 +2092,149 @@ const rsync: Herramienta = {
   ],
 };
 
+// ============================================================
+// responder — https://github.com/lgandx/Responder/blob/master/README.md
+// ============================================================
+const responder: Herramienta = {
+  nombre: 'responder',
+  descripcion: {
+    es: 'Envenenador (poisoner) de LLMNR, NBT-NS y MDNS con servidores de autenticación falsos (SMB, HTTP, SQL…): responde a las peticiones de resolución de nombres de la red haciéndose pasar por el servidor buscado para capturar las credenciales que el cliente le envía.',
+    en: 'LLMNR, NBT-NS and MDNS poisoner with rogue authentication servers (SMB, HTTP, SQL…): it answers the network name-resolution requests, posing as the server being looked up, to capture the credentials the client then sends.',
+  },
+  categoria: 'Conexiones',
+  docs: 'https://github.com/lgandx/Responder/blob/master/README.md',
+  docsVariantes: [{ nombre: 'Kali', url: 'https://www.kali.org/tools/responder/' }],
+  variantes: {
+    es: 'En Kali se instala como "responder" (paquete responder, versión 3.2.2.0) y también puede ejecutarse con "python3 Responder.py". Necesita privilegios de root.',
+    en: 'On Kali it installs as "responder" (package responder, version 3.2.2.0) and can also be run with "python3 Responder.py". It needs root privileges.',
+  },
+  estilo: 'posix',
+  combinables: false,
+  argumentos: null,
+  opciones: [
+    {
+      nombres: ['-I', '--interface'],
+      descripcion: {
+        es: 'Interfaz de red en la que escucha. Es obligatoria; con "ALL" usa todas las interfaces.',
+        en: 'Network interface to use. It is required; with "ALL" it uses every interface.',
+      },
+      valor: { nombre: { es: 'interfaz', en: 'interface' }, descripcion: { es: 'Nombre de la interfaz, p. ej. tun0 o eth0.', en: 'Interface name, e.g. tun0 or eth0.' } },
+    },
+  ],
+};
+
+// ============================================================
+// john (John the Ripper) — https://www.openwall.com/john/doc/OPTIONS.shtml
+// ============================================================
+const john: Herramienta = {
+  nombre: 'john',
+  descripcion: {
+    es: 'John the Ripper: herramienta de código abierto de auditoría y recuperación de contraseñas. Prueba contraseñas candidatas contra los hashes de un fichero hasta encontrar las que coinciden.',
+    en: 'John the Ripper: an Open Source password security auditing and password recovery tool. It tries candidate passwords against the hashes in a file until it finds the ones that match.',
+  },
+  categoria: 'Contraseñas',
+  docs: 'https://www.openwall.com/john/doc/OPTIONS.shtml',
+  variantes: {
+    es: 'Las opciones admiten guion simple o doble y el valor va pegado con "=" o ":" (p. ej. -w=lista o --wordlist=lista). Los nombres se pueden abreviar si no hay ambigüedad, y distinguen mayúsculas y minúsculas.',
+    en: 'Options take a single or a double dash and the value is attached with "=" or ":" (e.g. -w=list or --wordlist=list). Names may be abbreviated when unambiguous, and are case sensitive.',
+  },
+  estilo: 'go',
+  argumentos: {
+    es: 'Uno o varios ficheros con los hashes que se quieren crackear.',
+    en: 'One or more files holding the hashes to crack.',
+  },
+  opciones: [
+    {
+      nombres: ['--wordlist', '-w'],
+      descripcion: {
+        es: 'Modo diccionario: lee las contraseñas candidatas del fichero indicado.',
+        en: 'Wordlist mode: reads the candidate passwords from the given file.',
+      },
+      valor: { nombre: { es: 'fichero', en: 'file' }, descripcion: { es: 'Diccionario de contraseñas, p. ej. rockyou.txt.', en: 'Password wordlist, e.g. rockyou.txt.' } },
+    },
+    {
+      nombres: ['--rules'],
+      descripcion: {
+        es: 'Activa las reglas de transformación de palabras (word mangling) del modo diccionario.',
+        en: 'Enables the word mangling rules for wordlist mode.',
+      },
+    },
+    {
+      nombres: ['--format'],
+      descripcion: {
+        es: 'Fuerza el tipo de hash en lugar de dejar que John lo detecte.',
+        en: 'Forces the hash type instead of letting John detect it.',
+      },
+      valor: { nombre: { es: 'nombre', en: 'name' }, descripcion: { es: 'Nombre del formato, p. ej. netntlmv2.', en: 'Format name, e.g. netntlmv2.' } },
+    },
+  ],
+};
+
+// ============================================================
+// evil-winrm — https://github.com/Hackplayers/evil-winrm/blob/master/README.md
+// ============================================================
+const evilWinrm: Herramienta = {
+  nombre: 'evil-winrm',
+  descripcion: {
+    es: 'Shell de WinRM (Windows Remote Management) para pentesting: abre una consola de PowerShell en un equipo Windows remoto a partir de credenciales válidas. WinRM es la implementación de Microsoft del protocolo WS-Management.',
+    en: 'WinRM (Windows Remote Management) shell for pentesting: it opens a PowerShell console on a remote Windows machine from valid credentials. WinRM is Microsoft\'s implementation of the WS-Management protocol.',
+  },
+  categoria: 'Conexiones',
+  docs: 'https://github.com/Hackplayers/evil-winrm/blob/master/README.md',
+  estilo: 'posix',
+  combinables: false,
+  argumentos: null,
+  opciones: [
+    {
+      nombres: ['-i', '--ip'],
+      descripcion: {
+        es: 'IP o nombre del host remoto (FQDN si se usa Kerberos). Es obligatoria.',
+        en: 'Remote host IP or hostname (FQDN for Kerberos auth). Required.',
+      },
+      valor: { nombre: { es: 'ip', en: 'ip' }, descripcion: { es: 'Dirección IP o nombre del equipo objetivo.', en: 'IP address or name of the target machine.' } },
+    },
+    {
+      nombres: ['-u', '--user'],
+      descripcion: {
+        es: 'Usuario con el que se autentica (obligatorio si no se usa Kerberos).',
+        en: 'Username (required if not using kerberos).',
+      },
+      valor: { nombre: { es: 'usuario', en: 'user' }, descripcion: { es: 'Nombre de usuario.', en: 'User name.' } },
+    },
+    {
+      nombres: ['-p', '--password'],
+      descripcion: {
+        es: 'Contraseña del usuario. Si no se indica, se pide por consola sin mostrarla.',
+        en: 'Password. If it is left out, it is asked for on the console without echoing it.',
+      },
+      valor: { nombre: { es: 'contraseña', en: 'password' }, descripcion: { es: 'Contraseña en texto claro.', en: 'Clear text password.' } },
+    },
+    {
+      nombres: ['-H', '--hash'],
+      descripcion: {
+        es: 'NThash para autenticarse por pass-the-hash en lugar de con contraseña.',
+        en: 'NTHash, to authenticate by pass-the-hash instead of with a password.',
+      },
+      valor: { nombre: { es: 'hash', en: 'hash' }, descripcion: { es: 'NThash del usuario.', en: 'User NTHash.' } },
+    },
+    {
+      nombres: ['-S', '--ssl'],
+      descripcion: {
+        es: 'Activa el cifrado SSL/TLS de la conexión.',
+        en: 'Enables SSL for the connection.',
+      },
+    },
+    {
+      nombres: ['-P', '--port'],
+      descripcion: {
+        es: 'Puerto del host remoto (por defecto, 5985).',
+        en: 'Remote host port (default 5985).',
+      },
+      valor: { nombre: { es: 'puerto', en: 'port' }, descripcion: { es: 'Número de puerto de WinRM.', en: 'WinRM port number.' } },
+    },
+  ],
+};
+
 export const HERRAMIENTAS: Herramienta[] = [
   nmap,
   gobuster,
@@ -2102,6 +2252,8 @@ export const HERRAMIENTAS: Herramienta[] = [
   mongosh,
   mysql,
   ssh,
+  responder,
+  evilWinrm,
   sudo,
   find,
   grep,
@@ -2111,6 +2263,7 @@ export const HERRAMIENTAS: Herramienta[] = [
   cd,
   id,
   whoami,
+  john,
   python3,
 ];
 

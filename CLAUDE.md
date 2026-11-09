@@ -75,6 +75,11 @@ esa traducción, `npm run build` falla al generar las páginas en inglés.
 - MariaDB
 - Inyección de comandos
 - SSH
+- LFI
+- RFI
+- Captura de hashes NTLM
+- Crackeo de hashes
+- WinRM
 
 ### Estructura
 
