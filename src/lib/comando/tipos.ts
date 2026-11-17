@@ -33,7 +33,8 @@ export type Categoria =
   | 'Privilegios'
   | 'Ficheros y búsqueda'
   | 'Información del sistema'
-  | 'Intérpretes';
+  | 'Intérpretes'
+  | 'Nube';
 
 export interface ValorOpcion {
   /** Nombre corto del valor, p. ej. "puertos" o "fichero". */

