@@ -59,6 +59,7 @@ const CATEGORIAS_EN: Traduccion = {
   'Ficheros y búsqueda': 'Files and search',
   'Información del sistema': 'System information',
   'Intérpretes': 'Interpreters',
+  Nube: 'Cloud',
 };
 
 /**
@@ -67,6 +68,8 @@ const CATEGORIAS_EN: Traduccion = {
  */
 const TECNICAS_EN: Traduccion = {
   'Acceso anónimo': 'Anonymous access',
+  'Amazon S3': 'Amazon S3',
+  'Enumeración de subdominios': 'Subdomain enumeration',
   'Acceso sin contraseña': 'Passwordless access',
   'Captura de hashes NTLM': 'NTLM hash capture',
   'Credenciales por defecto': 'Default credentials',

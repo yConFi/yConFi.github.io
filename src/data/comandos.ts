@@ -1465,6 +1465,178 @@ const cat: Herramienta = {
   ],
 };
 
+// ============================================================
+// echo — https://man7.org/linux/man-pages/man1/echo.1.html
+// ============================================================
+const echo: Herramienta = {
+  nombre: 'echo',
+  descripcion: {
+    es: 'Escribe los textos que recibe en la salida estándar, seguidos de un salto de línea.',
+    en: 'Writes the strings it is given to standard output, followed by a newline.',
+  },
+  categoria: 'Ficheros y búsqueda',
+  docs: 'https://man7.org/linux/man-pages/man1/echo.1.html',
+  variantes: {
+    es: 'Bash tiene su propio echo integrado, que es el que se ejecuta normalmente en lugar del de GNU coreutils. Las dos versiones admiten -n, -e y -E.',
+    en: 'Bash has its own built-in echo, which normally runs instead of the GNU coreutils one. Both versions accept -n, -e and -E.',
+  },
+  docsVariantes: [
+    { nombre: 'echo (GNU coreutils)', url: 'https://man7.org/linux/man-pages/man1/echo.1.html' },
+    { nombre: 'echo (Bash)', url: 'https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html' },
+  ],
+  estilo: 'posix',
+  combinables: true,
+  argumentos: {
+    es: 'Texto que se escribe.',
+    en: 'Text that gets written.',
+  },
+  opciones: [
+    { nombres: ['-n'], descripcion: { es: 'No escribe el salto de línea final.', en: 'Does not output the trailing newline.' } },
+    { nombres: ['-e'], descripcion: { es: 'Interpreta las secuencias de escape con barra invertida, como \\n o \\t.', en: 'Enables interpretation of backslash escapes, such as \\n or \\t.' } },
+    { nombres: ['-E'], descripcion: { es: 'No interpreta las secuencias de escape (es lo que hace por defecto).', en: 'Disables interpretation of backslash escapes (the default).' } },
+  ],
+};
+
+// ============================================================
+// tee (GNU coreutils) — https://man7.org/linux/man-pages/man1/tee.1.html
+// ============================================================
+const tee: Herramienta = {
+  nombre: 'tee',
+  descripcion: {
+    es: 'Lee la entrada estándar y la copia a la vez en la salida estándar y en los ficheros indicados.',
+    en: 'Reads standard input and copies it both to standard output and to the given files.',
+  },
+  categoria: 'Ficheros y búsqueda',
+  docs: 'https://man7.org/linux/man-pages/man1/tee.1.html',
+  estilo: 'posix',
+  combinables: true,
+  argumentos: {
+    es: 'Fichero en el que se escribe la copia. Si existe, se sobrescribe, salvo con -a.',
+    en: 'File the copy is written to. If it exists, it is overwritten, unless -a is given.',
+  },
+  opciones: [
+    {
+      nombres: ['-a', '--append'],
+      descripcion: {
+        es: 'Añade al final de los ficheros en lugar de sobrescribirlos.',
+        en: 'Appends to the given files instead of overwriting them.',
+      },
+    },
+    { nombres: ['-i', '--ignore-interrupts'], descripcion: { es: 'Ignora las señales de interrupción.', en: 'Ignores interrupt signals.' } },
+  ],
+};
+
+// ============================================================
+// sed (GNU) — https://www.gnu.org/software/sed/manual/sed.html
+// ============================================================
+const sed: Herramienta = {
+  nombre: 'sed',
+  descripcion: {
+    es: 'Editor de flujo: lee texto línea a línea, le aplica un script de órdenes y escribe el resultado.',
+    en: 'Stream editor: reads text line by line, applies a script of commands to it and writes the result.',
+  },
+  categoria: 'Ficheros y búsqueda',
+  docs: 'https://www.gnu.org/software/sed/manual/sed.html',
+  variantes: {
+    es: 'Explicaciones según el sed de GNU (el habitual en Linux). El sed de BSD/macOS difiere en algunas opciones, como -i, que allí exige un sufijo.',
+    en: 'Explanations follow GNU sed (the usual one on Linux). BSD/macOS sed differs in some options, such as -i, which there requires a suffix.',
+  },
+  estilo: 'posix',
+  combinables: true,
+  argumentos: {
+    es: 'Script de sed (p. ej. \'s/viejo/nuevo/\') y, después, los ficheros sobre los que se aplica. Sin ficheros, lee la entrada estándar.',
+    en: "sed script (e.g. 's/old/new/') and then the files it is applied to. With no files, it reads standard input.",
+  },
+  opciones: [
+    {
+      nombres: ['-i', '--in-place'],
+      descripcion: {
+        es: 'Edita los ficheros sobre la marcha en lugar de escribir en la salida estándar. Admite un sufijo opcional pegado (-i.bak) para guardar una copia del original.',
+        en: 'Edits the files in place instead of writing to standard output. It takes an optional attached suffix (-i.bak) to keep a backup of the original.',
+      },
+    },
+    {
+      nombres: ['-e', '--expression'],
+      descripcion: {
+        es: 'Añade un script a las órdenes que se ejecutan. Permite encadenar varios.',
+        en: 'Adds a script to the commands that get run. It lets you chain several.',
+      },
+      valor: { nombre: { es: 'script', en: 'script' }, descripcion: { es: 'Órdenes de sed.', en: 'sed commands.' } },
+    },
+    {
+      nombres: ['-f', '--file'],
+      descripcion: {
+        es: 'Lee el script desde un fichero.',
+        en: 'Reads the script from a file.',
+      },
+      valor: { nombre: { es: 'fichero', en: 'file' }, descripcion: { es: 'Fichero con el script.', en: 'File with the script.' } },
+    },
+    { nombres: ['-n', '--quiet', '--silent'], descripcion: { es: 'No imprime cada línea automáticamente; solo lo que el script indique (p. ej. con la orden p).', en: 'Does not print each line automatically; only what the script asks for (e.g. with the p command).' } },
+    { nombres: ['-E', '-r', '--regexp-extended'], descripcion: { es: 'Usa expresiones regulares extendidas en el script.', en: 'Uses extended regular expressions in the script.' } },
+    { nombres: ['-s', '--separate'], descripcion: { es: 'Trata los ficheros como flujos separados en lugar de como uno solo.', en: 'Treats the files as separate streams instead of as a single one.' } },
+    { nombres: ['-z', '--null-data'], descripcion: { es: 'Separa las líneas por el carácter NUL en lugar de por saltos de línea.', en: 'Separates lines by the NUL character instead of by newlines.' } },
+  ],
+};
+
+// ============================================================
+// aws (AWS CLI v2) — https://docs.aws.amazon.com/cli/latest/reference/
+// ============================================================
+const AWS_S3_OPCIONES: Opcion[] = [
+  { nombres: ['--recursive'], descripcion: { es: 'Aplica la orden a todos los objetos bajo el prefijo o el directorio indicado.', en: 'Applies the command to every object under the given prefix or directory.' } },
+  { nombres: ['--dryrun'], descripcion: { es: 'Muestra las operaciones que se harían, sin ejecutarlas.', en: 'Shows the operations that would be run, without running them.' } },
+];
+
+const aws: Herramienta = {
+  nombre: 'aws',
+  descripcion: {
+    es: 'Interfaz de línea de comandos de Amazon Web Services: una sola herramienta para gestionar los servicios de AWS.',
+    en: 'The Amazon Web Services command-line interface: a single tool to manage AWS services.',
+  },
+  categoria: 'Nube',
+  docs: 'https://docs.aws.amazon.com/cli/latest/reference/',
+  estilo: 'posix',
+  argumentos: {
+    es: 'Acción del servicio (p. ej. "ls" o "cp") y sus argumentos: rutas locales y URI de S3 (s3://bucket/clave).',
+    en: 'Service action (e.g. "ls" or "cp") and its arguments: local paths and S3 URIs (s3://bucket/key).',
+  },
+  opciones: [
+    {
+      nombres: ['--endpoint-url'],
+      descripcion: {
+        es: 'Sustituye la URL por defecto del servicio por la indicada. Sirve para apuntar a un servicio compatible con S3, como el de esta máquina.',
+        en: "Overrides the command's default URL with the given one. It is used to point at an S3-compatible service, like this machine's.",
+      },
+      valor: { nombre: { es: 'URL', en: 'URL' }, descripcion: { es: 'URL del servicio, p. ej. http://s3.thetoppers.htb.', en: 'Service URL, e.g. http://s3.thetoppers.htb.' } },
+    },
+    {
+      nombres: ['--profile'],
+      descripcion: {
+        es: 'Usa un perfil de credenciales concreto del fichero de configuración.',
+        en: 'Uses a specific credentials profile from the configuration file.',
+      },
+      valor: { nombre: { es: 'perfil', en: 'profile' }, descripcion: { es: 'Nombre del perfil.', en: 'Profile name.' } },
+    },
+  ],
+  subcomandos: [
+    {
+      nombre: 's3',
+      descripcion: {
+        es: 'Gestiona el almacenamiento de objetos Amazon S3: listar, copiar, mover o borrar objetos y buckets.',
+        en: 'Manages Amazon S3 object storage: listing, copying, moving or deleting objects and buckets.',
+      },
+      opciones: AWS_S3_OPCIONES,
+    },
+    {
+      nombre: 'configure',
+      descripcion: {
+        es: 'Configura la AWS CLI. Sin más argumentos, pide los valores (clave de acceso, clave secreta, región y formato de salida).',
+        en: 'Configures the AWS CLI. With no further arguments, it prompts for the values (access key, secret key, region and output format).',
+      },
+      opciones: [],
+    },
+  ],
+};
+
 const id: Herramienta = {
   nombre: 'id',
   descripcion: {
@@ -2259,6 +2431,10 @@ export const HERRAMIENTAS: Herramienta[] = [
   grep,
   ls,
   cat,
+  echo,
+  tee,
+  sed,
+  aws,
   tar,
   cd,
   id,
