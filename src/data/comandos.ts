@@ -2166,6 +2166,109 @@ const mysql: Herramienta = {
 };
 
 // ============================================================
+// psql (PostgreSQL) — https://www.postgresql.org/docs/current/app-psql.html
+// ============================================================
+const psql: Herramienta = {
+  nombre: 'psql',
+  descripcion: {
+    es: 'Terminal interactivo de PostgreSQL: se conecta a un servidor y permite escribir consultas SQL y metacomandos que empiezan por "\\", como \\l (listar bases de datos).',
+    en: 'PostgreSQL interactive terminal: it connects to a server and lets you type SQL queries and meta-commands that start with "\\", such as \\l (list databases).',
+  },
+  categoria: 'Conexiones',
+  docs: 'https://www.postgresql.org/docs/current/app-psql.html',
+  variantes: {
+    es: 'Explicaciones según la página man de psql de PostgreSQL 16 (Ubuntu 24.04), consultada el 23/11/2026.',
+    en: 'Explanations follow the psql man page of PostgreSQL 16 (Ubuntu 24.04), checked on 23/11/2026.',
+  },
+  estilo: 'posix',
+  combinables: false,
+  argumentos: {
+    es: 'Opcionalmente, la base de datos y, detrás, el usuario. Si no se indica la base de datos, se usa una con el mismo nombre que el usuario.',
+    en: 'Optionally, the database name and, after it, the user name. If no database is given, one with the same name as the user is used.',
+  },
+  opciones: [
+    {
+      nombres: ['-h', '--host'],
+      descripcion: {
+        es: 'Equipo en el que corre el servidor. Si se omite, se conecta por un socket Unix local.',
+        en: 'Host name of the machine the server runs on. If it is left out, it connects through a local Unix-domain socket.',
+      },
+      valor: { nombre: { es: 'host', en: 'host' }, descripcion: { es: 'Nombre o dirección del servidor.', en: 'Name or address of the server.' } },
+    },
+    {
+      nombres: ['-p', '--port'],
+      descripcion: {
+        es: 'Puerto TCP en el que escucha el servidor. Por defecto, el de la variable PGPORT o el fijado al compilar, normalmente el 5432.',
+        en: 'TCP port the server is listening on. Defaults to the PGPORT environment variable or, if not set, the port set at compile time, usually 5432.',
+      },
+      valor: { nombre: { es: 'puerto', en: 'port' }, descripcion: { es: 'Número de puerto.', en: 'Port number.' } },
+    },
+    {
+      nombres: ['-U', '--username'],
+      descripcion: {
+        es: 'Usuario de la base de datos con el que se conecta, en lugar del usuario del sistema.',
+        en: 'Database user to connect as, instead of the default (the operating system user name).',
+      },
+      valor: { nombre: { es: 'usuario', en: 'user' }, descripcion: { es: 'Nombre del usuario de PostgreSQL.', en: 'Name of the PostgreSQL user.' } },
+    },
+    {
+      nombres: ['-l', '--list'],
+      descripcion: {
+        es: 'Lista las bases de datos disponibles y sale. Es parecido al metacomando \\list.',
+        en: 'Lists all available databases, then exits. Similar to the meta-command \\list.',
+      },
+    },
+    {
+      nombres: ['-W', '--password'],
+      descripcion: {
+        es: 'Pide la contraseña antes de conectarse, aunque no se vaya a usar.',
+        en: 'Forces psql to prompt for a password before connecting, even if the password will not be used.',
+      },
+    },
+  ],
+};
+
+// ============================================================
+// ss (iproute2) — https://man7.org/linux/man-pages/man8/ss.8.html
+// ============================================================
+const ss: Herramienta = {
+  nombre: 'ss',
+  descripcion: {
+    es: 'Muestra estadísticas de los sockets del sistema, como netstat: conexiones y puertos en escucha. Sin opciones, lista las conexiones establecidas.',
+    en: 'Dumps socket statistics, like netstat: connections and listening ports. With no options, it lists the open non-listening sockets that have an established connection.',
+  },
+  categoria: 'Información del sistema',
+  docs: 'https://man7.org/linux/man-pages/man8/ss.8.html',
+  variantes: {
+    es: 'Explicaciones según la página man de ss de iproute2 6.1 (Ubuntu 24.04), consultada el 23/11/2026.',
+    en: 'Explanations follow the ss man page of iproute2 6.1 (Ubuntu 24.04), checked on 23/11/2026.',
+  },
+  estilo: 'posix',
+  combinables: true,
+  argumentos: {
+    es: 'Opcionalmente, un filtro por estado, dirección o puerto.',
+    en: 'Optionally, a filter by state, address or port.',
+  },
+  opciones: [
+    { nombres: ['-t', '--tcp'], descripcion: { es: 'Muestra los sockets TCP.', en: 'Displays TCP sockets.' } },
+    { nombres: ['-u', '--udp'], descripcion: { es: 'Muestra los sockets UDP.', en: 'Displays UDP sockets.' } },
+    {
+      nombres: ['-l', '--listening'],
+      descripcion: { es: 'Muestra solo los sockets en escucha (por defecto no aparecen).', en: 'Displays only listening sockets (these are omitted by default).' },
+    },
+    {
+      nombres: ['-a', '--all'],
+      descripcion: { es: 'Muestra los sockets en escucha y los que no lo están (en TCP, las conexiones establecidas).', en: 'Displays both listening and non-listening sockets (for TCP, established connections).' },
+    },
+    {
+      nombres: ['-n', '--numeric'],
+      descripcion: { es: 'No traduce los puertos a nombres de servicio: muestra 5432 en lugar de postgresql.', en: 'Does not try to resolve service names: shows 5432 instead of postgresql.' },
+    },
+    { nombres: ['-p', '--processes'], descripcion: { es: 'Muestra el proceso que usa cada socket.', en: 'Shows the process using the socket.' } },
+  ],
+};
+
+// ============================================================
 // tar (GNU tar) — https://www.gnu.org/software/tar/manual/
 // ============================================================
 const tar: Herramienta = {
@@ -2423,6 +2526,8 @@ export const HERRAMIENTAS: Herramienta[] = [
   redisCli,
   mongosh,
   mysql,
+  psql,
+  ss,
   ssh,
   responder,
   evilWinrm,

