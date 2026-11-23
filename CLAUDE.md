@@ -80,6 +80,10 @@ esa traducción, `npm run build` falla al generar las páginas en inglés.
 - Captura de hashes NTLM
 - Crackeo de hashes
 - WinRM
+- Enumeración de subdominios
+- Amazon S3
+- PostgreSQL
+- Reenvío de puertos
 
 ### Estructura
 
