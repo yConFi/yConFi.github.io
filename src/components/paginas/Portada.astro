@@ -3,7 +3,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Avatar from '../Avatar.astro';
 import TarjetaWalkthrough from '../TarjetaWalkthrough.astro';
 import TarjetaProyecto from '../TarjetaProyecto.astro';
-import BotonUtil from '../BotonUtil.astro';
 import { ENLACES } from '../../data/site';
 import { rellenar, ruta, textos, type Idioma } from '../../i18n';
 import { obtenerProyectos, obtenerWalkthroughs } from '../../lib/coleccion';
@@ -136,7 +135,7 @@ const contadores = [
     )
   }
 
-  <section class="banda" aria-labelledby="titulo-sobre-mi">
+  <section class="banda banda-final" aria-labelledby="titulo-sobre-mi">
     <div class="contenido sobre-mi">
       <div class="lectura">
         <h2 id="titulo-sobre-mi">{t.portada.sobreMi}</h2>
@@ -152,12 +151,6 @@ const contadores = [
           <li><a href={ruta('logros', idioma)}>{t.portada.logrosYPlataformas}</a></li>
         </ul>
       </aside>
-    </div>
-  </section>
-
-  <section class="banda banda-final" aria-labelledby="titulo-util">
-    <div class="contenido">
-      <BotonUtil idioma={idioma} />
     </div>
   </section>
 </BaseLayout>

@@ -1,5 +1,5 @@
 /**
- * Contador de "me ha servido" de la portada de yconfi.github.io.
+ * Contador de "me ha servido" de yconfi.github.io (botón de la barra de arriba).
  *
  * Es un Worker de Cloudflare con un Durable Object. Se eligió Durable Object y
  * no Workers KV porque la documentación de KV dice literalmente que no sirve

@@ -1,6 +1,6 @@
 # Contador de «me ha servido»
 
-Worker de Cloudflare que guarda **un número entero**: cuánta gente ha pulsado el botón de la portada.
+Worker de Cloudflare que guarda **un número entero**: cuánta gente ha pulsado el botón «me ha servido» de la barra de arriba de la web.
 Se despliega aparte de la web; `yconfi.github.io` sigue siendo estática en GitHub Pages y solo llama a
 este endpoint desde el navegador.
 
