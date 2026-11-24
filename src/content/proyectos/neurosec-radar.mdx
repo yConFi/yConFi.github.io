@@ -10,9 +10,8 @@ tecnologias:
   - TypeScript
   - GitHub Actions
   - Vercel
-estado: En producción
+estado: Terminado
 repositorio: https://github.com/yConFi/neurosec-radar
-demo: https://neurosec-radar.vercel.app
 borrador: false
 ---
 
@@ -22,8 +21,8 @@ Reúne en un solo sitio las novedades de **ciberseguridad**, de **inteligencia a
 pasa entre las dos: prompt injection, seguridad de modelos de lenguaje, IA ofensiva y defensiva…
 Cada noticia llega resumida en español, con su importancia del 1 al 10 y el enlace a la fuente original.
 
-Lo hice para estar al día sin tener que visitar decenas de webs cada día. Tiene una
-[demo pública](https://neurosec-radar.vercel.app) de solo lectura que cualquiera puede ver sin cuenta.
+Lo hice para estar al día sin tener que visitar decenas de webs cada día. Lo dejé de mantener porque ya
+no lo usaba, y la demo pública que tenía ya no está disponible. El código sigue en el repositorio.
 
 ![Portada de NeuroSec Radar: aviso fijo de noticias trascendentales con la etiqueta «Acción requerida»](../../assets/proyectos/neurosec-radar/home.png)
 
@@ -49,8 +48,8 @@ Lo hice para estar al día sin tener que visitar decenas de webs cada día. Tien
 
 ![Resumen semanal con la visión general y las noticias más importantes](../../assets/proyectos/neurosec-radar/weekly.png)
 
-Las notas, los favoritos, lo leído y el chat con mi propia clave son solo para mí. En la demo, quien quiera
-usar el chat pone **su propia API key de Anthropic**, así que su uso no me cuesta nada.
+Las notas, los favoritos, lo leído y el chat con mi propia clave son solo para mí. En la demo, quien quería
+usar el chat ponía **su propia API key de Anthropic**, así que su uso no me costaba nada.
 
 ## Decisiones de las que he aprendido
 
@@ -67,7 +66,7 @@ usar el chat pone **su propia API key de Anthropic**, así que su uso no me cues
 
 ## Seguridad
 
-Es un repositorio público y una web pública que procesa contenido no fiable (de hecho, recoge noticias
+Está pensado como repositorio público y web pública, y procesa contenido no fiable (de hecho, recoge noticias
 *sobre* prompt injection), así que la seguridad es parte del diseño:
 
 - **Base de datos.** Todas las tablas tienen Row Level Security. Los visitantes de la demo solo pueden
