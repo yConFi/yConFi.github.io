@@ -14,7 +14,7 @@ export const ENLACES = {
 } as const;
 
 /**
- * Contador de "me ha servido" de la portada. El endpoint es el Worker de
+ * Contador de "me ha servido" de la barra de arriba (en todas las páginas). El endpoint es el Worker de
  * Cloudflare de `worker/` (ver su README para desplegarlo).
  *
  * Mientras `endpoint` esté vacío el botón NO se muestra. Es a propósito: más

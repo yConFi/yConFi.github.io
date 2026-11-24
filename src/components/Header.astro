@@ -1,6 +1,7 @@
 ---
 import ThemeToggle from './ThemeToggle.astro';
 import SelectorIdioma from './SelectorIdioma.astro';
+import BotonUtil from './BotonUtil.astro';
 import { esSeccionActiva, navegacion, ruta as rutaDe, textos, type Idioma } from '../i18n';
 
 interface Props {
@@ -36,6 +37,7 @@ const ruta = Astro.url.pathname;
     </nav>
 
     <div class="controles">
+      <BotonUtil idioma={idioma} />
       <SelectorIdioma idioma={idioma} alternativas={alternativas} />
       <ThemeToggle idioma={idioma} />
     </div>
