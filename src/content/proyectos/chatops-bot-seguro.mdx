@@ -1,0 +1,93 @@
+---
+titulo: "Bot ChatOps seguro"
+resumen: "Bot ChatOps en Bash que recibe órdenes por un canal HTTP compartido y solo ejecuta las de una lista blanca, con firma HMAC, anti-repetición, límite de frecuencia y auditoría. Trabajo en grupo del Máster de Ciberseguridad & IA."
+tecnologias:
+  - Bash
+  - jq
+  - OpenSSL
+  - curl
+  - Python
+estado: Terminado
+fecha: 2026-11-24
+repositorio: https://github.com/yConFi/chatops-bot-seguro
+borrador: false
+---
+
+## Qué hace
+
+Es un bot que recibe órdenes por un canal HTTP que comparten todos los grupos de la clase y que
+**solo ejecuta cuatro acciones** de una lista blanca: `ping`, `estado`, `puertos` y `ayuda`. Cualquier
+otra cosa se rechaza **sin ejecutar nada**, por ejemplo `ping '8.8.8.8; id'` o `ping '$(whoami)'`.
+
+Lo hicimos en grupo para el Máster de Ciberseguridad & IA. Además de lo básico, implementamos cuatro
+ampliaciones: **firma HMAC, anti-repetición, límite de frecuencia y auditoría**.
+
+Son dos scripts:
+
+- `bot.sh`, el bot: consulta el canal cada 2 segundos, valida cada orden y ejecuta solo las permitidas.
+- `orden.sh`, el cliente: envía una orden firmada y espera la respuesta.
+
+## Cómo funciona
+
+Todo JSON que llega se trata como hostil. Cada mensaje pasa por una cadena de controles y el primero que
+falla decide:
+
+1. Tamaño máximo de 4 KB.
+2. ¿Es una orden? Las respuestas de los bots y los mensajes de otros canales se ignoran.
+3. `id_orden` válido, solo las claves permitidas y con los tipos correctos.
+4. Firma HMAC correcta.
+5. Fecha (`ts`) a menos de 60 segundos del reloj del bot e `id_orden` no visto antes.
+6. Como mucho 5 órdenes por minuto del mismo remitente.
+7. Acción de la lista blanca con argumentos válidos.
+
+Solo entonces se ejecuta, con un tiempo máximo de 10 segundos. La respuesta vuelve al mismo canal,
+también firmada.
+
+## Seguridad
+
+- **Nunca se ejecuta texto recibido.** El bot no usa `eval`, `bash -c` ni `source`: elige la acción con
+  un `case` entre cuatro palabras fijas. El objetivo de `ping` solo viaja como dato: primero se valida con
+  una expresión regular (IPv4 sin ceros a la izquierda o un nombre de host, y nada que empiece por `-`)
+  y después se pasa entre comillas y detrás de `--`.
+- **Firma HMAC-SHA256.** Los tokens del canal se vieron en clase, así que cualquiera podía publicar en el
+  nuestro. La firma demuestra que quien envía conoce la clave. Se calcula sobre el JSON en forma
+  canónica (`jq -cS`), porque el servidor añade campos y puede reordenarlo.
+- **Anti-repetición.** Se rechazan las órdenes con un `ts` fuera de la ventana y las que repiten un
+  `id_orden`. El id se marca **antes** de ejecutar: si el bot se cae a mitad de una acción, al reiniciar
+  no la repite.
+- **Auditoría.** Cada orden deja una línea JSON con la decisión y el motivo, sin secretos.
+- **Secretos fuera del código.** El token y la clave solo se leen de variables de entorno.
+- **JSON y terminal seguros.** Las respuestas se construyen con `jq --arg`, que escapa todo, y antes de
+  mostrar nada se quitan los caracteres de control.
+
+## Pruebas
+
+Para no depender del servidor del profesor, el repositorio incluye un **servidor falso** en Python y un
+script de pruebas automáticas. Para demostrar que una inyección no tuvo efecto no basta con ver
+«rechazada»: algunos ataques intentan escribir en un fichero testigo o crear otro, y la prueba comprueba
+que el testigo no cambia y que el otro no existe.
+
+La última ejecución en Kali, contra el servidor falso, dio **56 casos superados y ninguno fallido**.
+También lo probamos contra el servidor real: un `ping` legítimo respondió bien y los ataques
+y las firmas falsas se rechazaron.
+
+## Uso de la IA
+
+El código se generó con IA, pero el diseño lo decidimos nosotros:
+
+1. **Debate entre dos IA.** ChatGPT redactó un prompt con todo lo que tenía que cumplir la solución y
+   Claude lo auditó como *red team*, buscando requisitos que faltaban, vulnerabilidades y cosas
+   inventadas. Las preguntas que planteaban las contestábamos nosotros, no las IA entre ellas.
+2. **Generación.** Con el prompt final, Claude Code generó el código.
+3. **Revisión.** Lo probamos en Kali, corregimos a mano los avisos de `shellcheck` y mejoramos el bot.
+
+Una regla del grupo: ninguna prueba cuenta como superada hasta que la ejecutamos nosotros en Kali y
+guardamos el resultado real. Todo el proceso está documentado en el repositorio.
+
+## Lo que aprendí
+
+- **Las pruebas contra un servidor imitado no bastan.** Una mejora pasaba todas las pruebas contra el
+  servidor falso, pero una comprobación contra el real mostró que se comportaba distinto. Hubo que
+  corregir la mejora y el servidor falso.
+- **Documentar las limitaciones también es seguridad.** El README explica lo que el bot no resuelve, por
+  ejemplo que el límite de frecuencia es por remitente y que quien tiene la clave puede cambiarlo.
