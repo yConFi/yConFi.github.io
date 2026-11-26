@@ -89,6 +89,7 @@ const TECNICAS_EN: Traduccion = {
   RDP: 'RDP',
   Redis: 'Redis',
   Rsync: 'Rsync',
+  'Server Side Template Injection': 'Server-Side Template Injection (SSTI)',
   SMB: 'SMB',
   SSH: 'SSH',
   Telnet: 'Telnet',

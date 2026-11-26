@@ -1,0 +1,262 @@
+---
+titulo: "Bike"
+plataforma: HackTheBox
+dificultad: Muy fácil
+so: Linux
+fecha: 2026-11-26
+tecnicas:
+  - Escaneo de puertos
+  - Server Side Template Injection
+  - Inyección de comandos
+resumen: "Máquina Linux con una web en Node.js y Express cuyo formulario de correo refleja la entrada sin filtrarla: una inyección de plantillas (SSTI) en Handlebars permite escapar del sandbox con process.mainModule y ejecutar comandos como root."
+serie:
+  nombre: Starting Point
+  tier: 1
+borrador: false
+---
+
+Máquina del Tier 1 de Starting Point. Las preguntas guiadas (tasks) de HackTheBox aparecen plegadas en la
+sección donde se responden: intenta contestarlas antes de abrirlas.
+
+<Ruta
+  titulo="Camino seguido en Bike, de la conexión a root"
+  pasos={[
+    { titulo: 'nmap -sCV', detalle: '22/tcp SSH y 80/tcp HTTP (Node.js)' },
+    { titulo: 'Formulario de correo', detalle: 'Refleja la entrada: huele a plantilla' },
+    { titulo: '{{7*7}}', detalle: 'Error que delata Handlebars' },
+    { titulo: 'SSTI en Handlebars', detalle: 'require bloqueado por el sandbox' },
+    { titulo: 'process.mainModule', detalle: 'Escapa del sandbox y carga require' },
+    { titulo: 'execSync', detalle: 'Ejecuta comandos como root y lee la flag', meta: true },
+  ]}
+/>
+
+> La IP `10.129.228.195` es la que tenía la máquina en mi sesión; a ti te saldrá otra.
+
+## Reconocimiento
+
+Lo primero es comprobar que llega la conexión con la máquina:
+
+<Cmd c="ping 10.129.228.195" notas={{ "10.129.228.195": "IP de la máquina objetivo." }} />
+
+Lo detengo con `Ctrl+C` y muestra el resumen:
+
+```text
+64 bytes from 10.129.228.195: icmp_seq=1 ttl=63 time=7.80 ms
+...
+^C
+--- 10.129.228.195 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3005ms
+```
+
+La máquina responde a todo.
+
+## Enumeración
+
+### Puertos abiertos
+
+Busco los puertos abiertos, qué servicio y qué versión hay detrás de cada uno, y paso los scripts por
+defecto de nmap:
+
+<Cmd c="nmap -sCV 10.129.228.195" notas={{ "10.129.228.195": "IP de la máquina objetivo." }} />
+
+```text
+Not shown: 998 closed tcp ports (conn-refused)
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 8.2p1 Ubuntu 4ubuntu0.1 (Ubuntu Linux; protocol 2.0)
+80/tcp open  http    Node.js (Express middleware)
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+```
+
+Hay dos puertos abiertos: el **22/tcp**, con SSH, y el **80/tcp**, con un servidor web. El escaneo ya avisa
+de que detrás del puerto 80 no hay un Apache o un Nginx corrientes, sino un servidor **Node.js** que usa el
+*middleware* de **Express**. El 22 lo dejo de lado: no tengo ni usuario ni contraseña ni clave con los que
+autenticarme.
+
+<Pista titulo="Tarea 1 · ¿Qué puertos TCP identifica nmap como abiertos? Responde con la lista de puertos separados por comas, sin espacios, de menor a mayor.">
+  **22,80**.
+</Pista>
+
+<Pista titulo="Tarea 2 · ¿Qué software ejecuta el servicio que escucha en el puerto http/web de la primera pregunta?">
+  **Node.js**, un entorno de ejecución de JavaScript del lado del servidor.
+</Pista>
+
+### La web
+
+Al abrir el puerto 80 aparece una página «en construcción» con un formulario para suscribirse a novedades
+mediante un correo electrónico. Al enviar un correo de prueba, la página se recarga y **refleja de vuelta**
+lo que he escrito en el campo, en un mensaje del tipo «We will contact you at: …». Que la entrada del usuario
+se devuelva tal cual es la primera señal de que algo se está procesando por detrás, y abre la puerta a varios
+vectores (XSS, inyección de plantillas, etc.).
+
+Para confirmar la tecnología del servidor me apoyo en **Wappalyzer**, una extensión del navegador que
+analiza la página y reconoce los frameworks, servidores y lenguajes que usa. Sobre Bike reporta lo mismo
+que nmap: **Node.js** como entorno y **Express** como framework web.
+
+<Pista titulo="Tarea 3 · ¿Cuál es el nombre del framework web según Wappalyzer?">
+  **Express**, el framework web minimalista de Node.js.
+</Pista>
+
+### Buscando la inyección de plantillas
+
+Los backends de Node.js suelen usar un **motor de plantillas** (template engine) para generar HTML
+dinámico: una plantilla con huecos que se rellenan con datos y se devuelven al usuario. Si esos datos vienen
+del usuario y no se filtran, el motor puede interpretarlos como código de plantilla en lugar de como texto:
+eso es una **inyección de plantillas del lado del servidor (SSTI)**, y permite acabar ejecutando comandos en
+el servidor.
+
+Para comprobar si existe, se envían expresiones que el motor debería **calcular** si las toma como código.
+La más conocida es `{{7*7}}`: si el servidor responde `49`, está evaluando la expresión. En la
+[sección de detección de HackTricks](https://book.hacktricks.wiki/en/pentesting-web/ssti-server-side-template-injection/index.html)
+aparecen varias según el motor:
+
+```text
+{{7*7}}
+${7*7}
+<%= 7*7 %>
+${{7*7}}
+#{7*7}
+```
+
+Pruebo primero `${7*7}` en el formulario: el servidor lo refleja tal cual, sin evaluarlo. Pero al enviar
+`{{7*7}}` la página devuelve una **página de error**. Un error aquí es buena señal: significa que el motor
+sí ha tomado la expresión como código válido, aunque haya fallado al ejecutarla. Además, la traza del error
+revela dos cosas muy útiles: que el servidor corre desde el directorio `/root/Backend` y que el motor de
+plantillas es **Handlebars**.
+
+<Pista titulo="Tarea 4 · ¿Cómo se llama la vulnerabilidad que probamos al enviar {{7*7}}?">
+  **Server Side Template Injection** (inyección de plantillas del lado del servidor, SSTI).
+</Pista>
+
+<Pista titulo="Tarea 5 · ¿Qué motor de plantillas se usa dentro de Node.js?">
+  **Handlebars** (respuesta en HTB: `Handlebars`). Lo delata la traza del error que devuelve `{{7*7}}`.
+</Pista>
+
+## Acceso inicial
+
+### El payload de Handlebars
+
+Confirmado que hay un SSTI en Handlebars, busco en HackTricks la sección **Handlebars (NodeJS)**, que trae un
+payload pensado para ejecutar comandos. Para editar la petición con comodidad la capturo con **Burp Suite**
+(con FoxyProxy enviando el tráfico del navegador al proxy) y la mando al módulo **Repeater** con `Ctrl+R`.
+El payload completo es este:
+
+```handlebars
+{{#with "s" as |string|}}
+  {{#with "e"}}
+    {{#with split as |conslist|}}
+      {{this.pop}}
+      {{this.push (lookup string.sub "constructor")}}
+      {{this.pop}}
+      {{#with string.split as |codelist|}}
+        {{this.pop}}
+        {{this.push "return require('child_process').exec('whoami');"}}
+        {{this.pop}}
+        {{#each conslist}}
+          {{#with (string.sub.apply 0 codelist)}}
+            {{this}}
+          {{/with}}
+        {{/each}}
+      {{/with}}
+    {{/with}}
+  {{/with}}
+{{/with}}
+```
+
+El bloque es enrevesado, pero lo que nos importa es la línea que indica el comando a ejecutar:
+
+```handlebars
+{{this.push "return require('child_process').exec('whoami');"}}
+```
+
+Esa línea carga el módulo `child_process` con `require` y ejecuta un comando del sistema (aquí `whoami`).
+Más adelante solo cambiaremos el comando de esa línea.
+
+### Codificar el payload en URL
+
+Antes de enviarlo hay que **codificarlo en URL**, porque una petición solo puede llevar ciertos caracteres
+del juego ASCII estándar y los reservados (como `&`, que pasa a ser `%26`) tienen que escaparse. Burp trae
+una pestaña, **Decoder**, que codifica o decodifica texto en varios formatos, URL entre ellos: pego el
+payload en el panel de arriba y elijo **Encode as > URL**.
+
+<Pista titulo="Tarea 6 · ¿Cómo se llama la pestaña de BurpSuite que se usa para codificar texto?">
+  **Decoder**.
+</Pista>
+
+<Pista titulo="Tarea 7 · Para enviar caracteres especiales en el payload dentro de una petición HTTP, codificamos el payload. ¿Qué tipo de codificación usamos?">
+  **URL** (respuesta en HTB: `URL`).
+</Pista>
+
+Copio el resultado codificado, lo pego en el campo `email=` de la petición en el Repeater y pulso **Send**.
+La respuesta devuelve un error: `require is not defined`.
+
+<Pista titulo="Tarea 8 · Al usar un payload de HackTricks para intentar ejecutar comandos, nos devuelve un error. ¿Qué es lo que «no está definido» en el error de la respuesta?">
+  **require**. El motor de plantillas corre en un entorno aislado (sandbox) donde `require` no está
+  disponible directamente.
+</Pista>
+
+### Escapar del sandbox con los globales
+
+`require` es la palabra de Node.js que carga módulos, pero los motores de plantillas suelen ejecutarse en un
+**sandbox**: un espacio restringido donde justamente no se puede usar `require` para cargar módulos que den
+ejecución de comandos. Hay que llegar a él por otra vía.
+
+La [documentación de objetos globales de Node.js](https://nodejs.org/api/globals.html) aclara que `require`,
+`__dirname`, `__filename`, `exports` y `module` **no** son globales de verdad, sino objetos propios de cada
+módulo; por eso en el sandbox no se ven. En cambio, sí hay un objeto global `process`, que da información y
+control sobre el proceso de Node.js en curso. Cambio la línea del comando por `return process;` para ver si
+es accesible, y la respuesta ahora incluye `[object process]`: lo es.
+
+<Pista titulo="Tarea 9 · ¿Cuál es el nombre del ámbito (scope) de nivel superior en Node.JS?">
+  **global**. En Node.js el ámbito superior es el objeto `global`; `process` es uno de sus objetos.
+</Pista>
+
+El objeto `process` tiene una propiedad `mainModule` que apunta al módulo principal de la aplicación. Ese
+módulo **no está dentro del sandbox**, así que desde él sí se puede llamar a `require`. Lo encadeno para
+cargar `child_process`, el módulo que ejecuta comandos del sistema, cambiando la línea del comando por:
+
+```handlebars
+{{this.push "return process.mainModule.require('child_process').execSync('whoami');"}}
+```
+
+Codifico de nuevo el payload completo en URL, lo pego en `email=` y pulso **Send**. Esta vez la respuesta no
+da error y muestra la salida del comando:
+
+```text
+root
+```
+
+El comando se ejecuta y además lo hace como **root**: el servidor web corre con el usuario más privilegiado
+del sistema, así que no hace falta escalar para leer la flag.
+
+<Pista titulo="Tarea 10 · Al explotar esta vulnerabilidad conseguimos ejecución de comandos como el usuario con el que corre el servidor web. ¿Cómo se llama ese usuario?">
+  **root**.
+</Pista>
+
+### Leer la flag
+
+Sabiendo que soy root y que el backend corre desde `/root/Backend`, la flag está casi seguro en `/root`. Lo
+confirmo cambiando el comando a `ls /root`, cuya respuesta lista `Backend`, `flag.txt` y `snap`. Ya solo
+queda leerla cambiando el comando a `cat /root/flag.txt`. La flag aparece en la respuesta del servidor.
+
+La flag no se publica: la tienes que conseguir tú.
+
+<Pista titulo="Flag · Envía la flag que está en el directorio personal de root">
+  Está en `/root/flag.txt`. Se lee con el mismo payload, cambiando el comando a `cat /root/flag.txt`.
+</Pista>
+
+## Escalada de privilegios
+
+No hace falta: el servidor web ya corre como **root**, así que la ejecución de comandos del SSTI se obtiene
+directamente con los máximos privilegios y la flag de root se lee sin tener que subir de usuario.
+
+## Lecciones aprendidas
+
+- **Qué fallé:** nada; seguí el camino del writeup y la máquina salió sin problemas.
+- **Lo que enseña la máquina:** reflejar la entrada del usuario sin filtrarla en un motor de plantillas es una
+  SSTI, y un sandbox no es una barrera infranqueable: si queda accesible un objeto global como `process`, se
+  puede escapar de él y cargar los módulos que dan ejecución de comandos.
+- **Qué haré la próxima vez:** ante una web que refleja lo que escribo, probar pronto las expresiones de
+  plantilla (`{{7*7}}`, `${7*7}`…) para descartar o confirmar un SSTI, y si un payload choca con un sandbox,
+  buscar la vía indirecta por los objetos globales en vez de insistir con la directa.
+
+{/* Redactado por Claude a partir del writeup oficial que seguiste; revisa sobre todo las frases de "Lecciones aprendidas". */}
