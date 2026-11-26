@@ -13,6 +13,7 @@ export const es = {
   // Las claves de `nav` son las secciones de src/i18n/rutas.ts.
   nav: {
     inicio: 'Inicio',
+    biblioteca: 'Biblioteca',
     walkthroughs: 'Walkthroughs',
     tecnicas: 'Técnicas',
     proyectos: 'Proyectos',
@@ -26,6 +27,9 @@ export const es = {
       'Portfolio de ciberseguridad y walkthroughs paso a paso de máquinas y retos retirados, con cada parte de cada comando explicada.',
     saltarContenido: 'Saltar al contenido',
     navPrincipal: 'Principal',
+    navSecundaria: 'Más secciones',
+    menu: 'Menú',
+    migas: 'Migas de pan',
     irAlInicio: 'Inicio',
     redes: 'Redes',
     documentacionOficial: 'Documentación oficial',
@@ -38,9 +42,17 @@ export const es = {
     avatarAlt: 'Avatar ilustrado de Ricardo Hidalgo',
   },
 
+  // El botón de tema rota sistema → claro → oscuro → sistema. Su nombre dice el
+  // estado actual y lo que hará al pulsarlo.
   tema: {
-    aOscuro: 'Cambiar a tema oscuro',
-    aClaro: 'Cambiar a tema claro',
+    sistemaAClaro: 'Tema: el del sistema. Cambiar a claro',
+    claroAOscuro: 'Tema: claro. Cambiar a oscuro',
+    oscuroASistema: 'Tema: oscuro. Volver al del sistema',
+  },
+
+  busqueda: {
+    lanzador: 'Buscar',
+    atajo: 'Ctrl K',
   },
 
   idioma: {
@@ -96,6 +108,10 @@ export const es = {
     varias: 'personas lo han encontrado útil',
     falloMuchos: 'Ahora mismo hay mucho movimiento. Prueba dentro de un minuto.',
     falloGenerico: 'No se ha podido guardar tu voto. Inténtalo más tarde.',
+    conectado: 'conectado',
+    noDisponible: 'no disponible',
+    noDisponibleTexto:
+      'El contador no responde ahora mismo. El contenido funciona igual y no se muestra ninguna cifra.',
   },
 
   walkthroughs: {
@@ -188,6 +204,17 @@ export const es = {
     sinResultados: 'No hay nada en el diccionario que coincida con la búsqueda.',
     resultadoPlantilla: '{secciones} secciones y {entradas} entradas coinciden.',
     resultadoUnaPlantilla: '{secciones} sección y {entradas} entradas coinciden.',
+  },
+
+  // Pie de página: principios de publicación y secciones que no están en el menú.
+  pie: {
+    principiosTitulo: 'Publicación responsable',
+    principio1: 'Solo máquinas retiradas y prácticas permitidas.',
+    principio2: 'Nunca se publica una flag.',
+    principio3: 'Cada explicación enlaza a su documentación oficial.',
+    principio4: 'Sin rastreadores ni recursos de terceros.',
+    secciones: 'Secciones',
+    enlaces: 'Enlaces',
   },
 
   pista: {

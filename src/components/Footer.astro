@@ -1,6 +1,9 @@
 ---
+// Pie: principios de publicación responsable, secciones que no están en el menú
+// principal (Técnicas, Logros) y los dos perfiles confirmados (GitHub, LinkedIn).
+// Nada de correo, ubicación ni disponibilidad: no son datos confirmados.
 import { ENLACES, SITE } from '../data/site';
-import { textos, type Idioma } from '../i18n';
+import { ruta, textos, type Idioma } from '../i18n';
 
 interface Props {
   idioma: Idioma;
@@ -13,48 +16,108 @@ const anio = new Date().getFullYear();
 
 <footer class="pie">
   <div class="contenedor">
-    <p>© {anio} {SITE.autor}</p>
-    <ul aria-label={t.general.redes}>
-      <li><a href={ENLACES.github} rel="me noopener">GitHub</a></li>
-      <li><a href={ENLACES.linkedin} rel="me noopener">LinkedIn</a></li>
-    </ul>
+    <section class="principios" aria-labelledby="pie-principios">
+      <h2 id="pie-principios">{t.pie.principiosTitulo}</h2>
+      <ul>
+        <li>{t.pie.principio1}</li>
+        <li>{t.pie.principio2}</li>
+        <li>{t.pie.principio3}</li>
+        <li>{t.pie.principio4}</li>
+      </ul>
+    </section>
+
+    <nav aria-labelledby="pie-secciones">
+      <h2 id="pie-secciones">{t.pie.secciones}</h2>
+      <ul>
+        <li><a href={ruta('biblioteca', idioma)}>{t.nav.biblioteca}</a></li>
+        <li><a href={ruta('tecnicas', idioma)}>{t.nav.tecnicas}</a></li>
+        <li><a href={ruta('logros', idioma)}>{t.nav.logros}</a></li>
+      </ul>
+    </nav>
+
+    <section aria-labelledby="pie-enlaces">
+      <h2 id="pie-enlaces">{t.pie.enlaces}</h2>
+      <ul>
+        <li><a href={ENLACES.github} rel="me noopener">GitHub</a></li>
+        <li><a href={ENLACES.linkedin} rel="me noopener">LinkedIn</a></li>
+      </ul>
+    </section>
+
+    <p class="firma">© {anio} {SITE.autor} · <span class="mono">~/yconfi</span></p>
   </div>
 </footer>
 
 <style>
   .pie {
-    border-top: 1px solid var(--borde);
-    background: var(--bg-elev);
-    font-family: var(--fuente-mono);
-    font-size: 0.85rem;
-    color: var(--texto-suave);
+    border-top: 2px solid var(--line);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 0.95rem;
   }
 
   .contenedor {
-    max-width: var(--ancho-max);
+    max-width: var(--max);
     margin-inline: auto;
-    padding: 1.25rem var(--gutter);
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.5rem 1.5rem;
+    padding: var(--space-8) var(--gutter);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    gap: var(--space-6) var(--space-8);
   }
 
-  p {
-    margin: 0;
+  .principios {
+    grid-column: 1 / -1;
+    padding-left: var(--space-4);
+    border-left: 0.35rem solid var(--accent);
+  }
+
+  @media (min-width: 58rem) {
+    .contenedor {
+      grid-template-columns: 2fr 1fr 1fr;
+    }
+
+    .principios {
+      grid-column: auto;
+    }
+  }
+
+  h2 {
+    margin: 0 0 var(--space-3);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text);
   }
 
   ul {
-    list-style: none;
     margin: 0;
     padding: 0;
-    display: flex;
-    gap: 1.25rem;
+    list-style: none;
   }
 
-  a {
-    display: inline-block;
-    padding: 0.4rem 0;
+  .principios li {
+    padding-block: 0.15rem;
+  }
+
+  nav a,
+  section a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+
+  .firma {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--line);
+    font-size: 0.85rem;
+  }
+
+  @media (forced-colors: active) {
+    .principios {
+      border-left-color: CanvasText;
+    }
   }
 </style>

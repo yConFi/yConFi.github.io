@@ -3,6 +3,7 @@ import { render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Cmd from '../Cmd.astro';
 import Pista from '../Pista.astro';
+import Migas from '../Migas.astro';
 import { IDIOMA_POR_DEFECTO, IDIOMAS, etiquetaEstado, ruta, rutaHija, textos, type Idioma } from '../../i18n';
 import type { Proyecto } from '../../lib/coleccion';
 import { formatearFecha } from '../../lib/walkthroughs';
@@ -41,9 +42,14 @@ const equivalentes = Object.fromEntries(
     {/* El texto del proyecto está en castellano: en inglés se avisa en lugar de disimularlo. */}
     {idioma !== IDIOMA_POR_DEFECTO && <p class="aviso-idioma" role="note">{t.aviso.contenidoEnOtroIdioma}</p>}
 
-    <p class="migas">
-      <a href={ruta('proyectos', idioma)}>{t.proyectos.migas}</a> <span aria-hidden="true">/</span> {proyecto.id}
-    </p>
+    <Migas
+      idioma={idioma}
+      migas={[
+        { texto: t.nav.inicio, href: ruta('inicio', idioma) },
+        { texto: t.nav.proyectos, href: ruta('proyectos', idioma) },
+        { texto: data.titulo },
+      ]}
+    />
 
     <div class="cabecera-pagina">
       <h1>{data.titulo}</h1>
@@ -99,20 +105,6 @@ const equivalentes = Object.fromEntries(
     font-size: 0.9rem;
   }
 
-  .migas {
-    margin: 0 0 1rem;
-    font-family: var(--fuente-mono);
-    font-size: 0.8rem;
-    color: var(--texto-suave);
-  }
-
-  .migas a {
-    text-decoration: none;
-  }
-
-  .migas a:hover {
-    text-decoration: underline;
-  }
 
   .ficha {
     display: grid;

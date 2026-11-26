@@ -9,6 +9,7 @@ import type { Textos } from './es';
 export const en: Textos = {
   nav: {
     inicio: 'Home',
+    biblioteca: 'Library',
     walkthroughs: 'Walkthroughs',
     tecnicas: 'Techniques',
     proyectos: 'Projects',
@@ -21,6 +22,9 @@ export const en: Textos = {
       'Cybersecurity portfolio and step-by-step walkthroughs of retired machines and challenges, with every part of every command explained.',
     saltarContenido: 'Skip to content',
     navPrincipal: 'Main',
+    navSecundaria: 'More sections',
+    menu: 'Menu',
+    migas: 'Breadcrumb',
     irAlInicio: 'Home',
     redes: 'Social',
     documentacionOficial: 'Official documentation',
@@ -34,8 +38,14 @@ export const en: Textos = {
   },
 
   tema: {
-    aOscuro: 'Switch to dark theme',
-    aClaro: 'Switch to light theme',
+    sistemaAClaro: 'Theme: system. Switch to light',
+    claroAOscuro: 'Theme: light. Switch to dark',
+    oscuroASistema: 'Theme: dark. Go back to system',
+  },
+
+  busqueda: {
+    lanzador: 'Search',
+    atajo: 'Ctrl K',
   },
 
   idioma: {
@@ -90,6 +100,10 @@ export const en: Textos = {
     varias: 'people found it useful',
     falloMuchos: 'There is a lot going on right now. Try again in a minute.',
     falloGenerico: 'Your vote could not be saved. Please try again later.',
+    conectado: 'connected',
+    noDisponible: 'unavailable',
+    noDisponibleTexto:
+      'The counter is not responding right now. The content works the same and no number is shown.',
   },
 
   walkthroughs: {
@@ -182,6 +196,16 @@ export const en: Textos = {
     sinResultados: 'Nothing in the dictionary matches your search.',
     resultadoPlantilla: '{secciones} sections and {entradas} entries match.',
     resultadoUnaPlantilla: '{secciones} section and {entradas} entries match.',
+  },
+
+  pie: {
+    principiosTitulo: 'Responsible publishing',
+    principio1: 'Only retired machines and permitted practice.',
+    principio2: 'A flag is never published.',
+    principio3: 'Every explanation links to its official documentation.',
+    principio4: 'No trackers or third-party resources.',
+    secciones: 'Sections',
+    enlaces: 'Links',
   },
 
   pista: {

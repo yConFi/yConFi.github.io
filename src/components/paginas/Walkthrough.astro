@@ -4,6 +4,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Cmd from '../Cmd.astro';
 import Pista from '../Pista.astro';
 import Ruta from '../Ruta.astro';
+import Migas from '../Migas.astro';
 import {
   IDIOMA_POR_DEFECTO,
   IDIOMAS,
@@ -59,10 +60,14 @@ const equivalentes = Object.fromEntries(
     {idioma !== IDIOMA_POR_DEFECTO && <p class="aviso-idioma" role="note">{t.aviso.contenidoEnOtroIdioma}</p>}
 
     <header class="cabecera">
-      <p class="migas">
-        <a href={ruta('walkthroughs', idioma)}>{t.walkthroughs.migas}</a>
-        <span aria-hidden="true">/</span> {walkthrough.id}
-      </p>
+      <Migas
+        idioma={idioma}
+        migas={[
+          { texto: t.nav.inicio, href: ruta('inicio', idioma) },
+          { texto: t.nav.walkthroughs, href: ruta('walkthroughs', idioma) },
+          { texto: data.titulo },
+        ]}
+      />
 
       <div class="presentacion">
         <div class="identidad">
@@ -144,21 +149,6 @@ const equivalentes = Object.fromEntries(
     font-size: 0.9rem;
   }
 
-  .migas {
-    margin: 0 0 1rem;
-    font-family: var(--fuente-mono);
-    font-size: 0.8rem;
-    color: var(--texto-suave);
-    overflow-wrap: anywhere;
-  }
-
-  .migas a {
-    text-decoration: none;
-  }
-
-  .migas a:hover {
-    text-decoration: underline;
-  }
 
   .presentacion {
     display: flex;
@@ -286,7 +276,7 @@ const equivalentes = Object.fromEntries(
 
     .indice {
       position: sticky;
-      top: calc(var(--altura-cabecera, 0px) + 1.5rem);
+      top: calc(var(--header-h) + 1.5rem);
       align-self: start;
     }
   }

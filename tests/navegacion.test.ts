@@ -15,7 +15,9 @@ describe('navegación en castellano', () => {
     ['/tecnicas/', ['Walkthroughs']],
     ['/tecnicas/sqli/', ['Walkthroughs']],
     ['/proyectos/fichas-tecnicas/', ['Proyectos']],
-    ['/logros/', ['Logros']],
+    ['/biblioteca/', ['Biblioteca']],
+    // Logros no está en el menú principal: se enlaza desde el pie.
+    ['/logros/', []],
     ['/diccionario/', ['Diccionario']],
     ['/no-existe/', []],
     // Las páginas en inglés no marcan ninguna sección del menú en castellano.
@@ -34,7 +36,8 @@ describe('navegación en inglés', () => {
     ['/en/techniques/', ['Walkthroughs']],
     ['/en/techniques/port-scanning/', ['Walkthroughs']],
     ['/en/projects/fichas-tecnicas/', ['Projects']],
-    ['/en/achievements/', ['Achievements']],
+    ['/en/library/', ['Library']],
+    ['/en/achievements/', []],
     ['/en/dictionary/', ['Dictionary']],
     ['/en/no-existe/', []],
     // El inicio en inglés es prefijo de todo /en/, así que solo vale su ruta exacta.

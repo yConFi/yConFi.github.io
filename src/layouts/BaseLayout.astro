@@ -76,7 +76,7 @@ for (const otro of IDIOMAS) {
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0c1116" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#181d21" media="(prefers-color-scheme: dark)" />
 
     <!-- Las dos fuentes que se ven desde el primer pintado. El resto se piden solo si hacen falta. -->
     <link rel="preload" href="/fuentes/ibm-plex-sans-var-latin.woff2" as="font" type="font/woff2" crossorigin />
@@ -87,6 +87,7 @@ for (const otro of IDIOMAS) {
       Si el visitante eligió uno, se aplica antes de pintar para evitar el parpadeo.
     -->
     <script is:inline>
+      document.documentElement.classList.add('js');
       try {
         const tema = localStorage.getItem('tema');
         if (tema === 'light' || tema === 'dark') document.documentElement.dataset.theme = tema;
