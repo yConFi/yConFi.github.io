@@ -242,6 +242,9 @@ export const es = {
     codigo: 'Código',
     repositorio: 'Repositorio',
     demo: 'Demo',
+    eyebrow: 'Proyecto',
+    equipo: 'Trabajo en equipo',
+    enlaces: 'Código y evidencia',
   },
 
   logros: {
@@ -249,8 +252,6 @@ export const es = {
     descripcion: 'Certificaciones conseguidas y progreso en plataformas de práctica de ciberseguridad.',
     intro: 'Certificaciones que he conseguido y mi progreso en plataformas de práctica.',
     certificaciones: 'Certificaciones',
-    sinCertificacionesHtmlPlantilla:
-      'Todavía no tengo ninguna certificación. Mientras tanto, lo que voy aprendiendo está en los <a href="{href}">walkthroughs</a>.',
     verificar: 'Verificar credencial',
     plataformas: 'Plataformas',
     rango: 'Rango:',

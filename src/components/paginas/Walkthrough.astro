@@ -5,12 +5,14 @@ import Cmd from '../Cmd.astro';
 import Pista from '../Pista.astro';
 import Ruta from '../Ruta.astro';
 import Migas from '../Migas.astro';
+import AvisoTraduccion from '../AvisoTraduccion.astro';
 import RutaConocimiento from '../RutaConocimiento.astro';
 import { obtenerWalkthroughs } from '../../lib/coleccion';
 import { cadenaDeWalkthrough, relacionados } from '../../lib/relaciones';
 import {
   IDIOMA_POR_DEFECTO,
   IDIOMAS,
+  LANG,
   etiquetaDificultad,
   etiquetaSistema,
   rellenar,
@@ -44,6 +46,10 @@ const numero = (i: number) => String(i + 1).padStart(2, '0');
 
 const tecnicas = data.tecnicas.map((canonico) => tecnicaEnIdioma(canonico, idioma));
 
+// El texto está en castellano: en otra versión sin traducir se marca lang="es".
+const langContenido =
+  idioma !== IDIOMA_POR_DEFECTO && data.translationStatus !== 'complete' ? LANG[IDIOMA_POR_DEFECTO] : undefined;
+
 // Cadena y relacionados: derivados del contenido, nunca escritos a mano.
 const cadena = cadenaDeWalkthrough({ id: walkthrough.id, ...data, body: walkthrough.body ?? '' }, idioma);
 const todos = (await obtenerWalkthroughs()).map((w) => ({ id: w.id, ...w.data }));
@@ -66,7 +72,7 @@ const equivalentes = Object.fromEntries(
     }
 
     {/* El walkthrough está escrito en castellano: en inglés se avisa, no se disimula. */}
-    {idioma !== IDIOMA_POR_DEFECTO && <p class="aviso-idioma" role="note">{t.aviso.contenidoEnOtroIdioma}</p>}
+    <AvisoTraduccion idioma={idioma} estado={data.translationStatus} />
 
     <header class="cabecera">
       <Migas
@@ -86,7 +92,7 @@ const equivalentes = Object.fromEntries(
               {etiquetaDificultad(data.dificultad, idioma)}
             </span>
           </div>
-          <p class="resumen">{data.resumen}</p>
+          <p class="resumen" lang={langContenido}>{data.resumen}</p>
         </div>
 
         <dl class="ficha">
@@ -139,7 +145,7 @@ const equivalentes = Object.fromEntries(
         </ol>
       </nav>
 
-      <div class="prosa">
+      <div class="prosa" lang={langContenido}>
         <Content components={{ Cmd, Pista, Ruta }} />
 
         {

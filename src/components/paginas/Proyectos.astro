@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TarjetaProyecto from '../TarjetaProyecto.astro';
-import { IDIOMA_POR_DEFECTO, textos, type Idioma } from '../../i18n';
+import AvisoTraduccion from '../AvisoTraduccion.astro';
+import { textos, type Idioma } from '../../i18n';
 import { obtenerProyectos } from '../../lib/coleccion';
 
 interface Props {
@@ -19,7 +20,7 @@ const proyectos = await obtenerProyectos();
     <p>{t.proyectos.intro}</p>
   </div>
 
-  {idioma !== IDIOMA_POR_DEFECTO && <p class="aviso-idioma" role="note">{t.aviso.resumenesEnOtroIdioma}</p>}
+  <AvisoTraduccion idioma={idioma} que="resumenes" />
 
   {
     proyectos.length === 0 ? (

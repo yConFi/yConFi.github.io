@@ -1,10 +1,28 @@
 ---
+// ProjectCase: un proyecto como caso de evidencia.
+//
+// Orden fijo (handoff): estado → resumen → contexto → aportación y equipo →
+// arquitectura → controles → pruebas → resultado → aprendizaje → enlaces.
+// Estado, resumen y equipo van en la cabecera; las secciones intermedias son las
+// del MDX, en ese orden; los enlaces cierran la página.
+//
+// Si el proyecto es de equipo (`equipo: true`), se dice siempre de forma visible.
 import { render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import AvisoTraduccion from '../AvisoTraduccion.astro';
 import Cmd from '../Cmd.astro';
-import Pista from '../Pista.astro';
 import Migas from '../Migas.astro';
-import { IDIOMA_POR_DEFECTO, IDIOMAS, etiquetaEstado, ruta, rutaHija, textos, type Idioma } from '../../i18n';
+import Pista from '../Pista.astro';
+import {
+  IDIOMA_POR_DEFECTO,
+  IDIOMAS,
+  LANG,
+  etiquetaEstado,
+  ruta,
+  rutaHija,
+  textos,
+  type Idioma,
+} from '../../i18n';
 import type { Proyecto } from '../../lib/coleccion';
 import { formatearFecha } from '../../lib/walkthroughs';
 
@@ -22,6 +40,13 @@ const { Content } = await render(proyecto);
 const equivalentes = Object.fromEntries(
   IDIOMAS.map((otro) => [otro, rutaHija('proyectos', otro, proyecto.id)]),
 ) as Record<Idioma, string>;
+
+// El texto del proyecto está escrito en castellano: si la página es de otro
+// idioma y no está traducido, se marca con lang="es" para los lectores de pantalla.
+const traducido = data.translationStatus === 'complete';
+const langContenido = idioma !== IDIOMA_POR_DEFECTO && !traducido ? LANG[IDIOMA_POR_DEFECTO] : undefined;
+const enProduccion = data.estado === 'En producción';
+const hayEnlaces = Boolean(data.repositorio || data.demo);
 ---
 
 <BaseLayout
@@ -29,8 +54,12 @@ const equivalentes = Object.fromEntries(
   titulo={data.titulo}
   descripcion={data.resumen}
   equivalentes={equivalentes}
+  tipoSeo="proyecto"
+  fecha={data.fecha}
 >
-  <article class="lectura">
+  <AvisoTraduccion idioma={idioma} estado={data.translationStatus} />
+
+  <article class="caso">
     {
       data.borrador && (
         <p class="franja-borrador" role="note">
@@ -38,9 +67,6 @@ const equivalentes = Object.fromEntries(
         </p>
       )
     }
-
-    {/* El texto del proyecto está en castellano: en inglés se avisa en lugar de disimularlo. */}
-    {idioma !== IDIOMA_POR_DEFECTO && <p class="aviso-idioma" role="note">{t.aviso.contenidoEnOtroIdioma}</p>}
 
     <Migas
       idioma={idioma}
@@ -51,45 +77,80 @@ const equivalentes = Object.fromEntries(
       ]}
     />
 
-    <div class="cabecera-pagina">
-      <h1>{data.titulo}</h1>
-      <p>{data.resumen}</p>
-    </div>
+    <header class="cabecera-caso">
+      <p class="eyebrow">
+        {t.proyectos.eyebrow}
+        <span aria-hidden="true"> · </span>
+        <span class:list={['estado', { activo: enProduccion }]}>{etiquetaEstado(data.estado, idioma)}</span>
+        {
+          data.equipo && (
+            <>
+              <span aria-hidden="true"> · </span>
+              <span class="equipo">{t.proyectos.equipo}</span>
+            </>
+          )
+        }
+      </p>
+      <h1 lang={langContenido}>{data.titulo}</h1>
+      <p class="resumen" lang={langContenido}>{data.resumen}</p>
 
-    <dl class="ficha">
-      <div><dt>{t.proyectos.estado}</dt><dd>{etiquetaEstado(data.estado, idioma)}</dd></div>
-      {
-        data.fecha && (
-          <div>
-            <dt>{t.proyectos.fecha}</dt>
-            <dd>
-              <time datetime={data.fecha.toISOString().slice(0, 10)}>{formatearFecha(data.fecha, idioma)}</time>
-            </dd>
-          </div>
-        )
-      }
-      <div><dt>{t.proyectos.tecnologias}</dt><dd>{data.tecnologias.join(' · ')}</dd></div>
-      {
-        data.repositorio && (
-          <div>
-            <dt>{t.proyectos.codigo}</dt>
-            <dd><a href={data.repositorio}>{t.proyectos.repositorio}</a></dd>
-          </div>
-        )
-      }
-      {
-        data.demo && (
-          <div>
-            <dt>{t.proyectos.demo}</dt>
-            <dd><a href={data.demo}>{new URL(data.demo).host}</a></dd>
-          </div>
-        )
-      }
-    </dl>
+      <dl class="ficha">
+        <div>
+          <dt>{t.proyectos.estado}</dt>
+          <dd>{etiquetaEstado(data.estado, idioma)}</dd>
+        </div>
+        {
+          data.fecha && (
+            <div>
+              <dt>{t.proyectos.fecha}</dt>
+              <dd>
+                <time datetime={data.fecha.toISOString().slice(0, 10)}>{formatearFecha(data.fecha, idioma)}</time>
+              </dd>
+            </div>
+          )
+        }
+        <div class="ancho">
+          <dt>{t.proyectos.tecnologias}</dt>
+          <dd>
+            <ul class="tecnologias" aria-label={t.general.tecnologiasAria}>
+              {data.tecnologias.map((x) => (
+                <li>
+                  <span class="etiqueta">{x}</span>
+                </li>
+              ))}
+            </ul>
+          </dd>
+        </div>
+      </dl>
+    </header>
 
-    <div class="prosa">
+    <div class="prosa lectura" lang={langContenido}>
       <Content components={{ Cmd, Pista }} />
     </div>
+
+    {
+      hayEnlaces && (
+        <section class="enlaces" aria-labelledby="titulo-enlaces">
+          <h2 id="titulo-enlaces">{t.proyectos.enlaces}</h2>
+          <ul>
+            {data.repositorio && (
+              <li>
+                <a class="boton" href={data.repositorio} rel="noopener">
+                  {t.proyectos.repositorio}
+                </a>
+              </li>
+            )}
+            {data.demo && (
+              <li>
+                <a class="boton" href={data.demo} rel="noopener">
+                  {t.proyectos.demo} · {new URL(data.demo).host}
+                </a>
+              </li>
+            )}
+          </ul>
+        </section>
+      )
+    }
   </article>
 </BaseLayout>
 
@@ -97,52 +158,140 @@ const equivalentes = Object.fromEntries(
   .franja-borrador {
     margin: 0 0 1.5rem;
     padding: 0.75rem 1rem;
-    border: 1px solid var(--peligro);
-    border-radius: var(--radio);
-    background: var(--peligro-bg);
-    color: var(--peligro);
-    font-family: var(--fuente-mono);
+    border: 1px solid var(--danger);
+    border-radius: var(--radius-m);
+    background: var(--danger-soft);
+    color: var(--danger);
+    font-family: var(--font-mono);
     font-size: 0.9rem;
   }
 
+  /* ---------- Cabecera del caso: bloque invertido (oscuro en claro y al revés) ---------- */
+  .cabecera-caso {
+    margin-bottom: var(--space-12);
+    padding: clamp(1.25rem, 4vw, 2.5rem);
+    border-radius: var(--radius-l);
+    background: var(--text);
+    color: var(--bg);
+  }
+
+  .cabecera-caso .eyebrow {
+    color: color-mix(in srgb, var(--bg) 75%, transparent);
+  }
+
+  .cabecera-caso h1 {
+    max-width: 22ch;
+  }
+
+  .resumen {
+    max-width: var(--read);
+    margin: 0;
+    font-size: 1.15rem;
+    color: color-mix(in srgb, var(--bg) 85%, transparent);
+  }
+
+  .estado,
+  .equipo {
+    padding: 0.05rem 0.45rem;
+    border: 1px solid currentColor;
+    border-radius: var(--radius-s);
+  }
+
+  .estado.activo,
+  .equipo {
+    color: var(--accent);
+  }
 
   .ficha {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-    gap: 0.9rem 1.25rem;
-    margin: 0 0 2rem;
-    padding: 1rem 1.15rem;
-    border: 1px solid var(--borde);
-    border-radius: var(--radio-lg);
-    background: var(--bg-elev);
-    font-family: var(--fuente-mono);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+    gap: var(--space-4) var(--space-6);
+    margin: var(--space-8) 0 0;
+    padding-top: var(--space-6);
+    border-top: 1px solid color-mix(in srgb, var(--bg) 30%, transparent);
+    font-family: var(--font-mono);
+  }
+
+  .ficha .ancho {
+    grid-column: 1 / -1;
   }
 
   .ficha dt {
-    font-size: 0.68rem;
+    font-size: 0.72rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--texto-suave);
+    color: color-mix(in srgb, var(--bg) 70%, transparent);
   }
 
   .ficha dd {
-    margin: 0.1rem 0 0;
-    font-size: 0.85rem;
+    margin: 0.2rem 0 0;
+    font-size: 0.9rem;
     overflow-wrap: anywhere;
   }
 
+  .tecnologias {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tecnologias .etiqueta {
+    background: transparent;
+    border-color: color-mix(in srgb, var(--bg) 40%, transparent);
+    color: var(--bg);
+  }
+
+  /* ---------- Cuerpo ---------- */
   .prosa :global(h2) {
-    margin-top: 2.5rem;
+    margin-top: 2.75rem;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--borde);
+    border-bottom: 2px solid var(--line);
+  }
+
+  .prosa :global(img) {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
   }
 
   .prosa :global(blockquote) {
     margin: 1.25rem 0;
     padding: 0.75rem 1rem;
-    border: 1px solid var(--borde);
-    border-radius: var(--radio);
-    background: var(--bg-elev);
-    color: var(--texto-suave);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    background: var(--surface);
+    color: var(--muted);
+  }
+
+  /* ---------- Enlaces: cierran el caso ---------- */
+  .enlaces {
+    max-width: var(--read);
+    margin-top: var(--space-12);
+    padding: var(--space-6);
+    border: 1px solid var(--line);
+    border-left: 0.35rem solid var(--relation);
+    border-radius: var(--radius-l);
+    background: var(--surface);
+  }
+
+  .enlaces h2 {
+    margin: 0 0 var(--space-4);
+  }
+
+  .enlaces ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (forced-colors: active) {
+    .cabecera-caso {
+      border: 1px solid CanvasText;
+    }
   }
 </style>

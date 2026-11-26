@@ -229,6 +229,9 @@ export const en: Textos = {
     codigo: 'Code',
     repositorio: 'Repository',
     demo: 'Demo',
+    eyebrow: 'Project',
+    equipo: 'Team project',
+    enlaces: 'Code and evidence',
   },
 
   logros: {
@@ -236,8 +239,6 @@ export const en: Textos = {
     descripcion: 'Certifications earned and progress on cybersecurity practice platforms.',
     intro: 'Certifications I have earned and my progress on practice platforms.',
     certificaciones: 'Certifications',
-    sinCertificacionesHtmlPlantilla:
-      'I do not have any certification yet. In the meantime, what I am learning is in the <a href="{href}">walkthroughs</a>.',
     verificar: 'Verify credential',
     plataformas: 'Platforms',
     rango: 'Rank:',
