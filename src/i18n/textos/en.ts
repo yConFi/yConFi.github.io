@@ -22,11 +22,9 @@ export const en: Textos = {
       'Cybersecurity portfolio and step-by-step walkthroughs of retired machines and challenges, with every part of every command explained.',
     saltarContenido: 'Skip to content',
     navPrincipal: 'Main',
-    navSecundaria: 'More sections',
     menu: 'Menu',
     migas: 'Breadcrumb',
     irAlInicio: 'Home',
-    redes: 'Social',
     documentacionOficial: 'Official documentation',
     ojo: 'Careful:',
     borrador: 'draft',
@@ -35,6 +33,7 @@ export const en: Textos = {
     tecnicasAria: 'Techniques',
     tecnologiasAria: 'Technologies',
     avatarAlt: 'Illustrated avatar of Ricardo Hidalgo',
+    ogAlt: 'yConFi: “Learn by building. Demonstrate by explaining.”, with Ricardo Hidalgo’s avatar',
   },
 
   tema: {
@@ -80,7 +79,6 @@ export const en: Textos = {
       'Walkthroughs, techniques, tools, command options and projects in a single index. Searches can be shared: the query goes in the address.',
     buscar: 'Search',
     sinJs: 'Search needs JavaScript. All the content is still in its indexes:',
-    indices: 'Indexes',
   },
 
   idioma: {
@@ -161,7 +159,6 @@ export const en: Textos = {
     varias: 'people found it useful',
     falloMuchos: 'There is a lot going on right now. Try again in a minute.',
     falloGenerico: 'Your vote could not be saved. Please try again later.',
-    conectado: 'connected',
     noDisponible: 'unavailable',
     noDisponibleTexto:
       'The counter is not responding right now. The content works the same and no number is shown.',
@@ -192,7 +189,6 @@ export const en: Textos = {
     totalUnaPlantilla: '{n} machine',
     parcialPlantilla: '{visibles} of {total} machines',
     sinResultados: 'No machine matches these filters.',
-    migas: 'walkthroughs',
     fichaPlataforma: 'Platform',
     fichaSerie: 'Series',
     fichaSistema: 'OS',
@@ -210,7 +206,6 @@ export const en: Textos = {
     introHtmlPlantilla:
       'Another way through the <a href="{href}">walkthroughs</a>: by what gets done on each machine.',
     vacio: 'There are no techniques yet: they will show up as walkthroughs get published.',
-    migas: 'techniques',
     tituloPlantilla: 'Technique: {nombre}',
     descripcionPlantilla: 'Walkthroughs that use the {nombre} technique.',
     usanUna: '1 machine uses this technique.',
@@ -222,11 +217,9 @@ export const en: Textos = {
     descripcion: 'Projects I have built and how I did it.',
     intro: 'Things I have built to solve real problems, and how I did it.',
     vacio: 'There are no projects published yet.',
-    migas: 'projects',
     estado: 'Status',
     fecha: 'Date',
     tecnologias: 'Technologies',
-    codigo: 'Code',
     repositorio: 'Repository',
     demo: 'Demo',
     eyebrow: 'Project',

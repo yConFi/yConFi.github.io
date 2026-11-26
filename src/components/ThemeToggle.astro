@@ -73,6 +73,11 @@ const t = textos(idioma);
     cursor: pointer;
   }
 
+  /* Sin JavaScript no puede cambiar nada: manda el tema del sistema. */
+  :global(:root:not(.js)) .theme-toggle {
+    display: none;
+  }
+
   .theme-toggle:hover {
     border-color: var(--accent);
     color: var(--text);

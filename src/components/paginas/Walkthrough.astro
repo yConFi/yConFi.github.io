@@ -52,6 +52,11 @@ const langContenido =
 
 // Cadena y relacionados: derivados del contenido, nunca escritos a mano.
 const cadena = cadenaDeWalkthrough({ id: walkthrough.id, ...data, body: walkthrough.body ?? '' }, idioma);
+const migas = [
+  { texto: t.nav.inicio, href: ruta('inicio', idioma) },
+  { texto: t.nav.walkthroughs, href: ruta('walkthroughs', idioma) },
+  { texto: data.titulo },
+];
 const todos = (await obtenerWalkthroughs()).map((w) => ({ id: w.id, ...w.data }));
 const siguientes = relacionados({ id: walkthrough.id, ...data }, todos);
 
@@ -61,7 +66,18 @@ const equivalentes = Object.fromEntries(
 ) as Record<Idioma, string>;
 ---
 
-<BaseLayout idioma={idioma} titulo={data.titulo} descripcion={data.resumen} equivalentes={equivalentes}>
+<BaseLayout
+  idioma={idioma}
+  titulo={data.titulo}
+  descripcion={data.resumen}
+  equivalentes={equivalentes}
+  tipoSeo="articulo"
+  fecha={data.fecha}
+  actualizado={data.actualizado}
+  migas={migas}
+  palabrasClave={tecnicas.map((x) => x.nombre)}
+  contenidoEnCastellano={langContenido !== undefined}
+>
   <article class="walkthrough">
     {
       data.borrador && (
@@ -75,14 +91,7 @@ const equivalentes = Object.fromEntries(
     <AvisoTraduccion idioma={idioma} estado={data.translationStatus} />
 
     <header class="cabecera">
-      <Migas
-        idioma={idioma}
-        migas={[
-          { texto: t.nav.inicio, href: ruta('inicio', idioma) },
-          { texto: t.nav.walkthroughs, href: ruta('walkthroughs', idioma) },
-          { texto: data.titulo },
-        ]}
-      />
+      <Migas idioma={idioma} migas={migas} />
 
       <div class="presentacion">
         <div class="identidad">

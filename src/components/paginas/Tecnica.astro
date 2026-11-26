@@ -19,6 +19,11 @@ const n = tecnica.walkthroughs.length;
 const equivalentes = Object.fromEntries(
   IDIOMAS.map((otro) => [otro, rutaHija('tecnicas', otro, tecnicaEnIdioma(tecnica.canonico, otro).slug)]),
 ) as Record<Idioma, string>;
+const migas = [
+  { texto: t.nav.inicio, href: ruta('inicio', idioma) },
+  { texto: t.nav.tecnicas, href: ruta('tecnicas', idioma) },
+  { texto: tecnica.nombre },
+];
 ---
 
 <BaseLayout
@@ -26,15 +31,10 @@ const equivalentes = Object.fromEntries(
   titulo={rellenar(t.tecnicas.tituloPlantilla, { nombre: tecnica.nombre })}
   descripcion={rellenar(t.tecnicas.descripcionPlantilla, { nombre: tecnica.nombre })}
   equivalentes={equivalentes}
+  tipoSeo="articulo"
+  migas={migas}
 >
-  <Migas
-    idioma={idioma}
-    migas={[
-      { texto: t.nav.inicio, href: ruta('inicio', idioma) },
-      { texto: t.nav.tecnicas, href: ruta('tecnicas', idioma) },
-      { texto: tecnica.nombre },
-    ]}
-  />
+  <Migas idioma={idioma} migas={migas} />
 
   <div class="cabecera-pagina">
     <h1><span class="almohadilla" aria-hidden="true">#</span>{tecnica.nombre}</h1>

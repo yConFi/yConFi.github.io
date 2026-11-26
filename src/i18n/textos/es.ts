@@ -27,11 +27,9 @@ export const es = {
       'Portfolio de ciberseguridad y walkthroughs paso a paso de máquinas y retos retirados, con cada parte de cada comando explicada.',
     saltarContenido: 'Saltar al contenido',
     navPrincipal: 'Principal',
-    navSecundaria: 'Más secciones',
     menu: 'Menú',
     migas: 'Migas de pan',
     irAlInicio: 'Inicio',
-    redes: 'Redes',
     documentacionOficial: 'Documentación oficial',
     ojo: 'Ojo:',
     borrador: 'borrador',
@@ -40,6 +38,7 @@ export const es = {
     tecnicasAria: 'Técnicas',
     tecnologiasAria: 'Tecnologías',
     avatarAlt: 'Avatar ilustrado de Ricardo Hidalgo',
+    ogAlt: 'yConFi: «Aprender haciendo. Demostrar explicando.», con el avatar de Ricardo Hidalgo',
   },
 
   // El botón de tema rota sistema → claro → oscuro → sistema. Su nombre dice el
@@ -88,7 +87,6 @@ export const es = {
       'Walkthroughs, técnicas, herramientas, opciones de comandos y proyectos en un único índice. La búsqueda se puede compartir: la consulta va en la dirección.',
     buscar: 'Buscar',
     sinJs: 'La búsqueda necesita JavaScript. Todo el contenido sigue en sus índices:',
-    indices: 'Índices',
   },
 
   idioma: {
@@ -174,7 +172,6 @@ export const es = {
     varias: 'personas lo han encontrado útil',
     falloMuchos: 'Ahora mismo hay mucho movimiento. Prueba dentro de un minuto.',
     falloGenerico: 'No se ha podido guardar tu voto. Inténtalo más tarde.',
-    conectado: 'conectado',
     noDisponible: 'no disponible',
     noDisponibleTexto:
       'El contador no responde ahora mismo. El contenido funciona igual y no se muestra ninguna cifra.',
@@ -205,7 +202,6 @@ export const es = {
     totalUnaPlantilla: '{n} máquina',
     parcialPlantilla: '{visibles} de {total} máquinas',
     sinResultados: 'Ninguna máquina coincide con estos filtros.',
-    migas: 'walkthroughs',
     fichaPlataforma: 'Plataforma',
     fichaSerie: 'Serie',
     fichaSistema: 'Sistema',
@@ -223,7 +219,6 @@ export const es = {
     introHtmlPlantilla:
       'Otra forma de recorrer los <a href="{href}">walkthroughs</a>: por lo que se hace en cada máquina.',
     vacio: 'Todavía no hay técnicas: aparecerán al publicar walkthroughs.',
-    migas: 'técnicas',
     tituloPlantilla: 'Técnica: {nombre}',
     descripcionPlantilla: 'Walkthroughs en los que se usa la técnica {nombre}.',
     usanUna: '1 máquina usa esta técnica.',
@@ -235,11 +230,9 @@ export const es = {
     descripcion: 'Proyectos que he construido y cómo los hice.',
     intro: 'Cosas que he construido para resolver problemas reales, y cómo las hice.',
     vacio: 'Todavía no hay proyectos publicados.',
-    migas: 'proyectos',
     estado: 'Estado',
     fecha: 'Fecha',
     tecnologias: 'Tecnologías',
-    codigo: 'Código',
     repositorio: 'Repositorio',
     demo: 'Demo',
     eyebrow: 'Proyecto',

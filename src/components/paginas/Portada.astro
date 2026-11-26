@@ -74,7 +74,7 @@ const EJEMPLOS = ['WinRM', 'nmap -p', 'HMAC', b.ejemploFtp, 'reverse shell'];
 const enBiblioteca = (q: string) => `${ruta('biblioteca', idioma)}?q=${encodeURIComponent(q)}`;
 ---
 
-<BaseLayout idioma={idioma}>
+<BaseLayout idioma={idioma} tipoSeo="inicio">
   <div class="portada">
     <EvidenceHero idioma={idioma} />
 
