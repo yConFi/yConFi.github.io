@@ -1,0 +1,342 @@
+---
+// Búsqueda global: un <dialog> modal que abre el lanzador de la cabecera o
+// Ctrl/⌘ K. El <dialog> nativo da gratis el foco contenido, Escape y el fondo
+// inerte; el script devuelve el foco al lanzador al cerrar.
+//
+// Sin JavaScript el lanzador es un enlace a la Biblioteca y este diálogo no se
+// abre nunca. También lleva los textos que usa el script (los de la Biblioteca
+// salen de aquí), y los estilos de los resultados, que comparten las dos.
+import { ruta, textos, type Idioma } from '../i18n';
+import type { TextosBusqueda } from '../scripts/busqueda';
+import Ejemplos from './EjemplosBusqueda.astro';
+import ErrorBusqueda from './ErrorBusqueda.astro';
+
+interface Props {
+  idioma: Idioma;
+}
+
+const { idioma } = Astro.props;
+const t = textos(idioma);
+const b = t.busqueda;
+
+// Cambia en cada compilación: el navegador puede guardar el índice en caché
+// sin riesgo de quedarse con uno viejo.
+const version = import.meta.env.PROD ? Date.now().toString(36) : 'dev';
+
+const datos: { textos: TextosBusqueda; indice: string } = {
+  indice: `/search/${idioma}.json?v=${version}`,
+  textos: {
+    cargando: b.cargando,
+    resultadosPlantilla: b.resultadosPlantilla,
+    resultadoUnoPlantilla: b.resultadoUnoPlantilla,
+    vacioPlantilla: b.vacioPlantilla,
+    intenciones: { aprender: b.aprender, aplicar: b.aplicar, consultar: b.consultar },
+    tipos: {
+      walkthrough: b.tipoWalkthrough,
+      technique: b.tipoTechnique,
+      tool: b.tipoTool,
+      option: b.tipoOption,
+      dictionary: b.tipoDictionary,
+      project: b.tipoProject,
+    },
+  },
+};
+---
+
+<script type="application/json" data-textos-busqueda set:html={JSON.stringify(datos).replaceAll('<', '\\u003c')} />
+
+<dialog class="buscador" id="buscador" data-buscador aria-labelledby="buscador-titulo">
+  <div class="buscador-cabeza">
+    <h2 id="buscador-titulo">{b.titulo}</h2>
+    <button type="button" class="buscador-cerrar" data-cerrar>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <path d="m6 6 12 12M18 6 6 18"></path>
+      </svg>
+      <span class="visually-hidden">{b.cerrar}</span>
+    </button>
+  </div>
+
+  <label class="visually-hidden" for="buscador-consulta">{b.etiqueta}</label>
+  <div class="caja-busqueda">
+    <input
+      id="buscador-consulta"
+      type="search"
+      class="campo"
+      data-consulta
+      autocomplete="off"
+      spellcheck="false"
+      placeholder={b.placeholder}
+    />
+    <kbd aria-hidden="true">Esc</kbd>
+  </div>
+
+  <Ejemplos idioma={idioma} />
+
+  <p class="estado-busqueda" data-estado aria-live="polite"></p>
+  <ErrorBusqueda idioma={idioma} />
+  <div class="resultados-busqueda" data-resultados></div>
+
+  <p class="buscador-pie">
+    <a href={ruta('biblioteca', idioma)} data-ver-biblioteca>{b.verBiblioteca} →</a>
+  </p>
+</dialog>
+
+<script>
+  import { iniciarBuscadorGlobal } from '../scripts/busqueda';
+  iniciarBuscadorGlobal();
+</script>
+
+<style>
+  .buscador {
+    width: min(46rem, calc(100vw - 2 * var(--gutter)));
+    max-height: min(44rem, calc(100dvh - 2rem));
+    margin: clamp(1rem, 8vh, 5rem) auto auto;
+    padding: var(--space-6);
+    border: 1px solid var(--line-strong);
+    border-top: 0.35rem solid var(--relation);
+    border-radius: var(--radius-l);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow-panel);
+    overflow-y: auto;
+  }
+
+  .buscador::backdrop {
+    background: rgb(10 14 16 / 0.55);
+  }
+
+  .buscador-cabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: var(--space-4);
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+
+  .buscador-cerrar {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-m);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .buscador-cerrar:hover {
+    border-color: var(--accent);
+  }
+
+  .buscador-cerrar svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  .buscador-pie {
+    margin: var(--space-4) 0 0;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--line);
+  }
+
+  .buscador-pie a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+
+  @media (max-width: 30rem) {
+    .buscador {
+      padding: var(--space-4);
+    }
+  }
+</style>
+
+<style is:global>
+  /* ---------- Piezas comunes del diálogo y de la Biblioteca ---------- */
+  .caja-busqueda {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-right: 0.6rem;
+    border: 1px solid var(--line-strong);
+    border-left: 0.4rem solid var(--relation);
+    border-radius: var(--radius-m);
+    background: var(--surface);
+  }
+
+  .caja-busqueda:focus-within {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .caja-busqueda .campo {
+    min-height: 3.25rem;
+    border: 0;
+    background: transparent;
+    font-size: 1.1rem;
+  }
+
+  .caja-busqueda .campo:focus-visible {
+    outline: none;
+  }
+
+  .estado-busqueda {
+    margin: var(--space-4) 0 var(--space-2);
+    color: var(--muted);
+  }
+
+  .estado-busqueda:empty {
+    display: none;
+  }
+
+  .grupo-titulo {
+    margin: var(--space-4) 0 var(--space-2);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .lista-resultados {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Cada resultado: tipo y contenido. El color del borde ayuda, pero el tipo
+     siempre está escrito. */
+  .resultado {
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--line);
+    border-left: 0.3rem solid var(--relation);
+    border-radius: var(--radius-m);
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color var(--motion-fast) var(--ease);
+  }
+
+  .resultado-walkthrough,
+  .resultado-technique {
+    border-left-color: var(--accent);
+  }
+
+  .resultado-project {
+    border-left-color: var(--text);
+  }
+
+  .resultado:hover {
+    border-color: var(--line-strong);
+  }
+
+  .resultado:hover .resultado-titulo {
+    text-decoration: underline;
+  }
+
+  .resultado-tipo,
+  .resultado-ruta {
+    overflow-wrap: anywhere;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .resultado-tipo {
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .resultado-titulo {
+    font-weight: 650;
+    overflow-wrap: anywhere;
+  }
+
+  .resultado-resumen {
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .ejemplos-busqueda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ejemplos-busqueda[hidden] {
+    display: none;
+  }
+
+  .ejemplo-busqueda {
+    min-height: 2.75rem;
+    padding: 0 0.8rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-s);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  .ejemplo-busqueda:hover {
+    border-color: var(--relation);
+  }
+
+  .error-busqueda {
+    margin: var(--space-4) 0;
+    padding: var(--space-4);
+    border: 1px solid var(--danger);
+    border-radius: var(--radius-m);
+    background: var(--danger-soft);
+  }
+
+  .error-busqueda[hidden] {
+    display: none;
+  }
+
+  .error-busqueda p {
+    margin: 0 0 var(--space-2);
+  }
+
+  .error-busqueda ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .error-busqueda a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+
+  @media (forced-colors: active) {
+    .resultado,
+    .caja-busqueda,
+    .ejemplo-busqueda,
+    .error-busqueda {
+      border-color: CanvasText;
+    }
+  }
+</style>

@@ -46,6 +46,41 @@ export const en: Textos = {
   busqueda: {
     lanzador: 'Search',
     atajo: 'Ctrl K',
+    titulo: 'Search all the knowledge',
+    etiqueta: 'Query',
+    placeholder: 'Try: WinRM, nmap -p, HMAC…',
+    cerrar: 'Close search',
+    ejemplos: 'Example searches',
+    ejemploFtp: 'anonymous FTP',
+    cargando: 'Loading the index…',
+    resultadosPlantilla: '{n} results for “{q}”',
+    resultadoUnoPlantilla: '{n} result for “{q}”',
+    vacioPlantilla: 'Nothing matches “{q}”. Try a technique, a tool or part of a command, such as -p.',
+    error: 'The search index could not be loaded. All the content is still in its indexes:',
+    verBiblioteca: 'Open in the Library',
+    aprender: 'Learn',
+    aplicar: 'Apply',
+    consultar: 'Look up',
+    tipoWalkthrough: 'Walkthrough',
+    tipoTechnique: 'Technique',
+    tipoTool: 'Tool',
+    tipoOption: 'Command option',
+    tipoDictionary: 'Shell operator',
+    tipoProject: 'Project',
+    filtro: 'Type',
+    todos: 'All',
+  },
+
+  biblioteca: {
+    titulo: 'Library',
+    descripcion:
+      'Search everything: walkthroughs, techniques, tools, command options, operators and projects, in a single static index.',
+    eyebrow: 'General index',
+    intro:
+      'Walkthroughs, techniques, tools, command options and projects in a single index. Searches can be shared: the query goes in the address.',
+    buscar: 'Search',
+    sinJs: 'Search needs JavaScript. All the content is still in its indexes:',
+    indices: 'Indexes',
   },
 
   idioma: {

@@ -1,0 +1,27 @@
+---
+// Qué se ve si el índice de búsqueda no carga: el motivo y los índices HTML,
+// que funcionan siempre. Nunca un panel vacío.
+import { ruta, textos, type Idioma } from '../i18n';
+
+interface Props {
+  idioma: Idioma;
+  /** true para que se vea desde el principio (la Biblioteca sin JavaScript). */
+  visible?: boolean;
+  /** Texto del aviso; por defecto, el del fallo de carga. */
+  mensaje?: string;
+}
+
+const { idioma, visible = false, mensaje } = Astro.props;
+const t = textos(idioma);
+---
+
+{/* Solo el aviso de fallo lleva data-error: es el que el script enseña y oculta. */}
+<div class="error-busqueda" role={visible ? undefined : 'alert'} data-error={visible ? undefined : ''} hidden={!visible}>
+  <p>{mensaje ?? t.busqueda.error}</p>
+  <ul>
+    <li><a href={ruta('walkthroughs', idioma)}>{t.nav.walkthroughs}</a></li>
+    <li><a href={ruta('tecnicas', idioma)}>{t.nav.tecnicas}</a></li>
+    <li><a href={ruta('proyectos', idioma)}>{t.nav.proyectos}</a></li>
+    <li><a href={ruta('diccionario', idioma)}>{t.nav.diccionario}</a></li>
+  </ul>
+</div>

@@ -53,6 +53,42 @@ export const es = {
   busqueda: {
     lanzador: 'Buscar',
     atajo: 'Ctrl K',
+    titulo: 'Buscar en todo el conocimiento',
+    etiqueta: 'Consulta',
+    placeholder: 'Prueba: WinRM, nmap -p, HMAC…',
+    cerrar: 'Cerrar la búsqueda',
+    ejemplos: 'Búsquedas de ejemplo',
+    ejemploFtp: 'FTP anónimo',
+    cargando: 'Cargando el índice…',
+    resultadosPlantilla: '{n} resultados para «{q}»',
+    resultadoUnoPlantilla: '{n} resultado para «{q}»',
+    vacioPlantilla:
+      'Nada coincide con «{q}». Prueba con una técnica, una herramienta o una parte del comando, como -p.',
+    error: 'No se ha podido cargar el índice de búsqueda. Todo el contenido sigue en sus índices:',
+    verBiblioteca: 'Abrir en la Biblioteca',
+    aprender: 'Aprender',
+    aplicar: 'Aplicar',
+    consultar: 'Consultar',
+    tipoWalkthrough: 'Walkthrough',
+    tipoTechnique: 'Técnica',
+    tipoTool: 'Herramienta',
+    tipoOption: 'Opción de comando',
+    tipoDictionary: 'Operador de shell',
+    tipoProject: 'Proyecto',
+    filtro: 'Tipo',
+    todos: 'Todo',
+  },
+
+  biblioteca: {
+    titulo: 'Biblioteca',
+    descripcion:
+      'Busca en todo: walkthroughs, técnicas, herramientas, opciones de comandos, operadores y proyectos, en un único índice estático.',
+    eyebrow: 'Índice general',
+    intro:
+      'Walkthroughs, técnicas, herramientas, opciones de comandos y proyectos en un único índice. La búsqueda se puede compartir: la consulta va en la dirección.',
+    buscar: 'Buscar',
+    sinJs: 'La búsqueda necesita JavaScript. Todo el contenido sigue en sus índices:',
+    indices: 'Índices',
   },
 
   idioma: {
