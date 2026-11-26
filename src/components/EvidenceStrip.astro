@@ -1,0 +1,90 @@
+---
+// Franja de estado de la portada. TODAS las cifras salen del contenido
+// publicado (colecciones y diccionario): ninguna se escribe a mano.
+import { textos, type Idioma } from '../i18n';
+
+export interface Cifra {
+  valor: number | string;
+  etiqueta: string;
+  href?: string;
+}
+
+interface Props {
+  idioma: Idioma;
+  cifras: Cifra[];
+}
+
+const { idioma, cifras } = Astro.props;
+const t = textos(idioma);
+---
+
+<ul class="franja" aria-label={t.portada.estadoAria}>
+  {
+    cifras.map((c) => (
+      <li>
+        {c.href ? (
+          <a href={c.href}>
+            <span class="valor">{c.valor}</span> <span class="etiqueta">{c.etiqueta}</span>
+          </a>
+        ) : (
+          <span class="dato">
+            <span class="valor">{c.valor}</span> <span class="etiqueta">{c.etiqueta}</span>
+          </span>
+        )}
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .franja {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+    gap: 1px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    background: var(--line);
+    overflow: hidden;
+  }
+
+  li {
+    background: var(--surface);
+  }
+
+  a,
+  .dato {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    height: 100%;
+    padding: var(--space-4);
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  a:hover .etiqueta {
+    text-decoration: underline;
+  }
+
+  .valor {
+    font-family: var(--font-mono);
+    font-size: 1.6rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--accent-ink);
+  }
+
+  .etiqueta {
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  @media (forced-colors: active) {
+    .franja {
+      border-color: CanvasText;
+    }
+  }
+</style>

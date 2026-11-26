@@ -5,11 +5,15 @@ import Cmd from '../Cmd.astro';
 import Pista from '../Pista.astro';
 import Ruta from '../Ruta.astro';
 import Migas from '../Migas.astro';
+import RutaConocimiento from '../RutaConocimiento.astro';
+import { obtenerWalkthroughs } from '../../lib/coleccion';
+import { cadenaDeWalkthrough, relacionados } from '../../lib/relaciones';
 import {
   IDIOMA_POR_DEFECTO,
   IDIOMAS,
   etiquetaDificultad,
   etiquetaSistema,
+  rellenar,
   ruta,
   rutaHija,
   textos,
@@ -39,6 +43,11 @@ const indice = headings.filter((h) => h.depth === 2);
 const numero = (i: number) => String(i + 1).padStart(2, '0');
 
 const tecnicas = data.tecnicas.map((canonico) => tecnicaEnIdioma(canonico, idioma));
+
+// Cadena y relacionados: derivados del contenido, nunca escritos a mano.
+const cadena = cadenaDeWalkthrough({ id: walkthrough.id, ...data, body: walkthrough.body ?? '' }, idioma);
+const todos = (await obtenerWalkthroughs()).map((w) => ({ id: w.id, ...w.data }));
+const siguientes = relacionados({ id: walkthrough.id, ...data }, todos);
 
 // El id de la máquina es el mismo en los dos idiomas: solo cambia el segmento.
 const equivalentes = Object.fromEntries(
@@ -132,12 +141,101 @@ const equivalentes = Object.fromEntries(
 
       <div class="prosa">
         <Content components={{ Cmd, Pista, Ruta }} />
+
+        {
+          cadena && (
+            <section class="extra" aria-labelledby="titulo-cadena">
+              <h2 id="titulo-cadena">{t.walkthroughs.cadenaTitulo}</h2>
+              <p class="extra-intro">{t.walkthroughs.cadenaIntro}</p>
+              <RutaConocimiento idioma={idioma} nodos={cadena} />
+            </section>
+          )
+        }
+
+        {
+          siguientes.length > 0 && (
+            <section class="extra" aria-labelledby="titulo-relacionados">
+              <h2 id="titulo-relacionados">{t.walkthroughs.relacionadosTitulo}</h2>
+              <ul class="relacionados">
+                {siguientes.map(({ item, comparte }) => (
+                  <li>
+                    <a href={rutaHija('walkthroughs', idioma, item.id)}>{item.titulo}</a>
+                    <span class="porque">
+                      {rellenar(t.walkthroughs.compartePlantilla, {
+                        tecnicas: comparte.map((c) => tecnicaEnIdioma(c, idioma).nombre).join(', '),
+                      })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        }
       </div>
     </div>
   </article>
 </BaseLayout>
 
 <style>
+  /* La cadena y los relacionados van tras las Lecciones aprendidas, con su
+     propio título: no son una sección del walkthrough. */
+  .extra {
+    margin-top: var(--space-12);
+    padding-top: var(--space-6);
+    border-top: 2px solid var(--line);
+  }
+
+  .extra h2 {
+    margin-top: 0;
+  }
+
+  .extra-intro {
+    color: var(--muted);
+  }
+
+  /* Dentro de la columna de lectura, la cadena siempre se apila. */
+  .extra :global(.ruta-conocimiento) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .extra :global(.ruta-conocimiento > li:first-child) {
+    padding-top: 0;
+  }
+
+  .extra :global(.relacion::before) {
+    content: '↓ ';
+  }
+
+  .relacionados {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .relacionados li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--line);
+    border-left: 0.3rem solid var(--relation);
+    border-radius: var(--radius-m);
+    background: var(--surface);
+  }
+
+  .relacionados a {
+    font-weight: 650;
+  }
+
+  .porque {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
   .franja-borrador {
     margin: 0 0 1.5rem;
     padding: 0.75rem 1rem;

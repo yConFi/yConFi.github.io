@@ -97,40 +97,70 @@ export const es = {
     cambiarPlantilla: 'Ver esta página en {idioma}',
   },
 
+  // Portada del Laboratorio. El titular y las CTA son los del handoff de diseño;
+  // el resto son datos y frases de Ricardo que ya estaban publicados.
   portada: {
-    lemaHtml: 'Estoy haciendo el camino hacia la <strong>ciberseguridad</strong>.',
-    pitchHtml:
-      'Aquí publico mis proyectos y los walkthroughs de las máquinas y retos <strong>retirados</strong> que voy resolviendo, con cada parte de cada comando explicada.',
-    verWalkthroughs: 'Ver los walkthroughs',
-    terminal: {
-      barra: 'ricardo@yconfi: ~ — bash',
-      whoami: 'ricardo · estudiante de ciberseguridad',
-      ordenObjetivo: 'cat objetivo.txt',
-      objetivo:
-        'Lo que busco, sobre todo, es aprender. Y cuando se me dé la oportunidad, trabajar en ello para aprender aún más.',
-      ordenFormacion: 'ls formacion/',
-      formacion1: 'ASIR · LinkiaFP',
-      formacion1Fecha: '→ sep 2027',
-      formacion2: 'Máster en Ciberseguridad & IA · Evolve',
-      formacion2Fecha: '→ abr 2027',
-    },
-    cifrasAria: 'En cifras',
-    maquinaResuelta: 'máquina resuelta',
-    maquinasResueltas: 'máquinas resueltas',
-    herramientasExplicadas: 'herramientas explicadas',
-    opcionesDiccionario: 'opciones en el diccionario',
+    eyebrow: 'Conocimiento aplicado y comprobable',
+    titulo: 'Aprender haciendo. Demostrar explicando.',
+    ledeHtml:
+      'Los proyectos muestran capacidad aplicada; los walkthroughs muestran método. Aquí publico los de las máquinas y retos <strong>retirados</strong> que voy resolviendo, con cada parte de cada comando explicada.',
+    consultar: 'Consultar conocimiento',
+    verEvidencia: 'Ver evidencia aplicada',
+    perfil: 'Perfil',
+    rol: 'Estudiante de ciberseguridad',
+    objetivo:
+      'Lo que busco, sobre todo, es aprender. Y cuando se me dé la oportunidad, trabajar en ello para aprender aún más.',
+    formacion: 'Formación',
+    formacion1: 'ASIR · LinkiaFP',
+    formacion1Fecha: '→ sep 2027',
+    formacion2: 'Máster en Ciberseguridad & IA · Evolve',
+    formacion2Fecha: '→ abr 2027',
+    buscarTitulo: 'Busca una técnica, una herramienta o un comando',
+    buscarBoton: 'Buscar',
+    estadoAria: 'Estado del laboratorio',
+    walkthrough: 'walkthrough',
+    walkthroughs: 'walkthroughs',
+    tecnica: 'técnica',
+    tecnicas: 'técnicas',
+    herramientas: 'herramientas explicadas',
+    opciones: 'opciones en el diccionario',
     proyecto: 'proyecto',
     proyectos: 'proyectos',
-    ultimasMaquinas: 'Últimas máquinas',
-    verTodasPlantilla: 'ver todas ({n}) →',
-    verTodosPlantilla: 'ver todos ({n}) →',
+    ultimo: 'último walkthrough',
+    entradasEyebrow: 'Método, evidencia y referencia',
+    entradasTitulo: 'Tres formas de entrar',
+    metodo: 'Método',
+    metodoTexto: 'El walkthrough más reciente, con cada comando desglosado.',
+    evidencia: 'Evidencia',
+    evidenciaTexto: 'Un proyecto real: qué resuelve, con qué y en qué estado está.',
+    referencia: 'Referencia',
+    referenciaPlantilla: '{n} opciones de {herramienta} explicadas, con enlace a su documentación oficial.',
+    verTodosPlantilla: 'Ver todos ({n})',
+    destacadoEyebrow: 'Caso destacado',
+    verCaso: 'Ver el caso completo',
+    cadenaEyebrow: 'Cadena de conocimiento',
+    cadenaTitulo: 'De un walkthrough a la documentación oficial',
+    cadenaIntro:
+      'Cada paso enlaza con el siguiente y dice por qué está ahí: así se puede comprobar cualquier explicación.',
     sobreMi: 'Sobre mí',
     sobreMi1Html:
       'Decidí estudiar ciberseguridad por curiosidad y porque es algo que siempre me ha llamado la atención. Empezó cuando tenía unos 12 años, jugando al famoso <em>Habbo</em>.',
     sobreMi2Html:
       'Lo que busco, sobre todo, es <strong>aprender</strong>. Y cuando se me dé la oportunidad, trabajar en ello para aprender aún más. Por eso explico cada comando parte por parte: para entender bien cada paso y que también le sirvan a otros.',
-    contacto: 'Contacto',
-    logrosYPlataformas: 'Logros y plataformas',
+  },
+
+  // Cadena de conocimiento: el tipo de cada eslabón y por qué está ahí.
+  cadena: {
+    walkthrough: 'Walkthrough',
+    technique: 'Técnica',
+    command: 'Comando',
+    dictionary: 'Diccionario',
+    source: 'Fuente oficial',
+    porTecnica: 'usa la técnica',
+    porComando: 'que se aplica con',
+    porDiccionario: 'cuya opción se explica en',
+    porFuente: 'y se comprueba en',
+    aria: 'Cadena de conocimiento',
   },
 
   util: {
@@ -181,6 +211,10 @@ export const es = {
     fichaSistema: 'Sistema',
     fichaFecha: 'Fecha',
     indice: 'En esta máquina',
+    cadenaTitulo: 'La cadena de esta máquina',
+    cadenaIntro: 'Del walkthrough a la documentación oficial: cada paso dice por qué enlaza con el siguiente.',
+    relacionadosTitulo: 'Siguientes máquinas',
+    compartePlantilla: 'Comparte: {tecnicas}',
   },
 
   tecnicas: {

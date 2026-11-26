@@ -1,0 +1,103 @@
+---
+// Un eslabón de la cadena de conocimiento: tipo, título, resumen y por qué está
+// enlazado con el anterior (la relación se escribe, no se deja a un color).
+import type { NodoConocimiento } from '../lib/relaciones';
+
+interface Props {
+  nodo: NodoConocimiento;
+  /** Nombre visible del tipo ("Técnica"). */
+  tipo: string;
+  /** Por qué sigue al anterior ("usa la técnica"). Vacío en el primero. */
+  relacion?: string;
+  numero: number;
+}
+
+const { nodo, tipo, relacion, numero } = Astro.props;
+---
+
+<li class:list={['nodo', `nodo-${nodo.tipo}`]}>
+  {relacion && <p class="relacion">{relacion}</p>}
+  <div class="caja">
+    <p class="tipo"><span aria-hidden="true">{String(numero).padStart(2, '0')} · </span>{tipo}</p>
+    <a class="titulo" href={nodo.href} rel={nodo.externo ? 'noopener' : undefined}>
+      {nodo.codigo ? <code>{nodo.titulo}</code> : nodo.titulo}
+    </a>
+    {nodo.resumen && <p class="resumen">{nodo.resumen}</p>}
+  </div>
+</li>
+
+<style>
+  .nodo {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .relacion {
+    margin: 0 0 var(--space-2);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--relation);
+  }
+
+  /* Flecha decorativa: la relación ya está escrita encima. */
+  .relacion::before {
+    content: '↓ ';
+  }
+
+  .caja {
+    flex: 1;
+    padding: var(--space-4);
+    border: 1px solid var(--line);
+    border-top: 0.25rem solid var(--relation);
+    border-radius: var(--radius-m);
+    background: var(--surface);
+  }
+
+  .nodo-walkthrough .caja {
+    border-top-color: var(--accent);
+  }
+
+  .nodo-source .caja {
+    border-top-color: var(--text);
+  }
+
+  .tipo {
+    margin: 0 0 var(--space-1);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .titulo {
+    display: inline-block;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+  }
+
+  .titulo code {
+    font-size: 0.85rem;
+    white-space: normal;
+  }
+
+  .resumen {
+    margin: var(--space-2) 0 0;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  @media (min-width: 68rem) {
+    .relacion::before {
+      content: '→ ';
+    }
+  }
+
+  @media (forced-colors: active) {
+    .caja {
+      border-color: CanvasText;
+    }
+  }
+</style>
