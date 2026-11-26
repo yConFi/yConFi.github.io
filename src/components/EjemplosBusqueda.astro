@@ -1,0 +1,31 @@
+---
+// Las cinco consultas de ejemplo (las de aceptación del handoff). Con JavaScript
+// rellenan la búsqueda; sin él no se muestran, porque no harían nada.
+import { textos, type Idioma } from '../i18n';
+
+interface Props {
+  idioma: Idioma;
+}
+
+const { idioma } = Astro.props;
+const b = textos(idioma).busqueda;
+const EJEMPLOS = ['WinRM', 'nmap -p', 'HMAC', b.ejemploFtp, 'reverse shell'];
+---
+
+<ul class="ejemplos-busqueda" aria-label={b.ejemplos} data-ejemplos>
+  {
+    EJEMPLOS.map((e) => (
+      <li>
+        <button type="button" class="ejemplo-busqueda" data-ejemplo={e}>
+          {e}
+        </button>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  :global(:root:not(.js)) .ejemplos-busqueda {
+    display: none;
+  }
+</style>

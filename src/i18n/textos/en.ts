@@ -9,6 +9,7 @@ import type { Textos } from './es';
 export const en: Textos = {
   nav: {
     inicio: 'Home',
+    biblioteca: 'Library',
     walkthroughs: 'Walkthroughs',
     tecnicas: 'Techniques',
     proyectos: 'Projects',
@@ -21,8 +22,9 @@ export const en: Textos = {
       'Cybersecurity portfolio and step-by-step walkthroughs of retired machines and challenges, with every part of every command explained.',
     saltarContenido: 'Skip to content',
     navPrincipal: 'Main',
+    menu: 'Menu',
+    migas: 'Breadcrumb',
     irAlInicio: 'Home',
-    redes: 'Social',
     documentacionOficial: 'Official documentation',
     ojo: 'Careful:',
     borrador: 'draft',
@@ -31,11 +33,52 @@ export const en: Textos = {
     tecnicasAria: 'Techniques',
     tecnologiasAria: 'Technologies',
     avatarAlt: 'Illustrated avatar of Ricardo Hidalgo',
+    ogAlt: 'yConFi: “Learn by building. Demonstrate by explaining.”, with Ricardo Hidalgo’s avatar',
   },
 
   tema: {
-    aOscuro: 'Switch to dark theme',
-    aClaro: 'Switch to light theme',
+    sistemaAClaro: 'Theme: system. Switch to light',
+    claroAOscuro: 'Theme: light. Switch to dark',
+    oscuroASistema: 'Theme: dark. Go back to system',
+  },
+
+  busqueda: {
+    lanzador: 'Search',
+    atajo: 'Ctrl K',
+    titulo: 'Search all the knowledge',
+    etiqueta: 'Query',
+    placeholder: 'Try: WinRM, nmap -p, HMAC…',
+    cerrar: 'Close search',
+    ejemplos: 'Example searches',
+    ejemploFtp: 'anonymous FTP',
+    cargando: 'Loading the index…',
+    resultadosPlantilla: '{n} results for “{q}”',
+    resultadoUnoPlantilla: '{n} result for “{q}”',
+    vacioPlantilla: 'Nothing matches “{q}”. Try a technique, a tool or part of a command, such as -p.',
+    error: 'The search index could not be loaded. All the content is still in its indexes:',
+    verBiblioteca: 'Open in the Library',
+    aprender: 'Learn',
+    aplicar: 'Apply',
+    consultar: 'Look up',
+    tipoWalkthrough: 'Walkthrough',
+    tipoTechnique: 'Technique',
+    tipoTool: 'Tool',
+    tipoOption: 'Command option',
+    tipoDictionary: 'Shell operator',
+    tipoProject: 'Project',
+    filtro: 'Type',
+    todos: 'All',
+  },
+
+  biblioteca: {
+    titulo: 'Library',
+    descripcion:
+      'Search everything: walkthroughs, techniques, tools, command options, operators and projects, in a single static index.',
+    eyebrow: 'General index',
+    intro:
+      'Walkthroughs, techniques, tools, command options and projects in a single index. Searches can be shared: the query goes in the address.',
+    buscar: 'Search',
+    sinJs: 'Search needs JavaScript. All the content is still in its indexes:',
   },
 
   idioma: {
@@ -44,39 +87,65 @@ export const en: Textos = {
   },
 
   portada: {
-    lemaHtml: "I'm making my way into <strong>cybersecurity</strong>.",
-    pitchHtml:
-      'Here I publish my projects and the walkthroughs of the <strong>retired</strong> machines and challenges I solve, with every part of every command explained.',
-    verWalkthroughs: 'See the walkthroughs',
-    terminal: {
-      barra: 'ricardo@yconfi: ~ — bash',
-      whoami: 'ricardo · cybersecurity student',
-      ordenObjetivo: 'cat goal.txt',
-      objetivo:
-        "What I'm after, above all, is learning. And when I get the chance, working at it to learn even more.",
-      ordenFormacion: 'ls education/',
-      formacion1: 'ASIR · LinkiaFP',
-      formacion1Fecha: '→ Sep 2027',
-      formacion2: "Master's in Cybersecurity & AI · Evolve",
-      formacion2Fecha: '→ Apr 2027',
-    },
-    cifrasAria: 'In numbers',
-    maquinaResuelta: 'machine solved',
-    maquinasResueltas: 'machines solved',
-    herramientasExplicadas: 'tools explained',
-    opcionesDiccionario: 'options in the dictionary',
+    eyebrow: 'Applied, verifiable knowledge',
+    titulo: 'Learn by building. Demonstrate by explaining.',
+    ledeHtml:
+      'Projects show applied ability; walkthroughs show method. Here I publish the walkthroughs of the <strong>retired</strong> machines and challenges I solve, with every part of every command explained.',
+    consultar: 'Look up knowledge',
+    verEvidencia: 'See applied evidence',
+    perfil: 'Profile',
+    rol: 'Cybersecurity student',
+    objetivo:
+      "What I'm after, above all, is learning. And when I get the chance, working at it to learn even more.",
+    formacion: 'Education',
+    formacion1: 'ASIR · LinkiaFP',
+    formacion1Fecha: '→ Sep 2027',
+    formacion2: "Master's in Cybersecurity & AI · Evolve",
+    formacion2Fecha: '→ Apr 2027',
+    buscarTitulo: 'Search for a technique, a tool or a command',
+    buscarBoton: 'Search',
+    estadoAria: 'Lab status',
+    walkthrough: 'walkthrough',
+    walkthroughs: 'walkthroughs',
+    tecnica: 'technique',
+    tecnicas: 'techniques',
+    herramientas: 'tools explained',
+    opciones: 'options in the dictionary',
     proyecto: 'project',
     proyectos: 'projects',
-    ultimasMaquinas: 'Latest machines',
-    verTodasPlantilla: 'see all ({n}) →',
-    verTodosPlantilla: 'see all ({n}) →',
+    ultimo: 'latest walkthrough',
+    entradasEyebrow: 'Method, evidence and reference',
+    entradasTitulo: 'Three ways in',
+    metodo: 'Method',
+    metodoTexto: 'The latest walkthrough, with every command broken down.',
+    evidencia: 'Evidence',
+    evidenciaTexto: 'A real project: what it solves, what it is built with and what state it is in.',
+    referencia: 'Reference',
+    referenciaPlantilla: '{n} {herramienta} options explained, with a link to its official documentation.',
+    verTodosPlantilla: 'See all ({n})',
+    destacadoEyebrow: 'Featured case',
+    verCaso: 'See the full case',
+    cadenaEyebrow: 'Knowledge chain',
+    cadenaTitulo: 'From a walkthrough to the official documentation',
+    cadenaIntro: 'Each step links to the next and says why it is there: that way any explanation can be checked.',
     sobreMi: 'About me',
     sobreMi1Html:
       'I decided to study cybersecurity out of curiosity, and because it is something that has always caught my attention. It started when I was about 12, playing the famous <em>Habbo</em>.',
     sobreMi2Html:
       "What I'm after, above all, is to <strong>learn</strong>. And when I get the chance, to work at it and learn even more. That is why I explain every command part by part: to understand each step properly, and so that it is useful to others too.",
-    contacto: 'Contact',
-    logrosYPlataformas: 'Achievements and platforms',
+  },
+
+  cadena: {
+    walkthrough: 'Walkthrough',
+    technique: 'Technique',
+    command: 'Command',
+    dictionary: 'Dictionary',
+    source: 'Official source',
+    porTecnica: 'uses the technique',
+    porComando: 'applied with',
+    porDiccionario: 'whose option is explained in',
+    porFuente: 'and checked against',
+    aria: 'Knowledge chain',
   },
 
   util: {
@@ -90,6 +159,9 @@ export const en: Textos = {
     varias: 'people found it useful',
     falloMuchos: 'There is a lot going on right now. Try again in a minute.',
     falloGenerico: 'Your vote could not be saved. Please try again later.',
+    noDisponible: 'unavailable',
+    noDisponibleTexto:
+      'The counter is not responding right now. The content works the same and no number is shown.',
   },
 
   walkthroughs: {
@@ -97,7 +169,7 @@ export const en: Textos = {
     descripcion: 'Step-by-step walkthroughs of retired machines and challenges, with every command explained.',
     vacio: 'There are no walkthroughs published yet.',
     introHtml:
-      '<strong>Retired</strong> machines and challenges, solved step by step. Hover over any part of a command and it tells you what it does.',
+      '<strong>Retired</strong> machines and challenges, solved step by step. Tap any part of a command and it tells you what it does.',
     todasLasTecnicasHtmlPlantilla: 'All the techniques are at <a href="{href}">{ruta}</a>.',
     filtrosAria: 'Filter walkthroughs',
     buscar: 'Search',
@@ -117,12 +189,15 @@ export const en: Textos = {
     totalUnaPlantilla: '{n} machine',
     parcialPlantilla: '{visibles} of {total} machines',
     sinResultados: 'No machine matches these filters.',
-    migas: 'walkthroughs',
     fichaPlataforma: 'Platform',
     fichaSerie: 'Series',
     fichaSistema: 'OS',
     fichaFecha: 'Date',
     indice: 'In this walkthrough',
+    cadenaTitulo: 'This machine’s chain',
+    cadenaIntro: 'From the walkthrough to the official documentation: each step says why it links to the next.',
+    relacionadosTitulo: 'Next machines',
+    compartePlantilla: 'Shares: {tecnicas}',
   },
 
   tecnicas: {
@@ -131,7 +206,6 @@ export const en: Textos = {
     introHtmlPlantilla:
       'Another way through the <a href="{href}">walkthroughs</a>: by what gets done on each machine.',
     vacio: 'There are no techniques yet: they will show up as walkthroughs get published.',
-    migas: 'techniques',
     tituloPlantilla: 'Technique: {nombre}',
     descripcionPlantilla: 'Walkthroughs that use the {nombre} technique.',
     usanUna: '1 machine uses this technique.',
@@ -143,13 +217,14 @@ export const en: Textos = {
     descripcion: 'Projects I have built and how I did it.',
     intro: 'Things I have built to solve real problems, and how I did it.',
     vacio: 'There are no projects published yet.',
-    migas: 'projects',
     estado: 'Status',
     fecha: 'Date',
     tecnologias: 'Technologies',
-    codigo: 'Code',
     repositorio: 'Repository',
     demo: 'Demo',
+    eyebrow: 'Project',
+    equipo: 'Team project',
+    enlaces: 'Code and evidence',
   },
 
   logros: {
@@ -157,8 +232,6 @@ export const en: Textos = {
     descripcion: 'Certifications earned and progress on cybersecurity practice platforms.',
     intro: 'Certifications I have earned and my progress on practice platforms.',
     certificaciones: 'Certifications',
-    sinCertificacionesHtmlPlantilla:
-      'I do not have any certification yet. In the meantime, what I am learning is in the <a href="{href}">walkthroughs</a>.',
     verificar: 'Verify credential',
     plataformas: 'Platforms',
     rango: 'Rank:',
@@ -182,6 +255,16 @@ export const en: Textos = {
     sinResultados: 'Nothing in the dictionary matches your search.',
     resultadoPlantilla: '{secciones} sections and {entradas} entries match.',
     resultadoUnaPlantilla: '{secciones} section and {entradas} entries match.',
+  },
+
+  pie: {
+    principiosTitulo: 'Responsible publishing',
+    principio1: 'Only retired machines and permitted practice.',
+    principio2: 'A flag is never published.',
+    principio3: 'Every explanation links to its official documentation.',
+    principio4: 'No trackers or third-party resources.',
+    secciones: 'Sections',
+    enlaces: 'Links',
   },
 
   pista: {
@@ -212,7 +295,12 @@ export const en: Textos = {
   },
 
   cmd: {
-    ayuda: 'tap any part to see what it does',
+    etiqueta: 'Explained command',
+    explorar: 'Explore command',
+    partesAria: 'Command parts',
+    ayudaExplorar:
+      'Tap a part of the command, or press “Explore command” and move through it with the arrow keys (Home and End jump to the ends, Escape leaves).',
+    verEnDiccionario: 'See it in the dictionary',
     copiar: 'Copy',
     copiarOculto: ' command',
     copiado: 'Copied',

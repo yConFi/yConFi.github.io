@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { PERFILES } from '../../data/site';
-import { rellenar, ruta, textos, type Idioma } from '../../i18n';
+import { rellenar, textos, type Idioma } from '../../i18n';
 import { obtenerCertificaciones } from '../../lib/coleccion';
 import { formatearFecha } from '../../lib/walkthroughs';
 
@@ -21,15 +21,11 @@ const iso = (fecha: Date) => fecha.toISOString().slice(0, 10);
     <p>{t.logros.intro}</p>
   </div>
 
-  <section aria-labelledby="titulo-certificaciones">
-    <h2 id="titulo-certificaciones">{t.logros.certificaciones}</h2>
-    {
-      certificaciones.length === 0 ? (
-        <p
-          class="vacio"
-          set:html={rellenar(t.logros.sinCertificacionesHtmlPlantilla, { href: ruta('walkthroughs', idioma) })}
-        />
-      ) : (
+  {/* Solo certificaciones reales: si no hay ninguna publicada, la sección no se muestra. */}
+  {
+    certificaciones.length > 0 && (
+      <section aria-labelledby="titulo-certificaciones">
+        <h2 id="titulo-certificaciones">{t.logros.certificaciones}</h2>
         <ul class="rejilla">
           {certificaciones.map(({ data }) => (
             <li class="tarjeta">
@@ -48,9 +44,9 @@ const iso = (fecha: Date) => fecha.toISOString().slice(0, 10);
             </li>
           ))}
         </ul>
-      )
-    }
-  </section>
+      </section>
+    )
+  }
 
   <section aria-labelledby="titulo-plataformas">
     <h2 id="titulo-plataformas">{t.logros.plataformas}</h2>

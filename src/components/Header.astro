@@ -1,4 +1,14 @@
 ---
+// Cabecera fija de una fila (64 px).
+//
+// - Desde 1088 px: marca, navegación, búsqueda, contador, idioma y tema.
+// - Por debajo: marca, búsqueda y botón de menú. El panel del menú contiene la
+//   navegación y después las utilidades, en el mismo orden que el DOM.
+// - Sin JavaScript no hay botón de menú: la navegación se ve entera debajo de
+//   la marca (la cabecera crece, pero todo sigue accesible).
+//
+// La cabecera nunca se oculta al hacer scroll: lo pide el handoff para que la
+// búsqueda y el menú estén siempre a mano y el foco nunca quede detrás.
 import ThemeToggle from './ThemeToggle.astro';
 import SelectorIdioma from './SelectorIdioma.astro';
 import BotonUtil from './BotonUtil.astro';
@@ -16,103 +26,145 @@ const enlaces = navegacion(idioma, t.nav);
 const ruta = Astro.url.pathname;
 ---
 
-<header class="cabecera" id="cabecera">
+<header class="cabecera" data-cabecera>
   <div class="contenedor">
-    <a href={rutaDe('inicio', idioma)} class="logo" aria-label={t.general.irAlInicio}>
-      <span class="prompt-logo" aria-hidden="true">~/</span>yconfi<span class="cursor" aria-hidden="true">_</span>
+    <a href={rutaDe('inicio', idioma)} class="marca" aria-label={`yConFi · ${t.general.irAlInicio}`}>
+      <span class="marca-sello" aria-hidden="true">~/</span><span aria-hidden="true">yconfi</span>
     </a>
 
-    <nav aria-label={t.general.navPrincipal}>
-      <ul>
-        {
-          enlaces.map((enlace) => (
-            <li>
-              <a href={enlace.href} aria-current={esSeccionActiva(enlace, ruta) ? 'page' : undefined}>
-                {enlace.texto}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </nav>
+    <!-- Sin JavaScript es un enlace a la Biblioteca; con él abre la búsqueda global. -->
+    <a class="lanzador" href={rutaDe('biblioteca', idioma)} data-busqueda-abrir>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <circle cx="10.5" cy="10.5" r="6.5"></circle>
+        <path d="m15.5 15.5 5 5"></path>
+      </svg>
+      <span class="lanzador-texto">{t.busqueda.lanzador}</span>
+      <kbd class="lanzador-atajo" aria-hidden="true">{t.busqueda.atajo}</kbd>
+    </a>
 
-    <div class="controles">
-      <BotonUtil idioma={idioma} />
-      <SelectorIdioma idioma={idioma} alternativas={alternativas} />
-      <ThemeToggle idioma={idioma} />
+    <button type="button" class="menu-boton" aria-expanded="false" aria-controls="menu-principal" data-menu-boton>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <path class="abierto-no" d="M4 7h16M4 12h16M4 17h16"></path>
+        <path class="abierto-si" d="m6 6 12 12M18 6 6 18"></path>
+      </svg>
+      <span class="visually-hidden">{t.general.menu}</span>
+    </button>
+
+    <div class="menu" id="menu-principal" data-menu>
+      <nav aria-label={t.general.navPrincipal}>
+        <ul>
+          {
+            enlaces.map((enlace) => (
+              <li>
+                <a href={enlace.href} aria-current={esSeccionActiva(enlace, ruta) ? 'page' : undefined}>
+                  {enlace.texto}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <div class="controles">
+        <BotonUtil idioma={idioma} />
+        <SelectorIdioma idioma={idioma} alternativas={alternativas} />
+        <ThemeToggle idioma={idioma} />
+      </div>
     </div>
   </div>
 </header>
 
 <style>
-  /* La barra acompaña al scroll. Al bajar se esconde para dejar sitio al texto;
-     al subir reaparece, así no hay que volver al principio de la página. */
   .cabecera {
     position: sticky;
     top: 0;
     z-index: 50;
-    border-bottom: 1px solid var(--borde);
-    background: var(--bg);
-    transition: transform 0.25s ease;
-  }
-
-  .cabecera.oculta {
-    transform: translateY(-100%);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .cabecera {
-      transition: none;
-    }
+    border-bottom: 2px solid var(--line);
+    background: var(--surface);
   }
 
   .contenedor {
-    max-width: var(--ancho-max);
+    position: relative;
+    max-width: var(--max);
+    min-height: var(--header-h);
     margin-inline: auto;
-    padding: 0.7rem var(--gutter);
+    padding: 0.5rem var(--gutter);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.5rem 1.5rem;
+    gap: 0.5rem;
   }
 
-  .logo {
-    font-family: var(--fuente-mono);
+  /* ---------- Marca ---------- */
+  .marca {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 2.75rem;
+    margin-right: auto;
+    font-family: var(--font-mono);
     font-weight: 600;
     font-size: 1.05rem;
     letter-spacing: -0.01em;
-    color: var(--texto);
+    color: var(--text);
     text-decoration: none;
-    margin-right: auto;
   }
 
-  .prompt-logo,
-  .cursor {
-    color: var(--acento);
+  .marca-sello {
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.2rem;
+    background: var(--accent);
+    color: var(--accent-contrast);
   }
 
-  .cursor {
-    animation: parpadeo 1.1s steps(1) infinite;
-  }
-
-  @keyframes parpadeo {
-    50% {
-      opacity: 0;
-    }
-  }
-
-  .controles {
-    display: flex;
+  /* ---------- Botones de la barra (búsqueda y menú) ---------- */
+  .lanzador,
+  .menu-boton {
+    display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 2.75rem;
+    height: 2.75rem;
+    padding: 0 0.7rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-m);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .lanzador:hover,
+  .menu-boton:hover,
+  .menu-boton[aria-expanded='true'] {
+    border-color: var(--accent);
+  }
+
+  .lanzador svg,
+  .menu-boton svg {
+    width: 1.15rem;
+    height: 1.15rem;
     flex-shrink: 0;
   }
 
-  nav {
-    order: 3;
-    width: 100%;
+  .lanzador-texto,
+  .lanzador-atajo {
+    display: none;
   }
 
+  .menu-boton .abierto-si,
+  .menu-boton[aria-expanded='true'] .abierto-no {
+    display: none;
+  }
+
+  .menu-boton[aria-expanded='true'] .abierto-si {
+    display: inline;
+  }
+
+  /* ---------- Navegación ---------- */
   ul {
     list-style: none;
     margin: 0;
@@ -123,73 +175,189 @@ const ruta = Astro.url.pathname;
   }
 
   nav a {
-    display: inline-block;
-    padding: 0.5rem 0.7rem;
-    border-radius: var(--radio-sm);
-    font-family: var(--fuente-mono);
-    font-size: 0.875rem;
-    color: var(--texto-suave);
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0 0.8rem;
+    border-radius: var(--radius-m);
+    color: var(--muted);
+    font-weight: 500;
     text-decoration: none;
   }
 
   nav a:hover {
-    background: var(--bg-elev);
-    color: var(--texto);
+    background: var(--surface-2);
+    color: var(--text);
   }
 
-  /* La sección en la que estás se marca con el acento relleno, no solo con color. */
+  /* La sección en la que estás: acento relleno, no solo color. */
   nav a[aria-current='page'] {
-    background: var(--acento);
-    color: var(--acento-sobre);
-    font-weight: 600;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-weight: 650;
   }
 
-  nav a[aria-current='page']:hover {
-    background: var(--acento);
-    color: var(--acento-sobre);
+  .controles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
   }
 
-  @media (min-width: 52rem) {
-    nav {
-      order: 0;
+  /* ---------- Sin JavaScript: todo visible, en flujo ---------- */
+  :global(:root:not(.js)) .menu-boton {
+    display: none;
+  }
+
+  :global(:root:not(.js)) .menu {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  /* ---------- Con JavaScript y por debajo de 1088 px: panel desplegable ---------- */
+  @media (max-width: 67.999rem) {
+    :global(:root.js) .menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      /* El 2px del borde de la cabecera queda por encima del panel. */
+      margin-top: 2px;
+      max-height: calc(100dvh - var(--header-h));
+      overflow-y: auto;
+      padding: 0.75rem var(--gutter) 1.25rem;
+      border-bottom: 2px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--shadow-panel);
+    }
+
+    :global(:root.js) .menu:not([data-abierto]) {
+      display: none;
+    }
+
+    :global(:root.js) .menu ul {
+      flex-direction: column;
+    }
+
+    :global(:root.js) .controles {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--line);
+    }
+
+    /* El panel del contador se abre dentro del menú, en flujo, sin salirse. */
+    .menu :global(.util),
+    .menu :global(.util .panel) {
+      position: static;
+    }
+
+    .menu :global(.util .panel) {
       width: auto;
+      margin-top: 0.5rem;
+      box-shadow: none;
+    }
+
+    /* Ocupa su propia fila; el orden visual sigue siendo el del DOM. */
+    .menu :global(.util) {
+      flex-basis: 100%;
+    }
+  }
+
+  /* ---------- Escritorio: una fila ---------- */
+  @media (min-width: 68rem) {
+    .contenedor {
+      flex-wrap: nowrap;
+      height: var(--header-h);
+      padding-block: 0;
+      gap: 0.75rem;
+    }
+
+    .marca {
+      margin-right: 0;
+    }
+
+    .menu-boton {
+      display: none;
+    }
+
+    /* El menú se deshace y sus hijos se colocan en la misma fila que la marca. */
+    .menu,
+    :global(:root:not(.js)) .menu {
+      display: contents;
+    }
+
+    nav {
+      order: 1;
+      margin-inline: auto;
+    }
+
+    .lanzador {
+      order: 2;
+    }
+
+    .controles {
+      order: 3;
+      flex-wrap: nowrap;
+    }
+
+    .lanzador-texto {
+      display: inline;
+    }
+  }
+
+  @media (min-width: 75rem) {
+    .lanzador-atajo {
+      display: inline-block;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .cabecera {
+      border-bottom-color: CanvasText;
+    }
+
+    nav a[aria-current='page'] {
+      outline: 2px solid CanvasText;
     }
   }
 </style>
 
 <script>
-  // Mide la cabecera y la publica como --altura-cabecera para que las anclas
-  // (#reconocimiento, el índice del walkthrough…) no queden tapadas por ella.
-  const cabecera = document.getElementById('cabecera');
+  const boton = document.querySelector<HTMLButtonElement>('[data-menu-boton]');
+  const menu = document.querySelector<HTMLElement>('[data-menu]');
+  const cabecera = document.querySelector<HTMLElement>('[data-cabecera]');
 
-  if (cabecera) {
-    const raiz = document.documentElement;
-
-    const medir = () => {
-      raiz.style.setProperty('--altura-cabecera', `${cabecera.offsetHeight}px`);
+  if (boton && menu && cabecera) {
+    const abrir = (si: boolean, devolverFoco = false) => {
+      menu.toggleAttribute('data-abierto', si);
+      boton.setAttribute('aria-expanded', String(si));
+      if (!si && devolverFoco) boton.focus();
     };
 
-    medir();
-    if ('ResizeObserver' in window) new ResizeObserver(medir).observe(cabecera);
+    boton.addEventListener('click', () => abrir(!menu.hasAttribute('data-abierto')));
 
-    // Se oculta al bajar y vuelve al subir. Nunca mientras el foco está dentro
-    // (navegación con teclado) ni cerca del principio de la página.
-    let anterior = window.scrollY;
+    // Escape cierra el menú y devuelve el foco al botón que lo abrió. Si el panel
+    // del contador está abierto, su propio Escape lo cierra primero.
+    document.addEventListener('keydown', (evento) => {
+      if (evento.key !== 'Escape' || !menu.hasAttribute('data-abierto')) return;
+      const panelUtil = menu.querySelector<HTMLElement>('[data-util-panel]');
+      if (panelUtil && !panelUtil.hidden) return;
+      abrir(false, true);
+    });
 
-    window.addEventListener(
-      'scroll',
-      () => {
-        const actual = window.scrollY;
-        const bajando = actual > anterior;
-        const margen = cabecera.offsetHeight * 2;
+    // Un clic fuera de la cabecera lo cierra.
+    document.addEventListener('click', (evento) => {
+      if (menu.hasAttribute('data-abierto') && !cabecera.contains(evento.target as Node)) abrir(false);
+    });
 
-        if (!cabecera.contains(document.activeElement)) {
-          cabecera.classList.toggle('oculta', bajando && actual > margen);
-        }
-
-        anterior = actual;
-      },
-      { passive: true },
-    );
+    // Al pasar a escritorio el panel deja de existir: se cierra para no dejar
+    // aria-expanded="true" colgando.
+    window.matchMedia('(min-width: 68rem)').addEventListener('change', (evento) => {
+      if (evento.matches) abrir(false);
+    });
   }
 </script>

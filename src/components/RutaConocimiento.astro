@@ -1,0 +1,57 @@
+---
+// Ruta de conocimiento de cinco nodos: walkthrough → técnica → comando →
+// diccionario → fuente. Es una lista ordenada de verdad: la misma información
+// para quien la ve y para quien la escucha. Las flechas son decorativas; la
+// relación entre un paso y el siguiente va escrita.
+//
+// En escritorio los cinco pasos van en fila; por debajo se apilan.
+import NodoConocimiento from './NodoConocimiento.astro';
+import { textos, type Idioma } from '../i18n';
+import type { NodoConocimiento as Nodo } from '../lib/relaciones';
+
+interface Props {
+  idioma: Idioma;
+  nodos: Nodo[];
+}
+
+const { idioma, nodos } = Astro.props;
+const c = textos(idioma).cadena;
+const RELACION: Record<Nodo['tipo'], string> = {
+  walkthrough: '',
+  technique: c.porTecnica,
+  command: c.porComando,
+  dictionary: c.porDiccionario,
+  source: c.porFuente,
+};
+---
+
+<ol class="ruta-conocimiento" aria-label={c.aria}>
+  {
+    nodos.map((nodo, i) => (
+      <NodoConocimiento nodo={nodo} tipo={c[nodo.tipo]} relacion={i > 0 ? RELACION[nodo.tipo] : undefined} numero={i + 1} />
+    ))
+  }
+</ol>
+
+<style>
+  .ruta-conocimiento {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 68rem) {
+    .ruta-conocimiento {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      align-items: stretch;
+    }
+
+    /* El primer nodo no tiene relación encima: se alinea con los demás. */
+    .ruta-conocimiento > :global(li:first-child) {
+      padding-top: calc(0.78rem * 1.6 + var(--space-2));
+    }
+  }
+</style>

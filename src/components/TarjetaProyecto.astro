@@ -26,7 +26,8 @@ const estado = etiquetaEstado(p.data.estado, idioma);
     </p>
   </div>
 
-  <p class="resumen">{p.data.resumen}</p>
+  {p.data.equipo && <p class="equipo">{t.proyectos.equipo}</p>}
+  <p class="resumen" lang={idioma === 'es' || p.data.translationStatus === 'complete' ? undefined : 'es'}>{p.data.resumen}</p>
 
   <ul class="tecnologias" aria-label={t.general.tecnologiasAria}>
     {p.data.tecnologias.map((t) => <li class="etiqueta">{t}</li>)}
@@ -97,6 +98,13 @@ const estado = etiquetaEstado(p.data.estado, idioma);
 
   .estado.activo {
     color: var(--acento-texto);
+  }
+
+  .equipo {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--accent-ink);
   }
 
   .resumen {

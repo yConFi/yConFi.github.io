@@ -1,0 +1,215 @@
+---
+// Hero del Laboratorio: tesis, las dos llamadas a la acción y la tarjeta de
+// perfil con el avatar real del repositorio. Sin "contrátame", disponibilidad
+// ni contacto inventado: solo datos que ya estaban publicados.
+import { Image } from 'astro:assets';
+import avatar from '../assets/avatar/ricardo.webp';
+import { ENLACES } from '../data/site';
+import { ruta, textos, type Idioma } from '../i18n';
+
+interface Props {
+  idioma: Idioma;
+}
+
+const { idioma } = Astro.props;
+const t = textos(idioma);
+const p = t.portada;
+---
+
+<section class="hero" aria-labelledby="hero-titulo">
+  <div class="tesis">
+    <p class="eyebrow">{p.eyebrow}</p>
+    <h1 id="hero-titulo">{p.titulo}</h1>
+    <p class="lede" set:html={p.ledeHtml} />
+    <div class="acciones">
+      <a class="boton boton-principal" href={ruta('biblioteca', idioma)}>{p.consultar}</a>
+      <a class="boton" href={ruta('proyectos', idioma)}>{p.verEvidencia}</a>
+    </div>
+  </div>
+
+  <aside class="perfil" aria-labelledby="perfil-titulo">
+    <Image src={avatar} width={320} height={320} alt={t.general.avatarAlt} loading="eager" class="foto" />
+    <div class="perfil-texto">
+      <p class="eyebrow">{p.perfil}</p>
+      <h2 id="perfil-titulo">Ricardo Hidalgo <span class="alias">· yConFi</span></h2>
+      <p class="rol">{p.rol}</p>
+      <p>{p.objetivo}</p>
+      <h3>{p.formacion}</h3>
+      <ul class="formacion">
+        <li>{p.formacion1} <span class="fecha">{p.formacion1Fecha}</span></li>
+        <li>{p.formacion2} <span class="fecha">{p.formacion2Fecha}</span></li>
+      </ul>
+      <p class="enlaces">
+        <a href={ENLACES.linkedin} rel="me noopener">LinkedIn</a>
+        <span aria-hidden="true">·</span>
+        <a href={ENLACES.github} rel="me noopener">GitHub</a>
+      </p>
+    </div>
+  </aside>
+</section>
+
+<style>
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+
+  @media (min-width: 58rem) {
+    .hero {
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.65fr);
+    }
+  }
+
+  .tesis {
+    padding: clamp(1.25rem, 5vw, 4rem);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    background: var(--surface);
+    box-shadow: var(--shadow-panel);
+  }
+
+  h1 {
+    max-width: 13ch;
+    font-size: clamp(2.4rem, 7vw, 4.5rem);
+    line-height: 1.02;
+    letter-spacing: -0.055em;
+  }
+
+  .lede {
+    max-width: 38rem;
+    margin: var(--space-6) 0 0;
+    font-size: clamp(1.05rem, 2vw, 1.25rem);
+    color: var(--muted);
+  }
+
+  .acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-8);
+  }
+
+  /* ---------- Tarjeta de perfil ---------- */
+  .perfil {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    background: var(--surface);
+  }
+
+  .foto {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 18rem;
+    aspect-ratio: 1;
+    object-fit: cover;
+    object-position: 50% 30%;
+    background: var(--accent-soft);
+  }
+
+  .perfil-texto {
+    padding: var(--space-6);
+    border-top: 0.35rem solid var(--accent);
+  }
+
+  .perfil h2 {
+    margin: 0;
+    font-size: 1.3rem;
+  }
+
+  .alias {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  .rol {
+    margin: var(--space-1) 0 var(--space-3);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--accent-ink);
+  }
+
+  .perfil p {
+    margin-block: 0 var(--space-3);
+  }
+
+  .perfil h3 {
+    margin: var(--space-4) 0 var(--space-2);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .formacion {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.95rem;
+  }
+
+  .fecha {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .enlaces {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: var(--space-4) 0 0 !important;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+
+  .enlaces a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+
+  /* En móvil la tarjeta separa imagen y texto: la imagen no ocupa la pantalla. */
+  @media (max-width: 57.999rem) {
+    .perfil {
+      flex-direction: row;
+      align-items: stretch;
+    }
+
+    .foto {
+      width: 8rem;
+      max-height: none;
+      aspect-ratio: auto;
+      flex-shrink: 0;
+    }
+
+    .perfil-texto {
+      border-top: 0;
+      border-left: 0.35rem solid var(--accent);
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .perfil {
+      flex-direction: column;
+    }
+
+    .foto {
+      width: 100%;
+      max-height: 12rem;
+    }
+
+    .perfil-texto {
+      border-left: 0;
+      border-top: 0.35rem solid var(--accent);
+      padding: var(--space-4);
+    }
+  }
+</style>

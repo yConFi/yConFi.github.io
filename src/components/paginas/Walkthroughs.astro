@@ -1,9 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TarjetaWalkthrough from '../TarjetaWalkthrough.astro';
+import AvisoTraduccion from '../AvisoTraduccion.astro';
 import { DIFICULTADES, PLATAFORMAS, SERIES, SISTEMAS } from '../../data/valores';
 import {
-  IDIOMA_POR_DEFECTO,
   etiquetaDificultad,
   etiquetaSistema,
   rellenar,
@@ -86,7 +86,7 @@ const series = SERIES.flatMap((nombre) => {
         </div>
 
         {/* Las tarjetas llevan el resumen en castellano: se avisa una vez, arriba. */}
-        {idioma !== IDIOMA_POR_DEFECTO && <p class="aviso-idioma" role="note">{t.aviso.resumenesEnOtroIdioma}</p>}
+        <AvisoTraduccion idioma={idioma} que="resumenes" />
 
         <form
           class="filtros"

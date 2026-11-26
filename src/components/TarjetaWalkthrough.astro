@@ -75,7 +75,7 @@ const texto = [
     {origen.map((parte) => <li>{parte}</li>)}
   </ul>
 
-  <p class="resumen">{data.resumen}</p>
+  <p class="resumen" lang={idioma === 'es' || data.translationStatus === 'complete' ? undefined : 'es'}>{data.resumen}</p>
 
   <div class="pie">
     <span class="so">{sistema}</span>

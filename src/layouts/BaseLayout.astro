@@ -2,9 +2,12 @@
 import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import BuscadorGlobal from '../components/BuscadorGlobal.astro';
 import { SITE } from '../data/site';
-import { LANG, OG_LOCALE, rutaEquivalente, textos, type Idioma } from '../i18n';
+import type { Miga } from '../components/Migas.astro';
+import { IDIOMA_POR_DEFECTO, LANG, OG_LOCALE, rutaEquivalente, textos, type Idioma } from '../i18n';
 import { IDIOMAS } from '../i18n/idiomas';
+import { jsonLd, serializar, type TipoSeo } from '../lib/seo';
 
 interface Props {
   /** Idioma de la página. Lo pasa la ruta, nunca se adivina. */
@@ -25,9 +28,36 @@ interface Props {
    * el slug puede cambiar de idioma y solo ellas saben cuál es el suyo.
    */
   equivalentes?: Partial<Record<Idioma, string>>;
+  /** Tipo de página para los datos estructurados. Por defecto, una página web. */
+  tipoSeo?: TipoSeo;
+  /** Fecha real del contenido (frontmatter), si la tiene. */
+  fecha?: Date;
+  /** Última actualización real, si la hubo. */
+  actualizado?: Date;
+  /** Migas de pan, para BreadcrumbList (las mismas que pinta <Migas>). */
+  migas?: Miga[];
+  /** Repositorio público (proyectos). */
+  repositorio?: string;
+  palabrasClave?: string[];
+  /** true si el CUERPO está en castellano aunque la página sea de otro idioma. */
+  contenidoEnCastellano?: boolean;
 }
 
-const { idioma, titulo, descripcion, noindex = false, anchoCompleto = false, equivalentes } = Astro.props;
+const {
+  idioma,
+  titulo,
+  descripcion,
+  noindex = false,
+  anchoCompleto = false,
+  equivalentes,
+  tipoSeo = 'pagina',
+  fecha,
+  actualizado,
+  migas,
+  repositorio,
+  palabrasClave,
+  contenidoEnCastellano = false,
+} = Astro.props;
 
 const t = textos(idioma);
 const descripcionFinal = descripcion ?? t.general.descripcionSitio;
@@ -43,6 +73,31 @@ for (const otro of IDIOMAS) {
   const ruta = equivalentes?.[otro] ?? rutaEquivalente(Astro.url.pathname, otro);
   if (ruta) alternativas.set(otro, ruta);
 }
+
+// x-default: la versión en castellano, que es la original.
+const porDefecto = alternativas.get(IDIOMA_POR_DEFECTO);
+
+// Vista previa al compartir: imagen generada en local (public/og/), 1200×630.
+const imagen = absoluta(`/og/yconfi-${idioma}.png`);
+const esArticulo = tipoSeo === 'articulo' || tipoSeo === 'proyecto';
+
+const datosEstructurados =
+  Astro.site && canonica && !noindex
+    ? jsonLd({
+        tipo: tipoSeo,
+        idioma,
+        url: canonica,
+        sitio: new URL('/', Astro.site).href,
+        titulo: titulo ?? SITE.titulo,
+        descripcion: descripcionFinal,
+        idiomaContenido: contenidoEnCastellano ? IDIOMA_POR_DEFECTO : idioma,
+        fecha,
+        actualizado,
+        repositorio,
+        palabrasClave,
+        migas: migas?.map((m) => ({ nombre: m.texto, url: absoluta(m.href ?? Astro.url.pathname)! })),
+      })
+    : undefined;
 ---
 
 <!doctype html>
@@ -65,18 +120,27 @@ for (const otro of IDIOMAS) {
           return href && <link rel="alternate" hreflang={LANG[otro]} href={href} />;
         })
     }
+    {!noindex && porDefecto && absoluta(porDefecto) && <link rel="alternate" hreflang="x-default" href={absoluta(porDefecto)} />}
 
-    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE.titulo} />
+    <meta property="og:type" content={esArticulo ? 'article' : 'website'} />
     <meta property="og:title" content={tituloCompleto} />
     <meta property="og:description" content={descripcionFinal} />
     <meta property="og:locale" content={OG_LOCALE[idioma]} />
     {canonica && <meta property="og:url" content={canonica} />}
+    {imagen && <meta property="og:image" content={imagen} />}
+    {imagen && <meta property="og:image:width" content="1200" />}
+    {imagen && <meta property="og:image:height" content="630" />}
+    {imagen && <meta property="og:image:alt" content={t.general.ogAlt} />}
+    {esArticulo && fecha && <meta property="article:published_time" content={fecha.toISOString().slice(0, 10)} />}
+    <meta name="twitter:card" content="summary_large_image" />
+    {datosEstructurados && <script type="application/ld+json" set:html={serializar(datosEstructurados)} />}
 
     <!-- El avatar, recortado a la cara: es lo que mejor se lee a 16-18 px en la pestaña. -->
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0c1116" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#181d21" media="(prefers-color-scheme: dark)" />
 
     <!-- Las dos fuentes que se ven desde el primer pintado. El resto se piden solo si hacen falta. -->
     <link rel="preload" href="/fuentes/ibm-plex-sans-var-latin.woff2" as="font" type="font/woff2" crossorigin />
@@ -87,6 +151,7 @@ for (const otro of IDIOMAS) {
       Si el visitante eligió uno, se aplica antes de pintar para evitar el parpadeo.
     -->
     <script is:inline>
+      document.documentElement.classList.add('js');
       try {
         const tema = localStorage.getItem('tema');
         if (tema === 'light' || tema === 'dark') document.documentElement.dataset.theme = tema;
@@ -100,6 +165,7 @@ for (const otro of IDIOMAS) {
       <slot />
     </main>
     <Footer idioma={idioma} />
+    <BuscadorGlobal idioma={idioma} />
   </body>
 </html>
 

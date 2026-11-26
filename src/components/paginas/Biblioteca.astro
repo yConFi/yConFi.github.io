@@ -1,0 +1,257 @@
+---
+// Biblioteca: búsqueda permanente sobre todo el índice, con filtro por tipo.
+//
+// La consulta va en la dirección (?q=nmap%20-p&type=option), así se puede
+// compartir. Es un <form method="get"> de verdad: sin JavaScript se envía y la
+// página dice que la búsqueda necesita JS, con enlaces a todos los índices HTML.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ErrorBusqueda from '../ErrorBusqueda.astro';
+import Ejemplos from '../EjemplosBusqueda.astro';
+import { textos, type Idioma } from '../../i18n';
+import { TIPOS, type TipoRegistro } from '../../lib/busqueda/tipos';
+
+interface Props {
+  idioma: Idioma;
+}
+
+const { idioma } = Astro.props;
+const t = textos(idioma);
+const b = t.busqueda;
+
+const NOMBRE_TIPO: Record<TipoRegistro, string> = {
+  walkthrough: b.tipoWalkthrough,
+  technique: b.tipoTechnique,
+  tool: b.tipoTool,
+  option: b.tipoOption,
+  dictionary: b.tipoDictionary,
+  project: b.tipoProject,
+};
+---
+
+<BaseLayout idioma={idioma} titulo={t.biblioteca.titulo} descripcion={t.biblioteca.descripcion} tipoSeo="biblioteca">
+  <header class="cabecera-pagina">
+    <p class="eyebrow">{t.biblioteca.eyebrow}</p>
+    <h1>{t.biblioteca.titulo}</h1>
+    <p>{t.biblioteca.intro}</p>
+  </header>
+
+  <div class="biblioteca" id="biblioteca" data-biblioteca>
+    <form class="consulta" method="get" role="search" data-form-biblioteca>
+      <label class="etiqueta-campo" for="biblioteca-consulta">{b.etiqueta}</label>
+      <div class="caja-busqueda">
+        <input
+          id="biblioteca-consulta"
+          name="q"
+          type="search"
+          class="campo"
+          data-consulta
+          autocomplete="off"
+          spellcheck="false"
+          placeholder={b.placeholder}
+        />
+      </div>
+
+      <fieldset class="filtros">
+        <legend class="etiqueta-campo">{b.filtro}</legend>
+        <label class="filtro">
+          <input type="radio" name="type" value="" checked data-filtro />
+          <span>{b.todos}</span>
+        </label>
+        {
+          TIPOS.map((tipo) => (
+            <label class="filtro">
+              <input type="radio" name="type" value={tipo} data-filtro />
+              <span>{NOMBRE_TIPO[tipo]}</span>
+            </label>
+          ))
+        }
+      </fieldset>
+
+      <button type="submit" class="boton boton-principal enviar">{t.biblioteca.buscar}</button>
+
+      <Ejemplos idioma={idioma} />
+    </form>
+
+    <section class="region-resultados" aria-labelledby="biblioteca-resultados-titulo">
+      <h2 id="biblioteca-resultados-titulo" class="visually-hidden">{t.biblioteca.buscar}</h2>
+      <div class="sin-js">
+        <ErrorBusqueda idioma={idioma} visible mensaje={t.biblioteca.sinJs} />
+      </div>
+      <p class="estado-busqueda" data-estado aria-live="polite"></p>
+      <ErrorBusqueda idioma={idioma} />
+      <div class="resultados-busqueda" data-resultados></div>
+    </section>
+  </div>
+</BaseLayout>
+
+<script>
+  import { leerTextos, pintar, piezasPanel } from '../../scripts/busqueda';
+  import { TIPOS, type TipoRegistro } from '../../lib/busqueda/tipos';
+
+  const raiz = document.querySelector<HTMLElement>('[data-biblioteca]');
+  const form = document.querySelector<HTMLFormElement>('[data-form-biblioteca]');
+  const datos = leerTextos();
+  const panel = raiz && piezasPanel(raiz);
+
+  if (raiz && form && datos && panel) {
+    const filtros = [...form.querySelectorAll<HTMLInputElement>('[data-filtro]')];
+    const tipoElegido = (): TipoRegistro | undefined => {
+      const valor = filtros.find((f) => f.checked)?.value;
+      return (TIPOS as readonly string[]).includes(valor ?? '') ? (valor as TipoRegistro) : undefined;
+    };
+
+    // La dirección manda al llegar: ?q=…&type=…
+    const params = new URLSearchParams(location.search);
+    panel.entrada.value = params.get('q') ?? '';
+    const tipoInicial = params.get('type') ?? '';
+    for (const f of filtros) f.checked = f.value === tipoInicial;
+    if (!filtros.some((f) => f.checked)) filtros[0]!.checked = true;
+
+    const actualizar = () => {
+      const q = panel.entrada.value.trim();
+      const tipo = tipoElegido();
+      const url = new URL(location.href);
+      if (q) url.searchParams.set('q', q);
+      else url.searchParams.delete('q');
+      if (tipo) url.searchParams.set('type', tipo);
+      else url.searchParams.delete('type');
+      history.replaceState(null, '', url);
+      void pintar(panel, datos.textos, datos.indice, tipo);
+    };
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      actualizar();
+    });
+    panel.entrada.addEventListener('input', actualizar);
+    for (const f of filtros) f.addEventListener('change', actualizar);
+    for (const ejemplo of form.querySelectorAll<HTMLButtonElement>('[data-ejemplo]')) {
+      ejemplo.addEventListener('click', () => {
+        panel.entrada.value = ejemplo.dataset.ejemplo ?? '';
+        actualizar();
+        panel.entrada.focus();
+      });
+    }
+
+    actualizar();
+  }
+</script>
+
+<style>
+  .biblioteca {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+    align-items: start;
+  }
+
+  @media (min-width: 58rem) {
+    .biblioteca {
+      grid-template-columns: minmax(18rem, 0.75fr) minmax(0, 1.25fr);
+    }
+
+    .consulta {
+      position: sticky;
+      top: calc(var(--header-h) + 1rem);
+    }
+  }
+
+  .consulta,
+  .region-resultados {
+    padding: var(--space-6);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    background: var(--surface);
+  }
+
+  .region-resultados {
+    min-height: 12rem;
+  }
+
+  @media (max-width: 30rem) {
+    .consulta,
+    .region-resultados {
+      padding: var(--space-4);
+    }
+  }
+
+  .etiqueta-campo {
+    display: block;
+    margin-bottom: var(--space-2);
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: var(--space-6) 0 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .filtros legend {
+    margin-bottom: var(--space-2);
+  }
+
+  /* El radio se queda en el DOM (teclado y lectores de pantalla) y se pinta la etiqueta. */
+  .filtro {
+    position: relative;
+  }
+
+  .filtro input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .filtro span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0 0.8rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-s);
+    font-size: 0.9rem;
+  }
+
+  .filtro input:checked + span {
+    border-color: var(--relation);
+    background: var(--relation-soft);
+    font-weight: 650;
+  }
+
+  .filtro input:checked + span::before {
+    content: '✓ ';
+    white-space: pre;
+  }
+
+  .filtro input:focus-visible + span {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .enviar {
+    margin-top: var(--space-6);
+  }
+
+  /* Con JavaScript se busca al escribir: el botón sobra. Sin JS, el aviso. */
+  :global(:root.js) .enviar,
+  :global(:root.js) .sin-js {
+    display: none;
+  }
+
+  @media (forced-colors: active) {
+    .filtro input:checked + span {
+      border: 2px solid Highlight;
+    }
+  }
+</style>

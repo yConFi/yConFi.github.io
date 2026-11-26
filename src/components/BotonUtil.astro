@@ -9,9 +9,13 @@
 // en móvil) y nadie vota por un clic accidental.
 //
 // El número lo sirve el Worker de `worker/` (un Durable Object, ver su README).
-// Aquí no hay ninguna cifra escrita a mano: el bloque empieza oculto y solo
-// aparece cuando el endpoint ha contestado. Si el endpoint no está configurado
-// o no responde, no se muestra nada. Mejor sin botón que con un número falso.
+// Aquí no hay ninguna cifra escrita a mano. Tres estados, siempre explícitos:
+// - conectado: el endpoint ha contestado y se ve el número real;
+// - agradecido: esta persona ya votó (icono de confirmación);
+// - no disponible: el endpoint no contesta a tiempo o falla. Se dice así, sin
+//   número y sin botón de votar. Mejor eso que una cifra falsa.
+// Mientras se espera la primera respuesta el bloque está oculto, y si no hay
+// endpoint configurado no se pinta nada.
 //
 // Que una misma persona no vote dos veces se resuelve en su navegador con
 // localStorage: aguanta recargar, cerrar y volver meses después. No aguanta
@@ -45,6 +49,8 @@ const CLAVE = 'util-votado-v1';
       data-txt-varias={t.util.varias}
       data-txt-muchos={t.util.falloMuchos}
       data-txt-fallo={t.util.falloGenerico}
+      data-txt-no-disponible={t.util.noDisponible}
+      data-txt-no-disponible-texto={t.util.noDisponibleTexto}
       hidden
     >
       <button
@@ -111,6 +117,8 @@ const CLAVE = 'util-votado-v1';
       varias: bloque.dataset.txtVarias ?? '',
       muchos: bloque.dataset.txtMuchos ?? '',
       fallo: bloque.dataset.txtFallo ?? '',
+      noDisponible: bloque.dataset.txtNoDisponible ?? '',
+      noDisponibleTexto: bloque.dataset.txtNoDisponibleTexto ?? '',
     };
 
     // ---------- Abrir y cerrar el panel ----------
@@ -160,16 +168,32 @@ const CLAVE = 'util-votado-v1';
       return total;
     };
 
-    // Arranque: se pide el total y solo entonces se enseña el botón. Si falla,
-    // se queda oculto y la página no muestra ningún contador.
+    // El Worker está fuera de GitHub Pages: si tarda, se da por no disponible.
+    const conTiempo = (): AbortSignal | undefined =>
+      'timeout' in AbortSignal ? AbortSignal.timeout(5000) : undefined;
+
+    // Estado "no disponible": se dice con palabras, sin número y sin votar.
+    const noDisponible = () => {
+      bloque.classList.add('no-disponible');
+      numeroBarra.textContent = txt.noDisponible;
+      numero.textContent = '';
+      frase.textContent = '';
+      boton.hidden = true;
+      fallo.removeAttribute('role');
+      fallo.textContent = txt.noDisponibleTexto;
+      fallo.hidden = false;
+      bloque.hidden = false;
+    };
+
+    // Arranque: se pide el total y solo entonces se enseña el número.
     (async () => {
       try {
-        const respuesta = await fetch(endpoint, { method: 'GET' });
+        const respuesta = await fetch(endpoint, { method: 'GET', signal: conTiempo() });
         if (!respuesta.ok) throw new Error(String(respuesta.status));
         pintar(await leerTotal(respuesta), yaVotado());
         bloque.hidden = false;
       } catch {
-        /* sin contador no hay botón: se deja oculto */
+        noDisponible();
       }
     })();
 
@@ -179,7 +203,7 @@ const CLAVE = 'util-votado-v1';
       fallo.hidden = true;
 
       try {
-        const respuesta = await fetch(endpoint, { method: 'POST' });
+        const respuesta = await fetch(endpoint, { method: 'POST', signal: conTiempo() });
 
         if (respuesta.status === 429) {
           // Tope por minuto del Worker: el voto no se ha guardado.
@@ -223,11 +247,11 @@ const CLAVE = 'util-votado-v1';
     gap: 0.4rem;
     height: 2.75rem;
     padding: 0 0.7rem;
-    background: var(--bg-elev);
-    color: var(--texto-suave);
-    border: 1px solid var(--borde);
-    border-radius: var(--radio);
-    font-family: var(--fuente-mono);
+    background: var(--surface);
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    font-family: var(--font-mono);
     font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
@@ -235,8 +259,8 @@ const CLAVE = 'util-votado-v1';
 
   .abrir:hover,
   .abrir[aria-expanded='true'] {
-    border-color: var(--acento);
-    color: var(--texto);
+    border-color: var(--accent);
+    color: var(--text);
   }
 
   /* En pantallas estrechas solo icono y número; el texto sigue ahí para los
@@ -259,13 +283,20 @@ const CLAVE = 'util-votado-v1';
       margin: 0;
       overflow: visible;
       clip: auto;
-      font-family: var(--fuente-texto);
+      font-family: var(--font-body);
       font-weight: 500;
     }
   }
 
   .numero-barra {
-    color: var(--acento-texto);
+    color: var(--accent-ink);
+  }
+
+  /* No disponible: el texto va en el color tenue, sin acento, para que no se
+     confunda con un número. */
+  .no-disponible .numero-barra {
+    color: var(--muted);
+    font-weight: 500;
   }
 
   .icono {
@@ -282,10 +313,10 @@ const CLAVE = 'util-votado-v1';
     z-index: 60;
     width: min(21rem, calc(100vw - 2 * var(--gutter)));
     padding: 1.1rem 1.2rem;
-    background: var(--bg-elev);
-    border: 1px solid var(--borde);
-    border-radius: var(--radio);
-    box-shadow: 0 10px 30px rgb(0 0 0 / 0.25);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow-panel);
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -317,13 +348,17 @@ const CLAVE = 'util-votado-v1';
     margin: 0;
     font-weight: 600;
     font-size: 1.05rem;
-    color: var(--texto);
+    color: var(--text);
   }
 
   .texto {
     margin: 0;
     font-size: 0.9rem;
-    color: var(--texto-suave);
+    color: var(--muted);
+  }
+
+  .votar[hidden] {
+    display: none;
   }
 
   .votar {
@@ -338,20 +373,24 @@ const CLAVE = 'util-votado-v1';
     gap: 0.4rem;
     margin: 0;
     font-size: 0.875rem;
-    color: var(--texto-suave);
+    color: var(--muted);
   }
 
   .numero {
-    font-family: var(--fuente-mono);
+    font-family: var(--font-mono);
     font-size: 1.2rem;
     font-weight: 600;
-    color: var(--acento-texto);
+    color: var(--accent-ink);
   }
 
   .fallo {
     margin: 0;
     font-size: 0.85rem;
-    color: var(--peligro);
+    color: var(--danger);
+  }
+
+  .no-disponible .fallo {
+    color: var(--muted);
   }
 
   .fallo[hidden] {
@@ -379,9 +418,9 @@ const CLAVE = 'util-votado-v1';
 
   .votado .votar[disabled] {
     /* Ya cumplió su función: deja de pedir el clic, pero se queda legible. */
-    border-color: var(--borde);
-    background: var(--bg-elev-2);
-    color: var(--texto-suave);
+    border-color: var(--line);
+    background: var(--surface-2);
+    color: var(--muted);
     cursor: default;
     filter: none;
   }

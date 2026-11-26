@@ -1,0 +1,27 @@
+---
+// Aviso de traducción: va ANTES del contenido principal en las páginas en
+// inglés cuyo texto sigue en castellano. Nunca se finge una traducción.
+//
+// translationStatus (frontmatter): 'source' (solo castellano, por defecto),
+// 'partial' o 'complete'. Con 'complete' no se muestra nada.
+import { IDIOMA_POR_DEFECTO, textos, type Idioma } from '../i18n';
+
+interface Props {
+  idioma: Idioma;
+  estado?: 'source' | 'partial' | 'complete';
+  /** 'contenido' para un detalle; 'resumenes' para un listado. */
+  que?: 'contenido' | 'resumenes';
+}
+
+const { idioma, estado = 'source', que = 'contenido' } = Astro.props;
+const t = textos(idioma);
+const mostrar = idioma !== IDIOMA_POR_DEFECTO && estado !== 'complete';
+---
+
+{
+  mostrar && (
+    <p class="aviso-idioma" role="note">
+      {que === 'contenido' ? t.aviso.contenidoEnOtroIdioma : t.aviso.resumenesEnOtroIdioma}
+    </p>
+  )
+}

@@ -13,6 +13,7 @@ import { IDIOMAS, type Idioma } from './idiomas';
 
 export const RUTAS = {
   inicio: { es: '/', en: '/en/' },
+  biblioteca: { es: '/biblioteca/', en: '/en/library/' },
   walkthroughs: { es: '/walkthroughs/', en: '/en/walkthroughs/' },
   tecnicas: { es: '/tecnicas/', en: '/en/techniques/' },
   proyectos: { es: '/proyectos/', en: '/en/projects/' },
@@ -56,14 +57,19 @@ export interface EnlaceNavegacion {
   exacto?: boolean;
 }
 
-/** Secciones de la navegación en el orden del menú, con los textos del idioma. */
+/**
+ * Secciones de la navegación principal, en el orden del menú.
+ *
+ * Técnicas no tiene entrada propia: se llega desde la Biblioteca, los walkthroughs y
+ * las rutas, y marca Walkthroughs como activa. Logros tampoco: no entra en el menú
+ * principal hasta que tenga contenido real; sigue enlazada desde el pie.
+ */
 export function navegacion(idioma: Idioma, textos: Record<Seccion, string>): readonly EnlaceNavegacion[] {
   return [
     { href: ruta('inicio', idioma), texto: textos.inicio, exacto: true },
-    // Las técnicas son otra forma de recorrer los walkthroughs, no una sección aparte.
+    { href: ruta('biblioteca', idioma), texto: textos.biblioteca },
     { href: ruta('walkthroughs', idioma), texto: textos.walkthroughs, incluye: [ruta('tecnicas', idioma)] },
     { href: ruta('proyectos', idioma), texto: textos.proyectos },
-    { href: ruta('logros', idioma), texto: textos.logros },
     { href: ruta('diccionario', idioma), texto: textos.diccionario },
   ];
 }

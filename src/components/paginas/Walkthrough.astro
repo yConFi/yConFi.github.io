@@ -4,11 +4,18 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Cmd from '../Cmd.astro';
 import Pista from '../Pista.astro';
 import Ruta from '../Ruta.astro';
+import Migas from '../Migas.astro';
+import AvisoTraduccion from '../AvisoTraduccion.astro';
+import RutaConocimiento from '../RutaConocimiento.astro';
+import { obtenerWalkthroughs } from '../../lib/coleccion';
+import { cadenaDeWalkthrough, relacionados } from '../../lib/relaciones';
 import {
   IDIOMA_POR_DEFECTO,
   IDIOMAS,
+  LANG,
   etiquetaDificultad,
   etiquetaSistema,
+  rellenar,
   ruta,
   rutaHija,
   textos,
@@ -39,13 +46,38 @@ const numero = (i: number) => String(i + 1).padStart(2, '0');
 
 const tecnicas = data.tecnicas.map((canonico) => tecnicaEnIdioma(canonico, idioma));
 
+// El texto está en castellano: en otra versión sin traducir se marca lang="es".
+const langContenido =
+  idioma !== IDIOMA_POR_DEFECTO && data.translationStatus !== 'complete' ? LANG[IDIOMA_POR_DEFECTO] : undefined;
+
+// Cadena y relacionados: derivados del contenido, nunca escritos a mano.
+const cadena = cadenaDeWalkthrough({ id: walkthrough.id, ...data, body: walkthrough.body ?? '' }, idioma);
+const migas = [
+  { texto: t.nav.inicio, href: ruta('inicio', idioma) },
+  { texto: t.nav.walkthroughs, href: ruta('walkthroughs', idioma) },
+  { texto: data.titulo },
+];
+const todos = (await obtenerWalkthroughs()).map((w) => ({ id: w.id, ...w.data }));
+const siguientes = relacionados({ id: walkthrough.id, ...data }, todos);
+
 // El id de la máquina es el mismo en los dos idiomas: solo cambia el segmento.
 const equivalentes = Object.fromEntries(
   IDIOMAS.map((otro) => [otro, rutaHija('walkthroughs', otro, walkthrough.id)]),
 ) as Record<Idioma, string>;
 ---
 
-<BaseLayout idioma={idioma} titulo={data.titulo} descripcion={data.resumen} equivalentes={equivalentes}>
+<BaseLayout
+  idioma={idioma}
+  titulo={data.titulo}
+  descripcion={data.resumen}
+  equivalentes={equivalentes}
+  tipoSeo="articulo"
+  fecha={data.fecha}
+  actualizado={data.actualizado}
+  migas={migas}
+  palabrasClave={tecnicas.map((x) => x.nombre)}
+  contenidoEnCastellano={langContenido !== undefined}
+>
   <article class="walkthrough">
     {
       data.borrador && (
@@ -56,13 +88,10 @@ const equivalentes = Object.fromEntries(
     }
 
     {/* El walkthrough está escrito en castellano: en inglés se avisa, no se disimula. */}
-    {idioma !== IDIOMA_POR_DEFECTO && <p class="aviso-idioma" role="note">{t.aviso.contenidoEnOtroIdioma}</p>}
+    <AvisoTraduccion idioma={idioma} estado={data.translationStatus} />
 
     <header class="cabecera">
-      <p class="migas">
-        <a href={ruta('walkthroughs', idioma)}>{t.walkthroughs.migas}</a>
-        <span aria-hidden="true">/</span> {walkthrough.id}
-      </p>
+      <Migas idioma={idioma} migas={migas} />
 
       <div class="presentacion">
         <div class="identidad">
@@ -72,7 +101,7 @@ const equivalentes = Object.fromEntries(
               {etiquetaDificultad(data.dificultad, idioma)}
             </span>
           </div>
-          <p class="resumen">{data.resumen}</p>
+          <p class="resumen" lang={langContenido}>{data.resumen}</p>
         </div>
 
         <dl class="ficha">
@@ -125,14 +154,103 @@ const equivalentes = Object.fromEntries(
         </ol>
       </nav>
 
-      <div class="prosa">
+      <div class="prosa" lang={langContenido}>
         <Content components={{ Cmd, Pista, Ruta }} />
+
+        {
+          cadena && (
+            <section class="extra" aria-labelledby="titulo-cadena">
+              <h2 id="titulo-cadena">{t.walkthroughs.cadenaTitulo}</h2>
+              <p class="extra-intro">{t.walkthroughs.cadenaIntro}</p>
+              <RutaConocimiento idioma={idioma} nodos={cadena} />
+            </section>
+          )
+        }
+
+        {
+          siguientes.length > 0 && (
+            <section class="extra" aria-labelledby="titulo-relacionados">
+              <h2 id="titulo-relacionados">{t.walkthroughs.relacionadosTitulo}</h2>
+              <ul class="relacionados">
+                {siguientes.map(({ item, comparte }) => (
+                  <li>
+                    <a href={rutaHija('walkthroughs', idioma, item.id)}>{item.titulo}</a>
+                    <span class="porque">
+                      {rellenar(t.walkthroughs.compartePlantilla, {
+                        tecnicas: comparte.map((c) => tecnicaEnIdioma(c, idioma).nombre).join(', '),
+                      })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        }
       </div>
     </div>
   </article>
 </BaseLayout>
 
 <style>
+  /* La cadena y los relacionados van tras las Lecciones aprendidas, con su
+     propio título: no son una sección del walkthrough. */
+  .extra {
+    margin-top: var(--space-12);
+    padding-top: var(--space-6);
+    border-top: 2px solid var(--line);
+  }
+
+  .extra h2 {
+    margin-top: 0;
+  }
+
+  .extra-intro {
+    color: var(--muted);
+  }
+
+  /* Dentro de la columna de lectura, la cadena siempre se apila. */
+  .extra :global(.ruta-conocimiento) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .extra :global(.ruta-conocimiento > li:first-child) {
+    padding-top: 0;
+  }
+
+  .extra :global(.relacion::before) {
+    content: '↓ ';
+  }
+
+  .relacionados {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .relacionados li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--line);
+    border-left: 0.3rem solid var(--relation);
+    border-radius: var(--radius-m);
+    background: var(--surface);
+  }
+
+  .relacionados a {
+    font-weight: 650;
+  }
+
+  .porque {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
   .franja-borrador {
     margin: 0 0 1.5rem;
     padding: 0.75rem 1rem;
@@ -144,21 +262,6 @@ const equivalentes = Object.fromEntries(
     font-size: 0.9rem;
   }
 
-  .migas {
-    margin: 0 0 1rem;
-    font-family: var(--fuente-mono);
-    font-size: 0.8rem;
-    color: var(--texto-suave);
-    overflow-wrap: anywhere;
-  }
-
-  .migas a {
-    text-decoration: none;
-  }
-
-  .migas a:hover {
-    text-decoration: underline;
-  }
 
   .presentacion {
     display: flex;
@@ -286,7 +389,7 @@ const equivalentes = Object.fromEntries(
 
     .indice {
       position: sticky;
-      top: calc(var(--altura-cabecera, 0px) + 1.5rem);
+      top: calc(var(--header-h) + 1.5rem);
       align-self: start;
     }
   }

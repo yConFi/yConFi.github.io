@@ -13,6 +13,7 @@ export const es = {
   // Las claves de `nav` son las secciones de src/i18n/rutas.ts.
   nav: {
     inicio: 'Inicio',
+    biblioteca: 'Biblioteca',
     walkthroughs: 'Walkthroughs',
     tecnicas: 'Técnicas',
     proyectos: 'Proyectos',
@@ -26,8 +27,9 @@ export const es = {
       'Portfolio de ciberseguridad y walkthroughs paso a paso de máquinas y retos retirados, con cada parte de cada comando explicada.',
     saltarContenido: 'Saltar al contenido',
     navPrincipal: 'Principal',
+    menu: 'Menú',
+    migas: 'Migas de pan',
     irAlInicio: 'Inicio',
-    redes: 'Redes',
     documentacionOficial: 'Documentación oficial',
     ojo: 'Ojo:',
     borrador: 'borrador',
@@ -36,11 +38,55 @@ export const es = {
     tecnicasAria: 'Técnicas',
     tecnologiasAria: 'Tecnologías',
     avatarAlt: 'Avatar ilustrado de Ricardo Hidalgo',
+    ogAlt: 'yConFi: «Aprender haciendo. Demostrar explicando.», con el avatar de Ricardo Hidalgo',
   },
 
+  // El botón de tema rota sistema → claro → oscuro → sistema. Su nombre dice el
+  // estado actual y lo que hará al pulsarlo.
   tema: {
-    aOscuro: 'Cambiar a tema oscuro',
-    aClaro: 'Cambiar a tema claro',
+    sistemaAClaro: 'Tema: el del sistema. Cambiar a claro',
+    claroAOscuro: 'Tema: claro. Cambiar a oscuro',
+    oscuroASistema: 'Tema: oscuro. Volver al del sistema',
+  },
+
+  busqueda: {
+    lanzador: 'Buscar',
+    atajo: 'Ctrl K',
+    titulo: 'Buscar en todo el conocimiento',
+    etiqueta: 'Consulta',
+    placeholder: 'Prueba: WinRM, nmap -p, HMAC…',
+    cerrar: 'Cerrar la búsqueda',
+    ejemplos: 'Búsquedas de ejemplo',
+    ejemploFtp: 'FTP anónimo',
+    cargando: 'Cargando el índice…',
+    resultadosPlantilla: '{n} resultados para «{q}»',
+    resultadoUnoPlantilla: '{n} resultado para «{q}»',
+    vacioPlantilla:
+      'Nada coincide con «{q}». Prueba con una técnica, una herramienta o una parte del comando, como -p.',
+    error: 'No se ha podido cargar el índice de búsqueda. Todo el contenido sigue en sus índices:',
+    verBiblioteca: 'Abrir en la Biblioteca',
+    aprender: 'Aprender',
+    aplicar: 'Aplicar',
+    consultar: 'Consultar',
+    tipoWalkthrough: 'Walkthrough',
+    tipoTechnique: 'Técnica',
+    tipoTool: 'Herramienta',
+    tipoOption: 'Opción de comando',
+    tipoDictionary: 'Operador de shell',
+    tipoProject: 'Proyecto',
+    filtro: 'Tipo',
+    todos: 'Todo',
+  },
+
+  biblioteca: {
+    titulo: 'Biblioteca',
+    descripcion:
+      'Busca en todo: walkthroughs, técnicas, herramientas, opciones de comandos, operadores y proyectos, en un único índice estático.',
+    eyebrow: 'Índice general',
+    intro:
+      'Walkthroughs, técnicas, herramientas, opciones de comandos y proyectos en un único índice. La búsqueda se puede compartir: la consulta va en la dirección.',
+    buscar: 'Buscar',
+    sinJs: 'La búsqueda necesita JavaScript. Todo el contenido sigue en sus índices:',
   },
 
   idioma: {
@@ -49,40 +95,70 @@ export const es = {
     cambiarPlantilla: 'Ver esta página en {idioma}',
   },
 
+  // Portada del Laboratorio. El titular y las CTA son los del handoff de diseño;
+  // el resto son datos y frases de Ricardo que ya estaban publicados.
   portada: {
-    lemaHtml: 'Estoy haciendo el camino hacia la <strong>ciberseguridad</strong>.',
-    pitchHtml:
-      'Aquí publico mis proyectos y los walkthroughs de las máquinas y retos <strong>retirados</strong> que voy resolviendo, con cada parte de cada comando explicada.',
-    verWalkthroughs: 'Ver los walkthroughs',
-    terminal: {
-      barra: 'ricardo@yconfi: ~ — bash',
-      whoami: 'ricardo · estudiante de ciberseguridad',
-      ordenObjetivo: 'cat objetivo.txt',
-      objetivo:
-        'Lo que busco, sobre todo, es aprender. Y cuando se me dé la oportunidad, trabajar en ello para aprender aún más.',
-      ordenFormacion: 'ls formacion/',
-      formacion1: 'ASIR · LinkiaFP',
-      formacion1Fecha: '→ sep 2027',
-      formacion2: 'Máster en Ciberseguridad & IA · Evolve',
-      formacion2Fecha: '→ abr 2027',
-    },
-    cifrasAria: 'En cifras',
-    maquinaResuelta: 'máquina resuelta',
-    maquinasResueltas: 'máquinas resueltas',
-    herramientasExplicadas: 'herramientas explicadas',
-    opcionesDiccionario: 'opciones en el diccionario',
+    eyebrow: 'Conocimiento aplicado y comprobable',
+    titulo: 'Aprender haciendo. Demostrar explicando.',
+    ledeHtml:
+      'Los proyectos muestran capacidad aplicada; los walkthroughs muestran método. Aquí publico los de las máquinas y retos <strong>retirados</strong> que voy resolviendo, con cada parte de cada comando explicada.',
+    consultar: 'Consultar conocimiento',
+    verEvidencia: 'Ver evidencia aplicada',
+    perfil: 'Perfil',
+    rol: 'Estudiante de ciberseguridad',
+    objetivo:
+      'Lo que busco, sobre todo, es aprender. Y cuando se me dé la oportunidad, trabajar en ello para aprender aún más.',
+    formacion: 'Formación',
+    formacion1: 'ASIR · LinkiaFP',
+    formacion1Fecha: '→ sep 2027',
+    formacion2: 'Máster en Ciberseguridad & IA · Evolve',
+    formacion2Fecha: '→ abr 2027',
+    buscarTitulo: 'Busca una técnica, una herramienta o un comando',
+    buscarBoton: 'Buscar',
+    estadoAria: 'Estado del laboratorio',
+    walkthrough: 'walkthrough',
+    walkthroughs: 'walkthroughs',
+    tecnica: 'técnica',
+    tecnicas: 'técnicas',
+    herramientas: 'herramientas explicadas',
+    opciones: 'opciones en el diccionario',
     proyecto: 'proyecto',
     proyectos: 'proyectos',
-    ultimasMaquinas: 'Últimas máquinas',
-    verTodasPlantilla: 'ver todas ({n}) →',
-    verTodosPlantilla: 'ver todos ({n}) →',
+    ultimo: 'último walkthrough',
+    entradasEyebrow: 'Método, evidencia y referencia',
+    entradasTitulo: 'Tres formas de entrar',
+    metodo: 'Método',
+    metodoTexto: 'El walkthrough más reciente, con cada comando desglosado.',
+    evidencia: 'Evidencia',
+    evidenciaTexto: 'Un proyecto real: qué resuelve, con qué y en qué estado está.',
+    referencia: 'Referencia',
+    referenciaPlantilla: '{n} opciones de {herramienta} explicadas, con enlace a su documentación oficial.',
+    verTodosPlantilla: 'Ver todos ({n})',
+    destacadoEyebrow: 'Caso destacado',
+    verCaso: 'Ver el caso completo',
+    cadenaEyebrow: 'Cadena de conocimiento',
+    cadenaTitulo: 'De un walkthrough a la documentación oficial',
+    cadenaIntro:
+      'Cada paso enlaza con el siguiente y dice por qué está ahí: así se puede comprobar cualquier explicación.',
     sobreMi: 'Sobre mí',
     sobreMi1Html:
       'Decidí estudiar ciberseguridad por curiosidad y porque es algo que siempre me ha llamado la atención. Empezó cuando tenía unos 12 años, jugando al famoso <em>Habbo</em>.',
     sobreMi2Html:
       'Lo que busco, sobre todo, es <strong>aprender</strong>. Y cuando se me dé la oportunidad, trabajar en ello para aprender aún más. Por eso explico cada comando parte por parte: para entender bien cada paso y que también le sirvan a otros.',
-    contacto: 'Contacto',
-    logrosYPlataformas: 'Logros y plataformas',
+  },
+
+  // Cadena de conocimiento: el tipo de cada eslabón y por qué está ahí.
+  cadena: {
+    walkthrough: 'Walkthrough',
+    technique: 'Técnica',
+    command: 'Comando',
+    dictionary: 'Diccionario',
+    source: 'Fuente oficial',
+    porTecnica: 'usa la técnica',
+    porComando: 'que se aplica con',
+    porDiccionario: 'cuya opción se explica en',
+    porFuente: 'y se comprueba en',
+    aria: 'Cadena de conocimiento',
   },
 
   util: {
@@ -96,6 +172,9 @@ export const es = {
     varias: 'personas lo han encontrado útil',
     falloMuchos: 'Ahora mismo hay mucho movimiento. Prueba dentro de un minuto.',
     falloGenerico: 'No se ha podido guardar tu voto. Inténtalo más tarde.',
+    noDisponible: 'no disponible',
+    noDisponibleTexto:
+      'El contador no responde ahora mismo. El contenido funciona igual y no se muestra ninguna cifra.',
   },
 
   walkthroughs: {
@@ -103,7 +182,7 @@ export const es = {
     descripcion: 'Walkthroughs paso a paso de máquinas y retos retirados, con cada comando explicado.',
     vacio: 'Todavía no hay walkthroughs publicados.',
     introHtml:
-      'Máquinas y retos <strong>retirados</strong>, resueltos paso a paso. Pasa el ratón por cualquier parte de un comando y te dice qué hace.',
+      'Máquinas y retos <strong>retirados</strong>, resueltos paso a paso. Toca cualquier parte de un comando y te dice qué hace.',
     todasLasTecnicasHtmlPlantilla: 'Todas las técnicas están en <a href="{href}">{ruta}</a>.',
     filtrosAria: 'Filtrar walkthroughs',
     buscar: 'Buscar',
@@ -123,12 +202,15 @@ export const es = {
     totalUnaPlantilla: '{n} máquina',
     parcialPlantilla: '{visibles} de {total} máquinas',
     sinResultados: 'Ninguna máquina coincide con estos filtros.',
-    migas: 'walkthroughs',
     fichaPlataforma: 'Plataforma',
     fichaSerie: 'Serie',
     fichaSistema: 'Sistema',
     fichaFecha: 'Fecha',
     indice: 'En esta máquina',
+    cadenaTitulo: 'La cadena de esta máquina',
+    cadenaIntro: 'Del walkthrough a la documentación oficial: cada paso dice por qué enlaza con el siguiente.',
+    relacionadosTitulo: 'Siguientes máquinas',
+    compartePlantilla: 'Comparte: {tecnicas}',
   },
 
   tecnicas: {
@@ -137,7 +219,6 @@ export const es = {
     introHtmlPlantilla:
       'Otra forma de recorrer los <a href="{href}">walkthroughs</a>: por lo que se hace en cada máquina.',
     vacio: 'Todavía no hay técnicas: aparecerán al publicar walkthroughs.',
-    migas: 'técnicas',
     tituloPlantilla: 'Técnica: {nombre}',
     descripcionPlantilla: 'Walkthroughs en los que se usa la técnica {nombre}.',
     usanUna: '1 máquina usa esta técnica.',
@@ -149,13 +230,14 @@ export const es = {
     descripcion: 'Proyectos que he construido y cómo los hice.',
     intro: 'Cosas que he construido para resolver problemas reales, y cómo las hice.',
     vacio: 'Todavía no hay proyectos publicados.',
-    migas: 'proyectos',
     estado: 'Estado',
     fecha: 'Fecha',
     tecnologias: 'Tecnologías',
-    codigo: 'Código',
     repositorio: 'Repositorio',
     demo: 'Demo',
+    eyebrow: 'Proyecto',
+    equipo: 'Trabajo en equipo',
+    enlaces: 'Código y evidencia',
   },
 
   logros: {
@@ -163,8 +245,6 @@ export const es = {
     descripcion: 'Certificaciones conseguidas y progreso en plataformas de práctica de ciberseguridad.',
     intro: 'Certificaciones que he conseguido y mi progreso en plataformas de práctica.',
     certificaciones: 'Certificaciones',
-    sinCertificacionesHtmlPlantilla:
-      'Todavía no tengo ninguna certificación. Mientras tanto, lo que voy aprendiendo está en los <a href="{href}">walkthroughs</a>.',
     verificar: 'Verificar credencial',
     plataformas: 'Plataformas',
     rango: 'Rango:',
@@ -188,6 +268,17 @@ export const es = {
     sinResultados: 'No hay nada en el diccionario que coincida con la búsqueda.',
     resultadoPlantilla: '{secciones} secciones y {entradas} entradas coinciden.',
     resultadoUnaPlantilla: '{secciones} sección y {entradas} entradas coinciden.',
+  },
+
+  // Pie de página: principios de publicación y secciones que no están en el menú.
+  pie: {
+    principiosTitulo: 'Publicación responsable',
+    principio1: 'Solo máquinas retiradas y prácticas permitidas.',
+    principio2: 'Nunca se publica una flag.',
+    principio3: 'Cada explicación enlaza a su documentación oficial.',
+    principio4: 'Sin rastreadores ni recursos de terceros.',
+    secciones: 'Secciones',
+    enlaces: 'Enlaces',
   },
 
   pista: {
@@ -221,7 +312,12 @@ export const es = {
   },
 
   cmd: {
-    ayuda: 'toca cada parte para saber qué hace',
+    etiqueta: 'Comando explicado',
+    explorar: 'Explorar comando',
+    partesAria: 'Partes del comando',
+    ayudaExplorar:
+      'Toca una parte del comando, o pulsa «Explorar comando» y recórrelo con las flechas (Inicio y Fin van a los extremos, Escape sale).',
+    verEnDiccionario: 'Ver en el diccionario',
     copiar: 'Copiar',
     copiarOculto: ' comando',
     copiado: 'Copiado',

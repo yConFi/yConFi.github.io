@@ -1,8 +1,13 @@
 ---
-// Botón de tema. Por defecto manda el tema del sistema; al pulsarlo se fija uno
-// y se guarda en localStorage. BaseLayout lo aplica antes de pintar.
-// Qué icono y qué etiqueta se ven lo decide el CSS, para que sea correcto
-// incluso antes de que cargue el JavaScript.
+// Botón de tema con tres estados: sistema → claro → oscuro → sistema.
+//
+// Por defecto manda el tema del sistema (no hay data-theme). Al elegir claro u
+// oscuro se escribe data-theme en <html> y se guarda en localStorage; al volver
+// a "sistema" se borran los dos. BaseLayout aplica la preferencia antes de pintar.
+//
+// Qué icono y qué nombre accesible se ven lo decide el CSS a partir de
+// data-theme, así es correcto incluso antes de que cargue el JavaScript.
+// El nombre accesible dice el estado actual y lo que hará el botón.
 import { textos, type Idioma } from '../i18n';
 
 interface Props {
@@ -14,31 +19,44 @@ const t = textos(idioma);
 ---
 
 <button type="button" class="theme-toggle" data-theme-toggle>
-  <svg class="icono a-oscuro" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-    <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path>
+  <!-- Sistema: un círculo mitad lleno. -->
+  <svg class="icono en-sistema" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+    <circle cx="12" cy="12" r="8.5"></circle>
+    <path d="M12 3.5a8.5 8.5 0 0 1 0 17Z" fill="currentColor" stroke="none"></path>
   </svg>
-  <svg class="icono a-claro" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+  <svg class="icono en-claro" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
     <circle cx="12" cy="12" r="4"></circle>
     <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"></path>
   </svg>
-  <span class="visually-hidden a-oscuro">{t.tema.aOscuro}</span>
-  <span class="visually-hidden a-claro">{t.tema.aClaro}</span>
+  <svg class="icono en-oscuro" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+    <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path>
+  </svg>
+  <span class="visually-hidden en-sistema">{t.tema.sistemaAClaro}</span>
+  <span class="visually-hidden en-claro">{t.tema.claroAOscuro}</span>
+  <span class="visually-hidden en-oscuro">{t.tema.oscuroASistema}</span>
 </button>
 
 <script>
-  const boton = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
-  const sistemaOscuro = window.matchMedia('(prefers-color-scheme: dark)');
+  const raiz = document.documentElement;
+  const SIGUIENTE: Record<string, 'light' | 'dark' | undefined> = {
+    sistema: 'light',
+    light: 'dark',
+    dark: undefined,
+  };
 
-  boton?.addEventListener('click', () => {
-    const actual = document.documentElement.dataset.theme ?? (sistemaOscuro.matches ? 'dark' : 'light');
-    const nuevo = actual === 'dark' ? 'light' : 'dark';
-    document.documentElement.dataset.theme = nuevo;
-    try {
-      localStorage.setItem('tema', nuevo);
-    } catch {
-      /* almacenamiento no disponible: el cambio dura solo esta visita */
-    }
-  });
+  for (const boton of document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]')) {
+    boton.addEventListener('click', () => {
+      const nuevo = SIGUIENTE[raiz.dataset.theme ?? 'sistema'];
+      if (nuevo) raiz.dataset.theme = nuevo;
+      else delete raiz.dataset.theme;
+      try {
+        if (nuevo) localStorage.setItem('tema', nuevo);
+        else localStorage.removeItem('tema');
+      } catch {
+        /* almacenamiento no disponible: el cambio dura solo esta visita */
+      }
+    });
+  }
 </script>
 
 <style>
@@ -48,43 +66,47 @@ const t = textos(idioma);
     width: 2.75rem;
     height: 2.75rem;
     flex-shrink: 0;
-    background: var(--bg-elev);
-    color: var(--texto-suave);
-    border: 1px solid var(--borde);
-    border-radius: var(--radio);
+    background: var(--surface);
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
     cursor: pointer;
   }
 
+  /* Sin JavaScript no puede cambiar nada: manda el tema del sistema. */
+  :global(:root:not(.js)) .theme-toggle {
+    display: none;
+  }
+
   .theme-toggle:hover {
-    border-color: var(--acento);
-    color: var(--texto);
+    border-color: var(--accent);
+    color: var(--text);
   }
 
   .icono {
-    width: 1.1rem;
-    height: 1.1rem;
+    width: 1.15rem;
+    height: 1.15rem;
   }
 
-  /* Por defecto (tema claro) se ofrece pasar a oscuro. */
-  .a-claro {
+  /* Sin data-theme (sistema) se ve el primero; con data-theme, el suyo. Lo que
+     está en display: none tampoco lo leen los lectores de pantalla. */
+  .en-claro,
+  .en-oscuro {
     display: none;
   }
 
-  @media (prefers-color-scheme: dark) {
-    :global(:root:not([data-theme='light'])) .a-oscuro {
-      display: none;
-    }
-
-    :global(:root:not([data-theme='light'])) .a-claro {
-      display: block;
-    }
-  }
-
-  :global(:root[data-theme='dark']) .a-oscuro {
+  :global(:root[data-theme]) .en-sistema {
     display: none;
   }
 
-  :global(:root[data-theme='dark']) .a-claro {
+  :global(:root[data-theme='light']) .en-claro,
+  :global(:root[data-theme='dark']) .en-oscuro {
     display: block;
+  }
+
+  @media (forced-colors: active) {
+    .theme-toggle {
+      border-color: ButtonText;
+    }
   }
 </style>

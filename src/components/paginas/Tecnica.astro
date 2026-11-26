@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TarjetaWalkthrough from '../TarjetaWalkthrough.astro';
+import Migas from '../Migas.astro';
 import { IDIOMAS, rellenar, ruta, rutaHija, textos, type Idioma } from '../../i18n';
 import { tecnicaEnIdioma, type Tecnica } from '../../lib/walkthroughs';
 
@@ -18,6 +19,11 @@ const n = tecnica.walkthroughs.length;
 const equivalentes = Object.fromEntries(
   IDIOMAS.map((otro) => [otro, rutaHija('tecnicas', otro, tecnicaEnIdioma(tecnica.canonico, otro).slug)]),
 ) as Record<Idioma, string>;
+const migas = [
+  { texto: t.nav.inicio, href: ruta('inicio', idioma) },
+  { texto: t.nav.tecnicas, href: ruta('tecnicas', idioma) },
+  { texto: tecnica.nombre },
+];
 ---
 
 <BaseLayout
@@ -25,10 +31,10 @@ const equivalentes = Object.fromEntries(
   titulo={rellenar(t.tecnicas.tituloPlantilla, { nombre: tecnica.nombre })}
   descripcion={rellenar(t.tecnicas.descripcionPlantilla, { nombre: tecnica.nombre })}
   equivalentes={equivalentes}
+  tipoSeo="articulo"
+  migas={migas}
 >
-  <p class="migas">
-    <a href={ruta('tecnicas', idioma)}>{t.tecnicas.migas}</a> <span aria-hidden="true">/</span> {tecnica.slug}
-  </p>
+  <Migas idioma={idioma} migas={migas} />
 
   <div class="cabecera-pagina">
     <h1><span class="almohadilla" aria-hidden="true">#</span>{tecnica.nombre}</h1>
@@ -41,20 +47,6 @@ const equivalentes = Object.fromEntries(
 </BaseLayout>
 
 <style>
-  .migas {
-    margin: 0 0 1rem;
-    font-family: var(--fuente-mono);
-    font-size: 0.8rem;
-    color: var(--texto-suave);
-  }
-
-  .migas a {
-    text-decoration: none;
-  }
-
-  .migas a:hover {
-    text-decoration: underline;
-  }
 
   h1 {
     overflow-wrap: anywhere;

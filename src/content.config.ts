@@ -9,6 +9,32 @@ import { z } from 'astro/zod';
 // usarlas sin arrastrar `astro:content`.
 import { DIFICULTADES, ESTADOS_PROYECTO, PLATAFORMAS, SERIES, SISTEMAS } from './data/valores';
 
+/**
+ * Campos opcionales comunes (handoff del Laboratorio). Ninguno es obligatorio:
+ * las relaciones se derivan del contenido y solo se escriben para excepciones.
+ */
+const comunes = {
+  /** Otras formas de nombrarlo, solo para la búsqueda. */
+  aliases: z.array(z.string().min(1)).optional(),
+  /** Última actualización real, si la hubo. */
+  actualizado: z.coerce.date().optional(),
+  /**
+   * Estado de la traducción del CUERPO. Sin el campo se entiende 'source': solo
+   * está en castellano, y la página en inglés lo avisa.
+   */
+  translationStatus: z.enum(['source', 'partial', 'complete']).optional(),
+  /** Relaciones escritas a mano: solo excepciones que no se pueden derivar. */
+  relations: z
+    .array(
+      z.object({
+        kind: z.enum(['walkthrough', 'technique', 'tool', 'option', 'dictionary', 'project', 'source']),
+        id: z.string().min(1),
+        label: z.string().optional(),
+      }),
+    )
+    .optional(),
+};
+
 const walkthroughs = defineCollection({
   loader: glob({ pattern: '**/*.mdx', base: './src/content/walkthroughs' }),
   schema: z.object({
@@ -28,6 +54,7 @@ const walkthroughs = defineCollection({
       .optional(),
     /** true = no se publica (solo visible con `npm run dev`). */
     borrador: z.boolean(),
+    ...comunes,
   }),
 });
 
@@ -44,8 +71,11 @@ const proyectos = defineCollection({
     repositorio: z.url().optional(),
     /** Opcional: web pública donde se puede probar. */
     demo: z.url().optional(),
+    /** true si fue un trabajo en equipo: la página lo dice siempre de forma visible. */
+    equipo: z.boolean().optional(),
     /** true = no se publica (solo visible con `npm run dev`). */
     borrador: z.boolean(),
+    ...comunes,
   }),
 });
 
