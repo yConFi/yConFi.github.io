@@ -111,7 +111,7 @@ export const en: Textos = {
     descripcion: 'Step-by-step walkthroughs of retired machines and challenges, with every command explained.',
     vacio: 'There are no walkthroughs published yet.',
     introHtml:
-      '<strong>Retired</strong> machines and challenges, solved step by step. Hover over any part of a command and it tells you what it does.',
+      '<strong>Retired</strong> machines and challenges, solved step by step. Tap any part of a command and it tells you what it does.',
     todasLasTecnicasHtmlPlantilla: 'All the techniques are at <a href="{href}">{ruta}</a>.',
     filtrosAria: 'Filter walkthroughs',
     buscar: 'Search',
@@ -236,7 +236,12 @@ export const en: Textos = {
   },
 
   cmd: {
-    ayuda: 'tap any part to see what it does',
+    etiqueta: 'Explained command',
+    explorar: 'Explore command',
+    partesAria: 'Command parts',
+    ayudaExplorar:
+      'Tap a part of the command, or press “Explore command” and move through it with the arrow keys (Home and End jump to the ends, Escape leaves).',
+    verEnDiccionario: 'See it in the dictionary',
     copiar: 'Copy',
     copiarOculto: ' command',
     copiado: 'Copied',

@@ -1,10 +1,23 @@
 ---
-// Comando con cada parte explicada.
+// CommandExplorer: un comando con cada parte explicada.
 // Uso en MDX: <Cmd c="nmap -sV 10.10.10.10" notas={{ "10.10.10.10": "IP de la máquina objetivo" }} />
+//
+// Accesibilidad (ver design-exploration/CLAUDE_CODE_HANDOFF.md):
+// - En reposo, el comando añade UNA sola parada de Tab: el botón «Explorar comando».
+//   Los tokens tienen tabindex="-1".
+// - Al explorar, el token actual pasa a tabindex="0" (roving tabindex) y se recorre
+//   con flechas, Inicio y Fin. Escape sale y devuelve el foco al botón.
+// - Un clic o un toque en un token lo selecciona.
+// - La explicación se pinta en una región aria-live="polite", visible para todos.
+// - Copiar es un control aparte.
+// - Sin JavaScript: el botón de explorar no se ve y el <details> con el desglose
+//   completo (y los enlaces oficiales) sigue ahí.
 //
 // La validación principal ocurre al compilar el MDX (src/lib/comando/validar-mdx.ts).
 // Aquí se vuelve a analizar para renderizar y como segunda red de seguridad.
-import { idiomaDeRuta, textos } from '../i18n';
+// El analizador y el tokenizador no cambian.
+import { HERRAMIENTAS } from '../data/comandos';
+import { idiomaDeRuta, ruta, textos } from '../i18n';
 import { analizarComando } from '../lib/comando/analizar';
 import { ErrorComando, formatearError } from '../lib/comando/errores';
 import type { Segmento } from '../lib/comando/tipos';
@@ -30,19 +43,26 @@ try {
   throw e;
 }
 
-// Id único y estable dentro de la página para enlazar cada token con su descripción.
+// Id único y estable dentro de la página para enlazar cada token con su explicación.
 const locals = Astro.locals as { cmdContador?: number };
 locals.cmdContador = (locals.cmdContador ?? 0) + 1;
 const id = `cmd-${locals.cmdContador}`;
 
+// Las herramientas tienen su ficha en el diccionario (el ancla es su nombre).
+const nombresHerramientas = new Set(HERRAMIENTAS.map((h) => h.nombre));
+const enDiccionario = (s: Segmento) =>
+  s.clase === 'herramienta' && nombresHerramientas.has(s.texto)
+    ? `${ruta('diccionario', idioma)}#${encodeURIComponent(s.texto)}`
+    : undefined;
+
 const escapar = (s: string) =>
   s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 
-// El <pre> se genera como HTML para controlar exactamente los espacios.
+// Los tokens se generan como HTML para controlar exactamente los espacios.
 const codigo = segmentos
   .map((s, i) => {
     const espacio = i > 0 && !s.pegadoAlAnterior ? ' ' : '';
-    return `${espacio}<button type="button" class="tok tok-${s.clase}" aria-describedby="${id}-${i}">${escapar(s.texto)}</button>`;
+    return `${espacio}<button type="button" class="tok tok-${s.clase}" tabindex="-1" data-explica="${id}-${i}">${escapar(s.texto)}</button>`;
   })
   .join('');
 ---
@@ -55,35 +75,67 @@ const codigo = segmentos
   data-txt-anuncio={t.cmd.copiadoAnuncio}
   data-txt-fallo={t.cmd.falloCopiar}
 >
-  <div class="cmd-barra">
-    <span class="cmd-shell" aria-hidden="true">bash</span>
-    <span class="cmd-ayuda" aria-hidden="true">{t.cmd.ayuda}</span>
-    <button type="button" class="cmd-copiar" data-copiar={c}>
-      <span data-copiar-texto>{t.cmd.copiar}</span><span class="visually-hidden">{t.cmd.copiarOculto}</span>
-    </button>
+  <figcaption class="cmd-barra">
+    <span class="cmd-etiqueta">{t.cmd.etiqueta}</span>
+    <span class="cmd-acciones">
+      <button type="button" class="cmd-boton cmd-explorar" aria-pressed="false" data-explorar>
+        {t.cmd.explorar}
+      </button>
+      <button type="button" class="cmd-boton cmd-copiar" data-copiar={c}>
+        <span data-copiar-texto>{t.cmd.copiar}</span><span class="visually-hidden">{t.cmd.copiarOculto}</span>
+      </button>
+    </span>
+  </figcaption>
+
+  <div class="cmd-codigo" role="toolbar" aria-label={t.cmd.partesAria} data-tokens>
+    <span class="cmd-prompt" aria-hidden="true">$ </span><Fragment set:html={codigo} />
   </div>
 
-  <pre class="cmd-codigo"><code><span class="cmd-prompt" aria-hidden="true">$ </span><Fragment set:html={codigo} /></code></pre>
+  <!-- La explicación del token seleccionado. Empieza con la ayuda de uso. -->
+  <div class="cmd-explicacion" aria-live="polite" data-explicacion>
+    <p class="cmd-ayuda">{t.cmd.ayudaExplorar}</p>
+  </div>
 
-  <!-- Descripciones accesibles (aria-describedby) y contenido de los tooltips -->
+  <!-- Contenido de cada explicación: el script lo copia a la región de arriba. -->
   <div hidden>
     {
-      segmentos.map((s, i) => (
-        <div id={`${id}-${i}`} class="tt-contenido">
-          <span class="tt-etiqueta">{s.etiqueta}<span class="visually-hidden">.</span></span>{' '}
-          <span class="tt-texto">{s.explicacion}</span>
-          {s.partes && (
-            <ul class="tt-partes">
-              {s.partes.map((p) => (
-                <li>
-                  <code>{p.texto}</code>: {p.explicacion}
-                </li>
-              ))}
-            </ul>
-          )}
-          {s.aviso && <span class="tt-aviso">{t.general.ojo} {s.aviso}</span>}
-        </div>
-      ))
+      segmentos.map((s, i) => {
+        const diccionario = enDiccionario(s);
+        return (
+          <div id={`${id}-${i}`}>
+            <p class="tt-cabecera">
+              <code class={`tt-token tok-${s.clase}`}>{s.texto}</code>
+              <span class="tt-etiqueta">{s.etiqueta}</span>
+            </p>
+            <p class="tt-texto">{s.explicacion}</p>
+            {s.partes && (
+              <ul class="tt-partes">
+                {s.partes.map((p) => (
+                  <li>
+                    <code>{p.texto}</code>: {p.explicacion}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {s.aviso && (
+              <p class="tt-aviso">
+                {t.general.ojo} {s.aviso}
+              </p>
+            )}
+            {(diccionario || s.docs) && (
+              <p class="tt-enlaces">
+                {diccionario && <a href={diccionario}>{t.cmd.verEnDiccionario}</a>}
+                {diccionario && s.docs && ' · '}
+                {s.docs && (
+                  <a href={s.docs} rel="noopener">
+                    {t.general.documentacionOficial}
+                  </a>
+                )}
+              </p>
+            )}
+          </div>
+        );
+      })
     }
   </div>
 
@@ -108,7 +160,11 @@ const codigo = segmentos
                   ))}
                 </ul>
               )}
-              {s.aviso && <p class="tt-aviso">{t.general.ojo} {s.aviso}</p>}
+              {s.aviso && (
+                <p class="tt-aviso">
+                  {t.general.ojo} {s.aviso}
+                </p>
+              )}
               {s.docs && (
                 <a href={s.docs} rel="noopener">
                   {t.general.documentacionOficial}
@@ -131,82 +187,91 @@ const codigo = segmentos
 
 <style>
   .cmd {
-    margin: 1.5rem 0;
-    border: 1px solid var(--borde);
-    border-radius: var(--radio-lg);
-    background: var(--bg-code);
+    margin: 1.75rem 0;
+    border: 1px solid var(--line);
+    border-top: 0.35rem solid var(--accent);
+    border-radius: var(--radius-l);
+    background: var(--surface);
     max-width: 100%;
     overflow: hidden;
   }
 
+  /* ---------- Barra: etiqueta y acciones ---------- */
   .cmd-barra {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.4rem 0.5rem 0.4rem 1rem;
-    border-bottom: 1px solid var(--borde);
-    background: var(--bg-elev);
-    font-family: var(--fuente-mono);
-    font-size: 0.75rem;
-    color: var(--texto-suave);
+    justify-content: space-between;
+    gap: 0.5rem 0.75rem;
+    padding: 0.6rem 0.75rem 0.6rem 1rem;
+    border-bottom: 1px solid var(--line);
   }
 
-  .cmd-shell {
-    flex-shrink: 0;
+  .cmd-etiqueta {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
   }
 
-  /* Pista de que los comandos son interactivos. Se cae en pantallas estrechas. */
-  .cmd-ayuda {
-    flex-grow: 1;
-    color: var(--texto-tenue);
-    text-align: right;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .cmd-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
   }
 
-  .cmd-copiar {
-    flex-shrink: 0;
-    min-height: 2rem;
-    padding: 0 0.7rem;
-    background: var(--bg);
-    color: var(--texto);
-    border: 1px solid var(--borde);
-    border-radius: var(--radio-sm);
-    font-family: var(--fuente-mono);
-    font-size: 0.75rem;
+  .cmd-boton {
+    min-height: 2.75rem;
+    padding: 0 0.8rem;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-s);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
     cursor: pointer;
   }
 
-  .cmd-copiar:hover {
-    border-color: var(--acento);
+  .cmd-boton:hover {
+    border-color: var(--accent);
   }
 
-  @media (max-width: 34rem) {
-    .cmd-ayuda {
-      display: none;
-    }
-
-    .cmd-shell {
-      flex-grow: 1;
-    }
+  .cmd-copiar[data-fallo] {
+    border-color: var(--danger);
+    color: var(--danger);
   }
 
+  .cmd-explorar[aria-pressed='true'] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    font-weight: 600;
+  }
+
+  /* Sin JavaScript no se puede explorar: queda el desglose de abajo. */
+  :global(:root:not(.js)) .cmd-explorar,
+  :global(:root:not(.js)) .cmd-explicacion,
+  :global(:root:not(.js)) .cmd-copiar {
+    display: none;
+  }
+
+  /* ---------- Código ---------- */
   .cmd-codigo {
     margin: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
     padding: 1rem 1.1rem;
-    font-size: 0.9rem;
-    /* El comando se parte en varias líneas antes que provocar scroll horizontal en móvil */
+    background: var(--bg-code);
+    font-family: var(--font-mono);
+    font-size: 0.92rem;
+    line-height: 2;
+    /* Envuelve antes que provocar scroll horizontal. */
     white-space: pre-wrap;
-    word-break: break-word;
-    line-height: 1.95;
+    overflow-wrap: anywhere;
   }
 
   .cmd-prompt {
-    color: var(--acento);
+    color: var(--accent);
     user-select: none;
   }
 
@@ -215,66 +280,130 @@ const codigo = segmentos
     color: inherit;
     background: none;
     border: 0;
-    padding: 0;
+    padding: 0 0.05em;
     margin: 0;
-    cursor: help;
+    cursor: pointer;
     user-select: text;
     -webkit-user-select: text;
     text-decoration: underline dotted;
-    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+    text-decoration-color: color-mix(in srgb, currentColor 50%, transparent);
     text-underline-offset: 0.35em;
     border-radius: 3px;
   }
 
-  .cmd-codigo :global(.tok:hover),
+  .cmd-codigo :global(.tok:hover) {
+    background: color-mix(in srgb, currentColor 14%, transparent);
+  }
+
+  /* Token seleccionado: fondo, subrayado sólido y contorno (no solo color). */
   .cmd-codigo :global(.tok[data-activo]) {
     background: color-mix(in srgb, currentColor 16%, transparent);
+    outline: 2px solid currentColor;
+    outline-offset: 1px;
     text-decoration-style: solid;
   }
 
-  .cmd-codigo :global(.tok-herramienta) {
+  .cmd-codigo :global(.tok:focus-visible) {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .cmd-codigo :global(.tok-herramienta),
+  .tt-token.tok-herramienta {
     color: var(--tok-herramienta);
     font-weight: 600;
   }
-  .cmd-codigo :global(.tok-subcomando) {
+  .cmd-codigo :global(.tok-subcomando),
+  .tt-token.tok-subcomando {
     color: var(--tok-subcomando);
     font-weight: 600;
   }
-  .cmd-codigo :global(.tok-opcion) {
+  .cmd-codigo :global(.tok-opcion),
+  .tt-token.tok-opcion {
     color: var(--tok-opcion);
   }
-  .cmd-codigo :global(.tok-valor) {
+  .cmd-codigo :global(.tok-valor),
+  .tt-token.tok-valor {
     color: var(--tok-valor);
   }
-  .cmd-codigo :global(.tok-argumento) {
+  .cmd-codigo :global(.tok-argumento),
+  .tt-token.tok-argumento {
     color: var(--tok-argumento);
   }
-  .cmd-codigo :global(.tok-operador) {
+  .cmd-codigo :global(.tok-operador),
+  .tt-token.tok-operador {
     color: var(--tok-operador);
     font-weight: 600;
   }
 
+  /* ---------- Explicación del token ---------- */
+  .cmd-explicacion {
+    padding: 0.85rem 1.1rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.95rem;
+  }
+
+  .cmd-explicacion :global(p) {
+    margin: 0.2rem 0;
+  }
+
+  .cmd-ayuda {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .cmd-explicacion :global(.tt-cabecera) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.6rem;
+  }
+
+  .cmd-explicacion :global(.tt-token) {
+    background: var(--bg-code);
+    font-size: 0.95rem;
+  }
+
+  .cmd-explicacion :global(.tt-partes) {
+    margin: 0.35rem 0;
+    padding-left: 1.2rem;
+  }
+
+  .cmd-explicacion :global(.tt-enlaces) {
+    margin-top: 0.4rem;
+    font-size: 0.9rem;
+  }
+
+  .cmd-explicacion :global(.tt-enlaces a) {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+
+  /* ---------- Desglose completo (también sin JavaScript) ---------- */
   .cmd-desglose {
-    border-top: 1px solid var(--borde);
-    background: var(--bg-elev);
-    padding: 0.4rem 1rem;
+    border-top: 1px solid var(--line);
+    background: var(--surface-2);
+    padding: 0 1rem;
     font-size: 0.93rem;
   }
 
   .cmd-desglose summary {
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
     cursor: pointer;
-    font-family: var(--fuente-mono);
-    font-size: 0.78rem;
-    color: var(--texto-suave);
-    padding: 0.4rem 0;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--muted);
   }
 
   .cmd-desglose summary:hover {
-    color: var(--texto);
+    color: var(--text);
   }
 
   dl {
-    margin: 0.25rem 0 0.5rem;
+    margin: 0 0 0.5rem;
   }
 
   .fila {
@@ -294,7 +423,7 @@ const codigo = segmentos
 
   dt code {
     word-break: break-all;
-    background: var(--bg);
+    background: var(--surface);
   }
 
   .fila-herramienta dt code {
@@ -326,51 +455,25 @@ const codigo = segmentos
     padding-left: 1.25rem;
   }
 
-  .tt-etiqueta {
-    font-family: var(--fuente-mono);
+  .tt-etiqueta,
+  .cmd-explicacion :global(.tt-etiqueta) {
+    font-family: var(--font-mono);
     font-size: 0.75rem;
-    color: var(--texto-suave);
+    color: var(--muted);
   }
 
-  .tt-aviso {
+  .tt-aviso,
+  .cmd-explicacion :global(.tt-aviso) {
     color: var(--acento2-texto);
   }
 
-  /* Tooltip flotante (lo crea src/scripts/cmd.ts) */
-  :global(.cmd-tooltip) {
-    position: fixed;
-    inset: auto;
-    margin: 0;
-    z-index: 1000;
-    max-width: min(24rem, calc(100vw - 16px));
-    padding: 0.7rem 0.85rem;
-    background: var(--bg-elev);
-    color: var(--texto);
-    border: 1px solid var(--acento);
-    border-radius: var(--radio);
-    box-shadow: var(--sombra);
-    font-family: var(--fuente-texto);
-    font-size: 0.9rem;
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-  }
+  @media (forced-colors: active) {
+    .cmd {
+      border-color: CanvasText;
+    }
 
-  :global(.cmd-tooltip .tt-etiqueta) {
-    display: block;
-    font-family: var(--fuente-mono);
-    font-size: 0.72rem;
-    color: var(--acento-texto);
-    margin-bottom: 0.2rem;
-  }
-
-  :global(.cmd-tooltip .tt-partes) {
-    margin: 0.35rem 0 0;
-    padding-left: 1.1rem;
-  }
-
-  :global(.cmd-tooltip .tt-aviso) {
-    display: block;
-    margin-top: 0.35rem;
-    color: var(--acento2-texto);
+    .cmd-codigo :global(.tok[data-activo]) {
+      outline-color: Highlight;
+    }
   }
 </style>

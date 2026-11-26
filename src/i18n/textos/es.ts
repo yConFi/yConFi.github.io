@@ -119,7 +119,7 @@ export const es = {
     descripcion: 'Walkthroughs paso a paso de máquinas y retos retirados, con cada comando explicado.',
     vacio: 'Todavía no hay walkthroughs publicados.',
     introHtml:
-      'Máquinas y retos <strong>retirados</strong>, resueltos paso a paso. Pasa el ratón por cualquier parte de un comando y te dice qué hace.',
+      'Máquinas y retos <strong>retirados</strong>, resueltos paso a paso. Toca cualquier parte de un comando y te dice qué hace.',
     todasLasTecnicasHtmlPlantilla: 'Todas las técnicas están en <a href="{href}">{ruta}</a>.',
     filtrosAria: 'Filtrar walkthroughs',
     buscar: 'Buscar',
@@ -248,7 +248,12 @@ export const es = {
   },
 
   cmd: {
-    ayuda: 'toca cada parte para saber qué hace',
+    etiqueta: 'Comando explicado',
+    explorar: 'Explorar comando',
+    partesAria: 'Partes del comando',
+    ayudaExplorar:
+      'Toca una parte del comando, o pulsa «Explorar comando» y recórrelo con las flechas (Inicio y Fin van a los extremos, Escape sale).',
+    verEnDiccionario: 'Ver en el diccionario',
     copiar: 'Copiar',
     copiarOculto: ' comando',
     copiado: 'Copiado',
